@@ -30,6 +30,7 @@ import {
   getTicketPriorityColor,
 } from '../constants'
 import { formatRelativeTime, copyTicketCode } from '../utils'
+import { EmptyState } from '@/components/EmptyState'
 
 function TicketListPage() {
   const navigate = useNavigate()
@@ -169,15 +170,12 @@ function TicketListPage() {
         </div>
         <Card>
           <CardBody className="p-6">
-            <div className="text-center space-y-4">
-              <p className="text-danger text-lg font-medium">
-                Error loading tickets
-              </p>
-              <p className="text-default-600">{error.message}</p>
-              <Button color="primary" onPress={() => refetch()}>
-                Retry
-              </Button>
-            </div>
+            <EmptyState
+              title="Error loading tickets"
+              description={error.message}
+              actionLabel="Retry"
+              onAction={() => refetch()}
+            />
           </CardBody>
         </Card>
       </div>
@@ -346,26 +344,23 @@ function TicketListPage() {
                 </>
               }
               emptyContent={
-                <div className="py-16 text-center space-y-4">
-                  <p className="text-default-500 text-lg">
-                    {hasActiveFilters
+                <EmptyState
+                  title={
+                    hasActiveFilters
                       ? 'No tickets found matching your filters'
-                      : 'No tickets yet'}
-                  </p>
-                  {hasActiveFilters ? (
-                    <Button variant="light" onPress={clearFilters}>
-                      Clear filters
-                    </Button>
-                  ) : (
-                    <Button
-                      color="primary"
-                      startContent={<Plus size={16} />}
-                      onPress={() => navigate('/tickets/new')}
-                    >
-                      Create first ticket
-                    </Button>
-                  )}
-                </div>
+                      : 'No tickets yet'
+                  }
+                  actionLabel={
+                    hasActiveFilters
+                      ? 'Clear filters'
+                      : 'Create first ticket'
+                  }
+                  onAction={
+                    hasActiveFilters
+                      ? clearFilters
+                      : () => navigate('/tickets/new')
+                  }
+                />
               }
             >
               {(ticket) => (

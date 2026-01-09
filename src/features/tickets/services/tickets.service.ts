@@ -231,7 +231,8 @@ export async function changeStatus(
   ticketId: string,
   toStatus: TicketStatus,
   actorName: string,
-  note?: string
+  note?: string,
+  clearResolvedAt?: boolean
 ): Promise<Ticket> {
   try {
     // Get current ticket to check old status
@@ -251,6 +252,11 @@ export async function changeStatus(
     // Set resolved_at if moving to done or rejected
     if ((toStatus === 'done' || toStatus === 'rejected') && !currentTicket.resolved_at) {
       updatePayload.resolved_at = new Date().toISOString()
+    }
+
+    // Clear resolved_at if requested (e.g., moving from done/rejected back to in_progress)
+    if (clearResolvedAt) {
+      updatePayload.resolved_at = undefined
     }
 
     // Update ticket

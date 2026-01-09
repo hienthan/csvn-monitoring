@@ -9,7 +9,7 @@ import './styles/globals.css'
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <HeroUIProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_relativeSplatPath: true }}>
         <SearchProvider>
           <App />
         </SearchProvider>

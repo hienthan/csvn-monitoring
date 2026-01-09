@@ -242,3 +242,36 @@ export function formatRelativeTime(dateString?: string): string {
 export async function copyTicketCode(code: string): Promise<boolean> {
   return copyToClipboard(code)
 }
+
+/**
+ * Get PocketBase file URL for a single file
+ * @param collectionName - Collection name (e.g., 'ma_tickets')
+ * @param recordId - Record ID
+ * @param fileName - File name
+ * @returns Full URL to the file
+ */
+export function pbFileUrl(
+  collectionName: string,
+  recordId: string,
+  fileName: string
+): string {
+  const pbUrl = import.meta.env.VITE_PB_URL || 'http://127.0.0.1:8090'
+  // Remove trailing slash if present
+  const baseUrl = pbUrl.replace(/\/$/, '')
+  return `${baseUrl}/api/files/${collectionName}/${recordId}/${fileName}`
+}
+
+/**
+ * Get PocketBase file URLs for multiple files
+ * @param collectionName - Collection name (e.g., 'ma_tickets')
+ * @param recordId - Record ID
+ * @param fileNames - Array of file names
+ * @returns Array of full URLs to the files
+ */
+export function pbFilesUrls(
+  collectionName: string,
+  recordId: string,
+  fileNames: string[]
+): string[] {
+  return fileNames.map((fileName) => pbFileUrl(collectionName, recordId, fileName))
+}

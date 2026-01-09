@@ -50,13 +50,24 @@ export function useTicket(ticketId?: string) {
   )
 
   const changeTicketStatus = useCallback(
-    async (toStatus: TicketStatus, actorName: string, note?: string) => {
+    async (
+      toStatus: TicketStatus,
+      actorName: string,
+      note?: string,
+      clearResolvedAt?: boolean
+    ) => {
       if (!ticketId) return
 
       try {
         setLoading(true)
         setError(null)
-        const updated = await changeStatus(ticketId, toStatus, actorName, note)
+        const updated = await changeStatus(
+          ticketId,
+          toStatus,
+          actorName,
+          note,
+          clearResolvedAt
+        )
         setTicket(updated)
         return updated
       } catch (err) {

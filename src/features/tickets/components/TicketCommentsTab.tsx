@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Card,
   CardBody,
@@ -9,15 +9,19 @@ import {
   Input,
   Chip,
 } from '@heroui/react'
-import { Send } from 'lucide-react'
+import { Send, Download, ExternalLink, File } from 'lucide-react'
 import { useTicketComments } from '../hooks/useTicketComments'
+import { useTicket } from '../hooks/useTicket'
 import { useApiError } from '@/lib/hooks/useApiError'
+import { pbFilesUrls } from '../utils'
+import { EmptyState } from '@/components/EmptyState'
 
 interface TicketCommentsTabProps {
   ticketId?: string
 }
 
 function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
+  const { ticket } = useTicket(ticketId)
   const { comments, loading, error, addComment } = useTicketComments({
     ticketId,
   })
@@ -26,6 +30,13 @@ function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
   const [authorName, setAuthorName] = useState('')
   const [attachments, setAttachments] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
+
+  // Set default author name from ticket
+  useEffect(() => {
+    if (ticket && !authorName) {
+      setAuthorName(ticket.assignee || ticket.requester_name || '')
+    }
+  }, [ticket, authorName])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,6 +99,8 @@ function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
         <CardBody>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
+              id="comment-author-name"
+              name="authorName"
               label="Author Name"
               placeholder="Enter your name"
               value={authorName}
@@ -96,6 +109,8 @@ function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
               isDisabled={submitting}
             />
             <Textarea
+              id="comment-message"
+              name="message"
               label="Message"
               placeholder="Write a comment..."
               value={newComment}
@@ -105,10 +120,12 @@ function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
               isDisabled={submitting}
             />
             <div>
-              <label className="text-sm font-medium mb-2 block">
+              <label htmlFor="comment-attachments" className="text-sm font-medium mb-2 block">
                 Attachments (optional)
               </label>
               <input
+                id="comment-attachments"
+                name="attachments"
                 type="file"
                 multiple
                 onChange={handleFileChange}
@@ -147,7 +164,7 @@ function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
         </CardBody>
       </Card>
 
-      {/* Comments List */}
+      {/* Comments Timeline */}
       <Card>
         <CardHeader>
           <h2 className="text-xl font-semibold">
@@ -165,31 +182,77 @@ function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
               ))}
             </div>
           ) : comments.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="text-default-500">No comments yet</p>
-            </div>
+            <EmptyState
+              title="No comments yet"
+              description="Be the first to add a comment"
+            />
           ) : (
             <div className="space-y-6">
-              {comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  className="border-b border-divider pb-4 last:border-0"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm">
-                        {comment.author_name || 'Anonymous'}
-                      </p>
+              {comments.map((comment) => {
+                const attachmentUrls = comment.attachments
+                  ? pbFilesUrls('ma_ticket_comments', comment.id, comment.attachments)
+                  : []
+
+                return (
+                  <div
+                    key={comment.id}
+                    className="border-l-4 border-primary pl-4 py-2 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm">
+                          {comment.author_name || 'Anonymous'}
+                        </p>
+                        <span className="text-xs text-default-500">
+                          {formatDate(comment.created)}
+                        </span>
+                      </div>
                     </div>
-                    <p className="text-default-500 text-xs">
-                      {formatDate(comment.created)}
+                    <p className="text-default-700 whitespace-pre-wrap">
+                      {comment.message || ''}
                     </p>
+                    {attachmentUrls.length > 0 && (
+                      <div className="space-y-1 mt-2">
+                        {attachmentUrls.map((url, index) => {
+                          const fileName = comment.attachments?.[index] || `file-${index}`
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2 p-2 bg-default-100 rounded text-sm"
+                            >
+                              <File size={16} className="text-default-500" />
+                              <span className="flex-1 truncate">{fileName}</span>
+                              <div className="flex gap-1">
+                                <Button
+                                  isIconOnly
+                                  size="sm"
+                                  variant="light"
+                                  as="a"
+                                  href={url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <ExternalLink size={14} />
+                                </Button>
+                                <Button
+                                  isIconOnly
+                                  size="sm"
+                                  variant="light"
+                                  as="a"
+                                  href={url}
+                                  download
+                                >
+                                  <Download size={14} />
+                                </Button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-default-700 whitespace-pre-wrap">
-                    {comment.message || ''}
-                  </p>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </CardBody>
@@ -199,4 +262,3 @@ function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
 }
 
 export default TicketCommentsTab
-
