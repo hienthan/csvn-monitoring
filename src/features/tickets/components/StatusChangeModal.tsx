@@ -9,7 +9,9 @@ import {
   Input,
   Textarea,
   Checkbox,
+  Alert,
 } from '@heroui/react'
+import { AlertCircle } from 'lucide-react'
 import type { TicketStatus } from '../types'
 import { TICKET_STATUS_LABELS } from '../constants'
 
@@ -71,6 +73,8 @@ export function StatusChangeModal({
     (currentStatus === 'done' || currentStatus === 'rejected') &&
     newStatus === 'in_progress'
 
+  const isClosingStatus = newStatus === 'done' || newStatus === 'rejected'
+
   return (
     <Modal 
       isOpen={isOpen} 
@@ -91,6 +95,17 @@ export function StatusChangeModal({
             </ModalHeader>
             <ModalBody>
               <div className="space-y-4">
+                {isClosingStatus && (
+                  <Alert
+                    color="warning"
+                    variant="flat"
+                    title="Confirm Status Change"
+                    startContent={<AlertCircle size={20} />}
+                  >
+                    You are about to change this ticket to a final status ({TICKET_STATUS_LABELS[newStatus]}). 
+                    This action will mark the ticket as resolved or closed. Please confirm this is correct.
+                  </Alert>
+                )}
                 <div>
                   <p className="text-sm text-default-600">
                     Changing status from{' '}
@@ -145,12 +160,12 @@ export function StatusChangeModal({
                 Cancel
               </Button>
               <Button
-                color="primary"
+                color={isClosingStatus ? 'warning' : 'primary'}
                 onPress={handleSubmit}
                 isLoading={loading}
                 isDisabled={!actorName.trim()}
               >
-                Save
+                {isClosingStatus ? 'Confirm & Save' : 'Save'}
               </Button>
             </ModalFooter>
           </>

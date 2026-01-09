@@ -8,6 +8,8 @@ import {
   CardBody,
   Skeleton,
   Button,
+  Select,
+  SelectItem,
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
@@ -24,6 +26,7 @@ import { TicketEditModal } from '../components/TicketEditModal'
 import {
   TICKET_STATUS_LABELS,
   TICKET_PRIORITY_LABELS,
+  TICKET_ENVIRONMENT_LABELS,
   getTicketStatusColor,
   getTicketPriorityColor,
 } from '../constants'
@@ -39,6 +42,7 @@ function TicketDetailPage() {
   const [statusModalOpen, setStatusModalOpen] = useState(false)
   const [selectedNewStatus, setSelectedNewStatus] = useState<TicketStatus | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
+  const [isChangingStatus, setIsChangingStatus] = useState(false)
 
   const handleStatusChange = async (params: {
     actorName: string
@@ -47,6 +51,7 @@ function TicketDetailPage() {
   }) => {
     if (!ticket || !selectedNewStatus) return
 
+    setIsChangingStatus(true)
     try {
       await changeStatus(
         selectedNewStatus,
@@ -64,12 +69,20 @@ function TicketDetailPage() {
     } catch (err) {
       handleError(err)
       throw err
+    } finally {
+      setIsChangingStatus(false)
     }
   }
 
   const handleStatusSelect = (status: TicketStatus) => {
-    setSelectedNewStatus(status)
-    setStatusModalOpen(true)
+    // Check if changing to Resolved/Closed status - show confirmation
+    if (status === 'done' || status === 'rejected') {
+      setSelectedNewStatus(status)
+      setStatusModalOpen(true)
+    } else {
+      setSelectedNewStatus(status)
+      setStatusModalOpen(true)
+    }
   }
 
   const handleEditSave = async (
@@ -164,12 +177,14 @@ function TicketDetailPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-[1100px] mx-auto px-6 py-6 space-y-6">
+      {/* Breadcrumb */}
       <div className="flex items-center gap-4">
         <Button
           isIconOnly
           variant="light"
           onPress={() => navigate('/tickets')}
+          aria-label="Back to tickets"
         >
           <ArrowLeft size={20} />
         </Button>
@@ -197,18 +212,22 @@ function TicketDetailPage() {
               </div>
             </div>
           ) : error ? (
-            <div className="text-center space-y-4">
+            <div className="text-center space-y-4 py-8">
               <p className="text-danger">Error loading ticket: {error.message}</p>
               <Button color="primary" onPress={() => refetch()}>
                 Retry
               </Button>
             </div>
           ) : ticket ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <h1 className="text-3xl font-bold">{ticket.title || 'Unknown Ticket'}</h1>
-                  <div className="flex gap-2">
+            <div className="space-y-6">
+              {/* Header: Left (Title + Meta) and Right (Actions) */}
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                {/* Left: Title + Meta Chips */}
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl lg:text-3xl font-bold mb-3 break-words">
+                    {ticket.title || 'Unknown Ticket'}
+                  </h1>
+                  <div className="flex flex-wrap items-center gap-2">
                     {ticket.status && (
                       <Chip
                         size="sm"
@@ -227,55 +246,84 @@ function TicketDetailPage() {
                         {TICKET_PRIORITY_LABELS[ticket.priority]}
                       </Chip>
                     )}
+                    {ticket.environment && (
+                      <Chip
+                        size="sm"
+                        variant="flat"
+                        color="default"
+                      >
+                        {TICKET_ENVIRONMENT_LABELS[ticket.environment]}
+                      </Chip>
+                    )}
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Dropdown>
-                    <DropdownTrigger>
-                      <Button
-                        variant="flat"
-                        startContent={<MoreVertical size={16} />}
-                      >
-                        Change Status
-                        {ticket.status && (
-                          <span className="ml-2 text-xs opacity-70">
-                            ({TICKET_STATUS_LABELS[ticket.status]})
-                          </span>
-                        )}
-                      </Button>
-                    </DropdownTrigger>
-                    <DropdownMenu
-                      aria-label="Status options"
-                      selectedKeys={ticket.status ? new Set([ticket.status]) : new Set()}
-                      selectionMode="single"
-                      onAction={(key) => {
-                        handleStatusSelect(key as TicketStatus)
-                      }}
-                    >
-                      {allStatuses.map((status) => (
-                        <DropdownItem
-                          key={status}
-                          textValue={TICKET_STATUS_LABELS[status]}
-                        >
-                          {TICKET_STATUS_LABELS[status]}
-                        </DropdownItem>
-                      ))}
-                    </DropdownMenu>
-                  </Dropdown>
+
+                {/* Right: Actions */}
+                <div className="flex flex-wrap items-center gap-2 justify-end lg:justify-start">
+                  {/* Primary: Change Status Select */}
+                  <Select
+                    placeholder="Change Status"
+                    selectedKeys={ticket.status ? new Set([ticket.status]) : new Set()}
+                    onSelectionChange={(keys) => {
+                      const value = Array.from(keys)[0] as TicketStatus
+                      if (value && value !== ticket.status) {
+                        handleStatusSelect(value)
+                      }
+                    }}
+                    isDisabled={isChangingStatus || loading}
+                    className="min-w-[160px]"
+                    size="sm"
+                    variant="flat"
+                    color="primary"
+                    aria-label="Change ticket status"
+                    selectionMode="single"
+                  >
+                    {allStatuses.map((status) => (
+                      <SelectItem key={status} textValue={TICKET_STATUS_LABELS[status]}>
+                        {TICKET_STATUS_LABELS[status]}
+                      </SelectItem>
+                    ))}
+                  </Select>
+
+                  {/* Secondary: Edit Button */}
                   <Button
                     variant="flat"
                     startContent={<Edit size={16} />}
                     onPress={() => setEditModalOpen(true)}
+                    isDisabled={loading}
+                    aria-label="Edit ticket"
                   >
                     Edit
                   </Button>
+
+                  {/* Icon-only: Refresh */}
                   <Button
                     isIconOnly
                     variant="light"
                     onPress={() => refetch()}
+                    isDisabled={loading}
+                    aria-label="Refresh ticket"
                   >
                     <RefreshCw size={16} />
                   </Button>
+
+                  {/* Icon-only: More Menu */}
+                  <Dropdown>
+                    <DropdownTrigger>
+                      <Button
+                        isIconOnly
+                        variant="light"
+                        aria-label="More options"
+                      >
+                        <MoreVertical size={16} />
+                      </Button>
+                    </DropdownTrigger>
+                    <DropdownMenu aria-label="More options">
+                      <DropdownItem key="copy" textValue="Copy ticket link">
+                        Copy Link
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </Dropdown>
                 </div>
               </div>
             </div>
@@ -284,23 +332,35 @@ function TicketDetailPage() {
       </Card>
 
       {/* Tabs */}
-      <Tabs
-        defaultSelectedKey="overview"
-        aria-label="Ticket detail tabs"
-      >
-        <Tab key="overview" title="Overview">
-          <TicketOverviewTab
-            ticketId={ticketId}
-            onEditClick={() => setEditModalOpen(true)}
-          />
-        </Tab>
-        <Tab key="comments" title="Comments">
-          <TicketCommentsTab ticketId={ticketId} />
-        </Tab>
-        <Tab key="events" title="Events">
-          <TicketEventsTab ticketId={ticketId} />
-        </Tab>
-      </Tabs>
+      <Card>
+        <CardBody className="p-0">
+          <Tabs
+            defaultSelectedKey="overview"
+            aria-label="Ticket detail tabs"
+            classNames={{
+              base: "w-full",
+              tabList: "px-6 pt-4",
+              panel: "px-6 pb-6",
+            }}
+          >
+            <Tab key="overview" title="Overview">
+              <div className="pt-4">
+                <TicketOverviewTab ticketId={ticketId} />
+              </div>
+            </Tab>
+            <Tab key="comments" title="Comments">
+              <div className="pt-4">
+                <TicketCommentsTab ticketId={ticketId} />
+              </div>
+            </Tab>
+            <Tab key="events" title="Events">
+              <div className="pt-4">
+                <TicketEventsTab ticketId={ticketId} />
+              </div>
+            </Tab>
+          </Tabs>
+        </CardBody>
+      </Card>
 
       {/* Status Change Modal */}
       {ticket && selectedNewStatus && (

@@ -8,8 +8,12 @@ import {
   Skeleton,
   Input,
   Chip,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
 } from '@heroui/react'
-import { Send, Download, ExternalLink, File } from 'lucide-react'
+import { Send, Download, ExternalLink, File, User as UserIcon, MoreVertical } from 'lucide-react'
 import { useTicketComments } from '../hooks/useTicketComments'
 import { useTicket } from '../hooks/useTicket'
 import { useApiError } from '@/lib/hooks/useApiError'
@@ -89,13 +93,20 @@ function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
     )
   }
 
+  // Helper component for User display
+  const UserDisplay = ({ name }: { name: string }) => (
+    <div className="flex items-center gap-2">
+      <div className="w-8 h-8 rounded-full bg-default-200 flex items-center justify-center flex-shrink-0">
+        <UserIcon size={16} className="text-default-500" />
+      </div>
+      <p className="font-medium text-sm text-default-900">{name}</p>
+    </div>
+  )
+
   return (
     <div className="space-y-6">
-      {/* Add Comment Form */}
+      {/* Add Comment Form - Top */}
       <Card>
-        <CardHeader>
-          <h2 className="text-xl font-semibold">Add Comment</h2>
-        </CardHeader>
         <CardBody>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
@@ -157,106 +168,122 @@ function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
                 isLoading={submitting}
                 isDisabled={!newComment.trim() || !authorName.trim()}
               >
-                Post Comment
+                Add Comment
               </Button>
             </div>
           </form>
         </CardBody>
       </Card>
 
-      {/* Comments Timeline */}
-      <Card>
-        <CardHeader>
-          <h2 className="text-xl font-semibold">
-            Comments ({comments.length})
-          </h2>
-        </CardHeader>
-        <CardBody>
-          {loading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div key={index} className="space-y-2">
+      {/* Comments List - Below */}
+      {loading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Card key={index}>
+              <CardBody>
+                <div className="space-y-2">
                   <Skeleton className="h-4 w-32 rounded" />
                   <Skeleton className="h-20 w-full rounded" />
                 </div>
-              ))}
-            </div>
-          ) : comments.length === 0 ? (
+              </CardBody>
+            </Card>
+          ))}
+        </div>
+      ) : comments.length === 0 ? (
+        <Card>
+          <CardBody>
             <EmptyState
               title="No comments yet"
               description="Be the first to add a comment"
             />
-          ) : (
-            <div className="space-y-6">
-              {comments.map((comment) => {
-                const attachmentUrls = comment.attachments
-                  ? pbFilesUrls('ma_ticket_comments', comment.id, comment.attachments)
-                  : []
+          </CardBody>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {comments.map((comment) => {
+            const attachmentUrls = comment.attachments
+              ? pbFilesUrls('ma_ticket_comments', comment.id, comment.attachments)
+              : []
 
-                return (
-                  <div
-                    key={comment.id}
-                    className="border-l-4 border-primary pl-4 py-2 space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-sm">
-                          {comment.author_name || 'Anonymous'}
-                        </p>
-                        <span className="text-xs text-default-500">
-                          {formatDate(comment.created)}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-default-700 whitespace-pre-wrap">
-                      {comment.message || ''}
-                    </p>
-                    {attachmentUrls.length > 0 && (
-                      <div className="space-y-1 mt-2">
-                        {attachmentUrls.map((url, index) => {
-                          const fileName = comment.attachments?.[index] || `file-${index}`
-                          return (
-                            <div
-                              key={index}
-                              className="flex items-center gap-2 p-2 bg-default-100 rounded text-sm"
-                            >
-                              <File size={16} className="text-default-500" />
-                              <span className="flex-1 truncate">{fileName}</span>
-                              <div className="flex gap-1">
-                                <Button
-                                  isIconOnly
-                                  size="sm"
-                                  variant="light"
-                                  as="a"
-                                  href={url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  <ExternalLink size={14} />
-                                </Button>
-                                <Button
-                                  isIconOnly
-                                  size="sm"
-                                  variant="light"
-                                  as="a"
-                                  href={url}
-                                  download
-                                >
-                                  <Download size={14} />
-                                </Button>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
+            return (
+              <Card key={comment.id}>
+                <CardHeader className="flex items-center justify-between pb-2">
+                  <div className="flex items-center gap-3">
+                    <UserDisplay name={comment.author_name || 'Anonymous'} />
+                    <span className="text-xs text-default-500">
+                      {formatDate(comment.created)}
+                    </span>
                   </div>
-                )
-              })}
-            </div>
-          )}
-        </CardBody>
-      </Card>
+                  <Dropdown>
+                    <DropdownTrigger>
+                      <Button
+                        isIconOnly
+                        size="sm"
+                        variant="light"
+                        aria-label="More options"
+                      >
+                        <MoreVertical size={16} />
+                      </Button>
+                    </DropdownTrigger>
+                    <DropdownMenu aria-label="Comment actions">
+                      <DropdownItem key="edit">Edit</DropdownItem>
+                      <DropdownItem key="delete" className="text-danger">
+                        Delete
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </Dropdown>
+                </CardHeader>
+                <CardBody className="pt-0">
+                  <p className="text-default-700 whitespace-pre-wrap mb-3">
+                    {comment.message || ''}
+                  </p>
+                  {attachmentUrls.length > 0 && (
+                    <div className="space-y-2 mt-3 pt-3 border-t border-divider">
+                      {attachmentUrls.map((url, index) => {
+                        const fileName = comment.attachments?.[index] || `file-${index}`
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 p-2 bg-default-100 rounded text-sm"
+                          >
+                            <File size={16} className="text-default-500 flex-shrink-0" />
+                            <span className="flex-1 truncate">{fileName}</span>
+                            <div className="flex gap-1">
+                              <Button
+                                isIconOnly
+                                size="sm"
+                                variant="light"
+                                as="a"
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="Open file"
+                              >
+                                <ExternalLink size={14} />
+                              </Button>
+                              <Button
+                                isIconOnly
+                                size="sm"
+                                variant="light"
+                                as="a"
+                                href={url}
+                                download
+                                aria-label="Download file"
+                              >
+                                <Download size={14} />
+                              </Button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </CardBody>
+              </Card>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

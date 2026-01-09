@@ -5,14 +5,9 @@ import {
   CardHeader,
   Skeleton,
   Chip,
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
   Select,
   SelectItem,
+  Divider,
 } from '@heroui/react'
 import { useTicketEvents } from '../hooks/useTicketEvents'
 import {
@@ -52,24 +47,50 @@ function TicketEventsTab({ ticketId }: TicketEventsTabProps) {
     from_value?: string
     to_value?: string
     note?: string
-  }): string => {
-    if (!event.event_type) return event.note || 'N/A'
+  }): { label: string; changedFields?: string[] } => {
+    if (!event.event_type) {
+      // Check if it's a ticket_updated event (note contains "ticket_updated:")
+      if (event.note?.includes('ticket_updated:')) {
+        const changedFields = event.note
+          .replace('ticket_updated:', '')
+          .split(',')
+          .map((f) => f.trim())
+          .filter(Boolean)
+        return { label: 'Ticket updated', changedFields }
+      }
+      return { label: event.note || 'N/A' }
+    }
 
     switch (event.event_type) {
       case 'status_changed':
-        return `Status: ${TICKET_STATUS_LABELS[event.from_value as keyof typeof TICKET_STATUS_LABELS] || event.from_value || 'N/A'} → ${TICKET_STATUS_LABELS[event.to_value as keyof typeof TICKET_STATUS_LABELS] || event.to_value || 'N/A'}`
+        return {
+          label: `${TICKET_STATUS_LABELS[event.from_value as keyof typeof TICKET_STATUS_LABELS] || event.from_value || 'N/A'} → ${TICKET_STATUS_LABELS[event.to_value as keyof typeof TICKET_STATUS_LABELS] || event.to_value || 'N/A'}`,
+        }
       case 'priority_changed':
-        return `Priority: ${TICKET_PRIORITY_LABELS[event.from_value as keyof typeof TICKET_PRIORITY_LABELS] || event.from_value || 'N/A'} → ${TICKET_PRIORITY_LABELS[event.to_value as keyof typeof TICKET_PRIORITY_LABELS] || event.to_value || 'N/A'}`
+        return {
+          label: `${TICKET_PRIORITY_LABELS[event.from_value as keyof typeof TICKET_PRIORITY_LABELS] || event.from_value || 'N/A'} → ${TICKET_PRIORITY_LABELS[event.to_value as keyof typeof TICKET_PRIORITY_LABELS] || event.to_value || 'N/A'}`,
+        }
       case 'type_changed':
-        return `Type: ${TICKET_TYPE_LABELS[event.from_value as keyof typeof TICKET_TYPE_LABELS] || event.from_value || 'N/A'} → ${TICKET_TYPE_LABELS[event.to_value as keyof typeof TICKET_TYPE_LABELS] || event.to_value || 'N/A'}`
+        return {
+          label: `${TICKET_TYPE_LABELS[event.from_value as keyof typeof TICKET_TYPE_LABELS] || event.from_value || 'N/A'} → ${TICKET_TYPE_LABELS[event.to_value as keyof typeof TICKET_TYPE_LABELS] || event.to_value || 'N/A'}`,
+        }
       case 'assigned':
-        return `Assigned to ${event.to_value || 'N/A'}`
+        return { label: `Assigned to ${event.to_value || 'N/A'}` }
       case 'unassigned':
-        return 'Unassigned'
+        return { label: 'Unassigned' }
       case 'note':
-        return event.note || 'Note'
+        // Check if note contains ticket_updated
+        if (event.note?.includes('ticket_updated:')) {
+          const changedFields = event.note
+            .replace('ticket_updated:', '')
+            .split(',')
+            .map((f) => f.trim())
+            .filter(Boolean)
+          return { label: 'Ticket updated', changedFields }
+        }
+        return { label: event.note || 'Note' }
       default:
-        return event.note || 'N/A'
+        return { label: event.note || 'N/A' }
     }
   }
 
@@ -145,60 +166,86 @@ function TicketEventsTab({ ticketId }: TicketEventsTabProps) {
             }
           />
         ) : (
-          <Table
-            aria-label="Events table"
-            removeWrapper
-            classNames={{
-              base: 'min-h-[400px]',
-              th: 'text-left text-xs font-semibold px-4 py-2',
-              td: 'text-left text-sm px-4 py-2',
-            }}
-          >
-            <TableHeader>
-              <TableColumn>TIME</TableColumn>
-              <TableColumn>EVENT TYPE</TableColumn>
-              <TableColumn>ACTOR</TableColumn>
-              <TableColumn>CHANGE</TableColumn>
-              <TableColumn>NOTE</TableColumn>
-            </TableHeader>
-            <TableBody items={filteredEvents}>
-              {(event) => (
-                <TableRow key={event.id}>
-                  <TableCell>
-                    <span className="text-default-500 text-xs">
-                      {formatDate(event.created)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {event.event_type && (
-                      <Chip
-                        size="sm"
-                        variant="flat"
-                        color={getTicketEventTypeColor(event.event_type) as any}
-                      >
-                        {event.event_type.replace('_', ' ')}
-                      </Chip>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-default-700">
-                      {event.actor_name || 'N/A'}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-default-700">
-                      {getHumanReadableChange(event)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-default-500 text-xs">
-                      {event.note || '-'}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <div className="space-y-4">
+            {filteredEvents.map((event, index) => {
+              const change = getHumanReadableChange(event)
+              const eventType = event.event_type || 'note'
+              
+              return (
+                <div key={event.id} className="relative">
+                  {/* Timeline line */}
+                  {index < filteredEvents.length - 1 && (
+                    <div className="absolute left-4 top-12 bottom-0 w-0.5 bg-default-200" />
+                  )}
+                  
+                  <div className="flex gap-4">
+                    {/* Timeline dot */}
+                    <div className="flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-default-200 flex items-center justify-center border-2 border-background">
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                      </div>
+                    </div>
+                    
+                    {/* Event content */}
+                    <div className="flex-1 min-w-0 pb-4">
+                      <div className="flex items-start justify-between gap-4 mb-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {eventType !== 'note' && (
+                            <Chip
+                              size="sm"
+                              variant="flat"
+                              color={getTicketEventTypeColor(eventType) as any}
+                            >
+                              {eventType.replace('_', ' ')}
+                            </Chip>
+                          )}
+                          <span className="text-xs text-default-500">
+                            {formatDate(event.created)}
+                          </span>
+                        </div>
+                        <span className="text-sm text-default-700 font-medium">
+                          {event.actor_name || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <p className="text-sm text-default-900 font-medium">
+                          {change.label}
+                        </p>
+                        
+                        {/* Changed fields as Chip list */}
+                        {change.changedFields && change.changedFields.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {change.changedFields.map((field, idx) => (
+                              <Chip
+                                key={idx}
+                                size="sm"
+                                variant="flat"
+                                color="default"
+                              >
+                                {field}
+                              </Chip>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Note if exists and not already shown */}
+                        {event.note && 
+                         !event.note.includes('ticket_updated:') && 
+                         eventType === 'note' && (
+                          <p className="text-sm text-default-600">
+                            {event.note}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {index < filteredEvents.length - 1 && <Divider className="mt-4" />}
+                </div>
+              )
+            })}
+          </div>
         )}
       </CardBody>
     </Card>
