@@ -15,7 +15,7 @@
 import PocketBase from "pocketbase";
 import fs from "fs";
 import path from "path";
-import { PB_CONFIG } from "./config/pb.config.js";
+import { PB_CONFIG } from "../src/config/pb.config.js";
 
 // ✅ Correct collection names
 const COLLECTIONS = [

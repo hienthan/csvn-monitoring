@@ -15,10 +15,10 @@ npm install
 Create a `.env` file in the root directory:
 
 ```bash
-VITE_PB_URL=http://127.0.0.1:8090
+VITE_PB_URL=http://gmo021.cansportsvg.com:8090
 ```
 
-The default PocketBase URL is `http://127.0.0.1:8090` if `VITE_PB_URL` is not set.
+The default PocketBase URL is `http://gmo021.cansportsvg.com:8090` if `VITE_PB_URL` is not set.
 
 ### 3. Run Development Server
 

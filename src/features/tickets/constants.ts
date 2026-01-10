@@ -3,7 +3,9 @@ import type {
   TicketPriority,
   TicketType,
   TicketEnvironment,
+  TicketEventType,
 } from './types'
+import type { ChipProps } from '@heroui/react'
 
 // Label maps
 export const TICKET_STATUS_LABELS: Record<TicketStatus, string> = {
@@ -63,6 +65,15 @@ export const TICKET_PRIORITY_COLORS: Record<TicketPriority, 'default' | 'warning
   urgent: 'danger',
 }
 
+export const TICKET_EVENT_TYPE_COLORS: Record<TicketEventType, ChipProps['color']> = {
+  status_changed: 'primary',
+  priority_changed: 'warning',
+  type_changed: 'secondary',
+  assigned: 'primary',
+  unassigned: 'default',
+  note: 'default',
+}
+
 // Service tag options (predefined + allow free input)
 export const SERVICE_TAG_OPTIONS = [
   'docker',
@@ -98,4 +109,8 @@ export function getTicketStatusColor(status: TicketStatus): 'default' | 'primary
 
 export function getTicketPriorityColor(priority: TicketPriority): 'default' | 'warning' | 'danger' {
   return TICKET_PRIORITY_COLORS[priority] || 'default'
+}
+
+export function getTicketEventTypeColor(eventType: TicketEventType): ChipProps['color'] {
+  return TICKET_EVENT_TYPE_COLORS[eventType] || 'default'
 }

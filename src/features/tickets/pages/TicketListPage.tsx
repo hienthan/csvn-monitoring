@@ -16,8 +16,9 @@ import {
   Select,
   SelectItem,
   Input,
+  Tooltip,
 } from '@heroui/react'
-import { Plus, Search, X, Copy, Check } from 'lucide-react'
+import { Plus, Search, X, Copy, Check, Eye, Edit, Trash2, User as UserIcon } from 'lucide-react'
 import { useTickets } from '../hooks/useTickets'
 import { useTicketFilters } from '../hooks/useTicketFilters'
 import type { Ticket } from '../types'
@@ -30,6 +31,7 @@ import {
   getTicketPriorityColor,
 } from '../constants'
 import { formatRelativeTime, copyTicketCode } from '../utils'
+import { EmptyState } from '@/components/EmptyState'
 
 function TicketListPage() {
   const navigate = useNavigate()
@@ -61,16 +63,30 @@ function TicketListPage() {
   )
 
   const columns = [
-    { key: 'code', label: 'Code' },
-    { key: 'title', label: 'Title' },
-    { key: 'status', label: 'Status' },
-    { key: 'priority', label: 'Priority' },
-    { key: 'type', label: 'Type' },
-    { key: 'environment', label: 'Env' },
-    { key: 'app_name', label: 'App' },
-    { key: 'assignee', label: 'Assignee' },
-    { key: 'updated', label: 'Updated' },
+    { key: 'code', label: 'CODE' },
+    { key: 'title', label: 'TITLE' },
+    { key: 'priority', label: 'PRIORITY' },
+    { key: 'status', label: 'STATUS' },
+    { key: 'assignee', label: 'ASSIGNEE' },
+    { key: 'updated', label: 'UPDATED' },
+    { key: 'actions', label: 'ACTIONS' },
   ]
+
+  const handleAction = (action: string, ticketId: string, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent row click
+    switch (action) {
+      case 'view':
+        navigate(`/tickets/${ticketId}`)
+        break
+      case 'edit':
+        navigate(`/tickets/${ticketId}`, { state: { edit: true } })
+        break
+      case 'delete':
+        // TODO: Implement delete functionality
+        console.log('Delete ticket', ticketId)
+        break
+    }
+  }
 
   const renderCell = (ticket: Ticket, columnKey: string) => {
     switch (columnKey) {
@@ -87,6 +103,7 @@ function TicketListPage() {
                 variant="light"
                 className="min-w-0 h-6 w-6"
                 onPress={(e) => handleCopyCode(ticket.code, e as any)}
+                aria-label="Copy ticket code"
               >
                 {copiedCode === ticket.code ? (
                   <Check size={12} className="text-success" />
@@ -99,8 +116,15 @@ function TicketListPage() {
         )
       case 'title':
         return (
-          <div className="font-medium text-foreground">
-            {ticket.title || 'N/A'}
+          <div className="flex flex-col">
+            <span className="font-medium text-foreground">
+              {ticket.title || 'N/A'}
+            </span>
+            {ticket.app_name && (
+              <span className="text-xs text-default-500 mt-0.5">
+                {ticket.app_name}
+              </span>
+            )}
           </div>
         )
       case 'status':
@@ -123,30 +147,60 @@ function TicketListPage() {
             {TICKET_PRIORITY_LABELS[ticket.priority] || ticket.priority || 'N/A'}
           </Chip>
         )
-      case 'type':
-        return (
-          <div className="text-default-600 text-sm">
-            {TICKET_TYPE_LABELS[ticket.type] || ticket.type || 'N/A'}
-          </div>
-        )
-      case 'environment':
-        return (
-          <div className="text-default-600 text-sm">
-            {TICKET_ENVIRONMENT_LABELS[ticket.environment] || ticket.environment || 'N/A'}
-          </div>
-        )
-      case 'app_name':
-        return (
-          <div className="text-default-600">{ticket.app_name || 'N/A'}</div>
-        )
       case 'assignee':
         return (
-          <div className="text-default-600">{ticket.assignee || 'Unassigned'}</div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-default-200 flex items-center justify-center flex-shrink-0">
+              <UserIcon size={14} className="text-default-500" />
+            </div>
+            <span className="text-sm text-default-700">
+              {ticket.assignee || 'Unassigned'}
+            </span>
+          </div>
         )
       case 'updated':
         return (
           <div className="text-default-500 text-sm" title={ticket.updated}>
             {formatRelativeTime(ticket.updated)}
+          </div>
+        )
+      case 'actions':
+        return (
+          <div className="flex items-center gap-1">
+            <Tooltip content="View">
+              <Button
+                isIconOnly
+                size="sm"
+                variant="light"
+                onPress={(e) => handleAction('view', ticket.id, e as any)}
+                aria-label="View ticket"
+              >
+                <Eye size={16} />
+              </Button>
+            </Tooltip>
+            <Tooltip content="Edit">
+              <Button
+                isIconOnly
+                size="sm"
+                variant="light"
+                onPress={(e) => handleAction('edit', ticket.id, e as any)}
+                aria-label="Edit ticket"
+              >
+                <Edit size={16} />
+              </Button>
+            </Tooltip>
+            <Tooltip content="Delete" color="danger">
+              <Button
+                isIconOnly
+                size="sm"
+                variant="light"
+                color="danger"
+                onPress={(e) => handleAction('delete', ticket.id, e as any)}
+                aria-label="Delete ticket"
+              >
+                <Trash2 size={16} />
+              </Button>
+            </Tooltip>
           </div>
         )
       default:
@@ -169,15 +223,12 @@ function TicketListPage() {
         </div>
         <Card>
           <CardBody className="p-6">
-            <div className="text-center space-y-4">
-              <p className="text-danger text-lg font-medium">
-                Error loading tickets
-              </p>
-              <p className="text-default-600">{error.message}</p>
-              <Button color="primary" onPress={() => refetch()}>
-                Retry
-              </Button>
-            </div>
+            <EmptyState
+              title="Error loading tickets"
+              description={error.message}
+              actionLabel="Retry"
+              onAction={() => refetch()}
+            />
           </CardBody>
         </Card>
       </div>
@@ -207,6 +258,7 @@ function TicketListPage() {
               value={filters.q || ''}
               onValueChange={(value) => setFilter('q', value)}
               startContent={<Search size={16} />}
+              aria-label="Search tickets"
               endContent={
                 filters.q && (
                   <Button
@@ -214,6 +266,7 @@ function TicketListPage() {
                     size="sm"
                     variant="light"
                     onPress={() => setFilter('q', undefined)}
+                    aria-label="Clear search"
                   >
                     <X size={16} />
                   </Button>
@@ -318,13 +371,26 @@ function TicketListPage() {
             removeWrapper
             classNames={{
               base: 'min-h-[400px]',
-              th: 'text-left text-xs font-semibold px-4 py-2',
-              td: 'text-left text-sm px-4 py-2',
+              th: 'text-left text-xs font-semibold text-default-500 uppercase px-4 py-3',
+              td: 'text-left text-sm px-4 py-3 align-middle',
             }}
           >
             <TableHeader columns={columns}>
               {(column) => (
-                <TableColumn key={column.key} className="text-left">
+                <TableColumn
+                  key={column.key}
+                  className={
+                    column.key === 'actions'
+                      ? 'text-center w-[120px]'
+                      : column.key === 'status' || column.key === 'priority'
+                      ? 'w-[100px]'
+                      : column.key === 'code'
+                      ? 'w-[140px]'
+                      : column.key === 'updated'
+                      ? 'w-[120px]'
+                      : 'text-left'
+                  }
+                >
                   {column.label}
                 </TableColumn>
               )}
@@ -346,26 +412,23 @@ function TicketListPage() {
                 </>
               }
               emptyContent={
-                <div className="py-16 text-center space-y-4">
-                  <p className="text-default-500 text-lg">
-                    {hasActiveFilters
+                <EmptyState
+                  title={
+                    hasActiveFilters
                       ? 'No tickets found matching your filters'
-                      : 'No tickets yet'}
-                  </p>
-                  {hasActiveFilters ? (
-                    <Button variant="light" onPress={clearFilters}>
-                      Clear filters
-                    </Button>
-                  ) : (
-                    <Button
-                      color="primary"
-                      startContent={<Plus size={16} />}
-                      onPress={() => navigate('/tickets/new')}
-                    >
-                      Create first ticket
-                    </Button>
-                  )}
-                </div>
+                      : 'No tickets yet'
+                  }
+                  actionLabel={
+                    hasActiveFilters
+                      ? 'Clear filters'
+                      : 'Create first ticket'
+                  }
+                  onAction={
+                    hasActiveFilters
+                      ? clearFilters
+                      : () => navigate('/tickets/new')
+                  }
+                />
               }
             >
               {(ticket) => (

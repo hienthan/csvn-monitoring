@@ -112,6 +112,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
           size="sm"
           onPress={onToggle}
           className="min-w-0"
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </Button>
