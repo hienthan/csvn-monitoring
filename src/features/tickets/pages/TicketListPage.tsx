@@ -103,6 +103,7 @@ function TicketListPage() {
                 variant="light"
                 className="min-w-0 h-6 w-6"
                 onPress={(e) => handleCopyCode(ticket.code, e as any)}
+                aria-label="Copy ticket code"
               >
                 {copiedCode === ticket.code ? (
                   <Check size={12} className="text-success" />
@@ -257,6 +258,7 @@ function TicketListPage() {
               value={filters.q || ''}
               onValueChange={(value) => setFilter('q', value)}
               startContent={<Search size={16} />}
+              aria-label="Search tickets"
               endContent={
                 filters.q && (
                   <Button
@@ -264,6 +266,7 @@ function TicketListPage() {
                     size="sm"
                     variant="light"
                     onPress={() => setFilter('q', undefined)}
+                    aria-label="Clear search"
                   >
                     <X size={16} />
                   </Button>

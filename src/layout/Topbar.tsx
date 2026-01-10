@@ -20,6 +20,7 @@ function Topbar() {
           onValueChange={showSearch ? setSearchQuery : undefined}
           isDisabled={!showSearch}
           startContent={<Search className="w-4 h-4 text-default-400" />}
+          aria-label={showSearch ? "Search servers" : "Search"}
           classNames={{
             base: 'w-full',
             input: 'text-sm',

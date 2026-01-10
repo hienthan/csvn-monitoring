@@ -129,12 +129,15 @@ function TicketOverviewTab({ ticketId }: TicketOverviewTabProps) {
 
   // Helper component for Key-Value display
   const KeyValue = ({ label, value, truncate = false }: { label: string; value: string | React.ReactNode; truncate?: boolean }) => {
-    const valueContent = truncate ? (
-      <Tooltip content={typeof value === 'string' ? value : ''}>
-        <p className="font-medium text-default-900 truncate">{value}</p>
+    const isString = typeof value === 'string'
+    const valueContent = truncate && isString ? (
+      <Tooltip content={value}>
+        <span className="font-medium text-default-900 truncate block">{value}</span>
       </Tooltip>
+    ) : isString ? (
+      <span className="font-medium text-default-900">{value}</span>
     ) : (
-      <p className="font-medium text-default-900">{value}</p>
+      <div className="font-medium text-default-900">{value}</div>
     )
     
     return (
@@ -407,7 +410,7 @@ function TicketOverviewTab({ ticketId }: TicketOverviewTabProps) {
               <KeyValue label="App Name" value={ticket.app_name || 'N/A'} truncate={true} />
               <Divider className="my-2" />
               <KeyValue label="Service Tags" value={
-                ticket.service_tags && ticket.service_tags.length > 0 ? (
+                Array.isArray(ticket.service_tags) && ticket.service_tags.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
                     {ticket.service_tags.map((tag) => (
                       <Chip key={tag} size="sm" variant="flat" color="primary">

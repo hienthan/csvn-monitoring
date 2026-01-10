@@ -201,6 +201,7 @@ function TicketCreatePage() {
           isIconOnly
           variant="light"
           onPress={() => navigate('/tickets')}
+          aria-label="Back to tickets"
         >
           <ArrowLeft size={20} />
         </Button>
@@ -324,7 +325,7 @@ function TicketCreatePage() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Service Tags</label>
               <div className="flex flex-wrap gap-2 mb-2">
-                {formData.service_tags?.map((tag) => (
+                {Array.isArray(formData.service_tags) && formData.service_tags.length > 0 && formData.service_tags.map((tag) => (
                   <Chip
                     key={tag}
                     onClose={() => {
@@ -354,6 +355,7 @@ function TicketCreatePage() {
                     }
                   }}
                   isDisabled={loading}
+                  aria-label="Add service tag"
                 >
                   {SERVICE_TAG_OPTIONS.filter(
                     (tag) => !formData.service_tags?.includes(tag)
@@ -378,6 +380,7 @@ function TicketCreatePage() {
                     }
                   }}
                   isDisabled={loading}
+                  aria-label="Custom service tag"
                 />
               </div>
             </div>
@@ -479,6 +482,7 @@ function TicketCreatePage() {
                       }}
                       isDisabled={loading}
                       className="flex-1"
+                      aria-label={`Link label ${index + 1}`}
                     />
                     <Input
                       placeholder="URL"
@@ -491,6 +495,7 @@ function TicketCreatePage() {
                       isRequired
                       isDisabled={loading}
                       className="flex-2"
+                      aria-label={`Link URL ${index + 1}`}
                     />
                     <Button
                       isIconOnly
@@ -498,6 +503,7 @@ function TicketCreatePage() {
                       color="danger"
                       onPress={() => setLinks(links.filter((_, i) => i !== index))}
                       isDisabled={loading}
+                      aria-label={`Remove link ${index + 1}`}
                     >
                       <X size={16} />
                     </Button>

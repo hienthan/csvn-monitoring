@@ -112,11 +112,12 @@ function TicketDetailPage() {
       if (payload.app_name !== undefined && payload.app_name !== ticket.app_name) {
         changedFields.push('app_name')
       }
-      if (
-        payload.service_tags !== undefined &&
-        JSON.stringify(payload.service_tags) !== JSON.stringify(ticket.service_tags)
-      ) {
-        changedFields.push('service_tags')
+      if (payload.service_tags !== undefined) {
+        const payloadTags = Array.isArray(payload.service_tags) ? payload.service_tags : []
+        const ticketTags = Array.isArray(ticket.service_tags) ? ticket.service_tags : []
+        if (JSON.stringify(payloadTags) !== JSON.stringify(ticketTags)) {
+          changedFields.push('service_tags')
+        }
       }
       if (
         payload.requester_name !== undefined &&

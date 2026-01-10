@@ -11,6 +11,20 @@ import { normalizePbError } from '../utils'
 
 const COLLECTION_NAME = 'ma_tickets'
 
+/**
+ * Normalize service_tags to always be an array
+ * Handles cases where it might be a string, null, undefined, or already an array
+ */
+function normalizeServiceTags(serviceTags: unknown): string[] {
+  if (Array.isArray(serviceTags)) {
+    return serviceTags.filter((tag) => typeof tag === 'string' && tag.trim().length > 0)
+  }
+  if (typeof serviceTags === 'string' && serviceTags.trim().length > 0) {
+    return [serviceTags.trim()]
+  }
+  return []
+}
+
 export interface ListTicketsParams {
   page?: number
   perPage?: number
@@ -94,12 +108,18 @@ export async function listTickets(
       filter,
     })
 
+    // Normalize service_tags for all items
+    const normalizedItems = result.items.map((item) => ({
+      ...item,
+      service_tags: normalizeServiceTags(item.service_tags),
+    }))
+
     return {
       page: result.page,
       perPage: result.perPage,
       totalItems: result.totalItems,
       totalPages: result.totalPages,
-      items: result.items,
+      items: normalizedItems,
     }
   } catch (error) {
     console.error('Error fetching tickets:', error)
@@ -114,7 +134,11 @@ export async function listTickets(
 export async function getTicket(ticketId: string): Promise<Ticket> {
   try {
     const result = await pb.collection(COLLECTION_NAME).getOne<Ticket>(ticketId)
-    return result
+    // Normalize service_tags to ensure it's always an array
+    return {
+      ...result,
+      service_tags: normalizeServiceTags(result.service_tags),
+    }
   } catch (error) {
     console.error(`Error fetching ticket ${ticketId}:`, error)
     const normalized = normalizePbError(error)
@@ -164,7 +188,11 @@ export async function createTicket(
     }
 
     const result = await pb.collection(COLLECTION_NAME).create<Ticket>(data as any)
-    return result
+    // Normalize service_tags to ensure it's always an array
+    return {
+      ...result,
+      service_tags: normalizeServiceTags(result.service_tags),
+    }
   } catch (error) {
     console.error('Error creating ticket:', error)
     const normalized = normalizePbError(error)
@@ -215,7 +243,11 @@ export async function updateTicket(
     }
 
     const result = await pb.collection(COLLECTION_NAME).update<Ticket>(ticketId, data as any)
-    return result
+    // Normalize service_tags to ensure it's always an array
+    return {
+      ...result,
+      service_tags: normalizeServiceTags(result.service_tags),
+    }
   } catch (error) {
     console.error(`Error updating ticket ${ticketId}:`, error)
     const normalized = normalizePbError(error)

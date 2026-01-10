@@ -73,7 +73,7 @@ export function TicketEditModal({
         assignee: ticket.assignee || '',
         due_at: ticket.due_at || '',
       })
-      setServiceTags(ticket.service_tags || [])
+      setServiceTags(Array.isArray(ticket.service_tags) ? ticket.service_tags : [])
       const parsedLinks = parseLinks(ticket.links)
       setLinks(
         parsedLinks.map((link) => ({
@@ -126,7 +126,8 @@ export function TicketEditModal({
       if (formData.priority !== ticket.priority) changedFields.push('priority')
       if (formData.environment !== ticket.environment) changedFields.push('environment')
       if (formData.app_name !== ticket.app_name) changedFields.push('app_name')
-      if (JSON.stringify(serviceTags) !== JSON.stringify(ticket.service_tags)) {
+      const ticketServiceTags = Array.isArray(ticket.service_tags) ? ticket.service_tags : []
+      if (JSON.stringify(serviceTags) !== JSON.stringify(ticketServiceTags)) {
         changedFields.push('service_tags')
       }
       if (formData.requester_name !== ticket.requester_name) changedFields.push('requester_name')
@@ -349,6 +350,7 @@ export function TicketEditModal({
                         }
                       }}
                       isDisabled={loading}
+                      aria-label="Custom service tag"
                     />
                   </div>
                 </div>
@@ -407,6 +409,7 @@ export function TicketEditModal({
                           }}
                           isDisabled={loading}
                           className="flex-1"
+                          aria-label={`Link label ${index + 1}`}
                         />
                         <Input
                           placeholder="URL"
@@ -418,6 +421,7 @@ export function TicketEditModal({
                           }}
                           isDisabled={loading}
                           className="flex-2"
+                          aria-label={`Link URL ${index + 1}`}
                         />
                         <Button
                           isIconOnly
@@ -425,6 +429,7 @@ export function TicketEditModal({
                           color="danger"
                           onPress={() => setLinks(links.filter((_, i) => i !== index))}
                           isDisabled={loading}
+                          aria-label="Remove link"
                         >
                           <X size={16} />
                         </Button>
