@@ -19,7 +19,7 @@ import {
   DropdownItem,
   Tooltip,
 } from '@heroui/react'
-import { Search, X, Plus } from 'lucide-react'
+import { Search, X, Plus, Server as ServerIcon } from 'lucide-react'
 import { EyeIcon, EditIcon, DeleteIcon } from '@/components/icons'
 import { useServers } from '@/lib/hooks/useServers'
 import { useSearch } from '@/lib/contexts/SearchContext'
@@ -250,7 +250,7 @@ function Servers() {
         </div>
       </div>
 
-      <Card shadow="none" className="border border-divider bg-content1/50 overflow-hidden">
+      <Card shadow="none" className="border border-divider bg-content1 overflow-hidden">
         <CardBody className="p-0">
           <Table
             aria-label="Servers table"
@@ -260,9 +260,9 @@ function Servers() {
             isStriped
             classNames={{
               base: 'min-h-[400px]',
-              th: 'bg-default-100/30 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider/50',
-              td: 'py-2 px-4 border-b border-divider/20',
-              tr: 'hover:bg-default-200/20 cursor-pointer transition-colors',
+              th: 'bg-content2 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider',
+              td: 'py-2 px-4 border-b border-divider/50',
+              tr: 'hover:bg-content3 cursor-pointer transition-colors',
             }}
           >
             <TableHeader columns={columns}>
@@ -292,14 +292,13 @@ function Servers() {
                 </>
               }
               emptyContent={
-                <div className="py-20">
-                  <EmptyState
-                    title={localSearchQuery ? 'No match found' : 'Infrastructure is quiet'}
-                    description={localSearchQuery ? `We couldn't find any server matching "${localSearchQuery}"` : "Start by adding your first server to the dashboard."}
-                    actionLabel={localSearchQuery ? 'Clear Filters' : 'Add New Server'}
-                    onAction={localSearchQuery ? () => { setLocalSearchQuery(''); setSearchQuery(''); } : undefined}
-                  />
-                </div>
+                <EmptyState
+                  title={localSearchQuery ? 'No servers found' : 'No servers found'}
+                  description={localSearchQuery ? "Try adjusting your search to see more results." : "Add a server to start monitoring infrastructure."}
+                  actionLabel={localSearchQuery ? undefined : "New Server"}
+                  onAction={localSearchQuery ? undefined : () => navigate('/servers/new')}
+                  icon={ServerIcon}
+                />
               }
             >
               {(server) => (

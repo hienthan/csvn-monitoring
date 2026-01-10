@@ -146,3 +146,69 @@ Sidebar and content are distinct.
 Tables/filters are readable and not flat-on-flat.
 
 Light mode remains unchanged.
+
+----
+
+Part 3:
+
+Refine dark mode only for the existing youtrack-calm theme.
+Do NOT change layout, spacing, or component structure.
+
+Apply the following dark mode palette and rules:
+
+- Use layered backgrounds (not pure black):
+  background: #0F141A
+  content1: #151B22
+  content2: #1C2430
+  content3 (hover): #242F3D
+
+- Sidebar:
+  - Background darker than content1 (#0D1218)
+  - Active item uses muted primary background (rgba(76,141,255,0.15))
+  - No glow or neon effects
+
+- Tables:
+  - Table container on content1
+  - Header uses content2
+  - Row hover uses content3
+  - Use subtle dividers instead of heavy shadows
+
+- Colors:
+  - Reduce primary blue saturation in dark mode (#4C8DFF)
+  - Chips (status/priority) must use muted semantic colors
+  - Text hierarchy must be clearly readable without high contrast
+
+Acceptance criteria:
+- Clear visual separation between sidebar, content, and tables
+- Dark mode is calm, readable, and comfortable for long usage
+- Overall look similar to YouTrack dark, not flashy
+
+----
+
+part 4: Prompt Empty State
+
+Standardize empty states across the app using a single calm pattern.
+
+Rules:
+- Use subtle outline icons (no illustrations).
+- Title: short, neutral.
+- Description: one concise sentence.
+- Optional primary action button only if it makes sense.
+- No emojis, no heavy colors.
+
+Dark mode:
+- Icon and text use muted tones.
+- Empty container sits on content1 background.
+
+Examples:
+- Tickets list empty:
+  Title: "No tickets yet"
+  Description: "Create your first ticket to start tracking work."
+  Action: "New Ticket"
+
+- Servers list empty:
+  Title: "No servers found"
+  Description: "Add a server to start monitoring infrastructure."
+  Action: "New Server"
+
+Ensure empty states feel calm and professional, similar to YouTrack.

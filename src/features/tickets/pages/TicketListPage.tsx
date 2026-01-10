@@ -22,7 +22,7 @@ import {
   DropdownItem,
   Tooltip,
 } from '@heroui/react'
-import { Plus, Search, X, Copy, Check, User as UserIcon } from 'lucide-react'
+import { Plus, Search, X, Copy, Check, User as UserIcon, Ticket } from 'lucide-react'
 import { EyeIcon, EditIcon, DeleteIcon } from '@/components/icons'
 import { useTickets } from '../hooks/useTickets'
 import { useTicketFilters } from '../hooks/useTicketFilters'
@@ -377,7 +377,7 @@ function TicketListPage() {
         </div>
       </div>
 
-      <Card shadow="none" className="border border-divider bg-content1/50 overflow-hidden">
+      <Card shadow="none" className="border border-divider bg-content1 overflow-hidden">
         <CardBody className="p-0">
           <Table
             aria-label="Tickets table"
@@ -386,9 +386,9 @@ function TicketListPage() {
             isStriped
             classNames={{
               base: 'min-h-[400px]',
-              th: 'bg-default-100/30 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider/50',
-              td: 'py-2 px-4 border-b border-divider/20',
-              tr: 'hover:bg-default-200/20 cursor-pointer transition-colors',
+              th: 'bg-content2 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider',
+              td: 'py-2 px-4 border-b border-divider/50',
+              tr: 'hover:bg-content3 cursor-pointer transition-colors',
             }}
           >
             <TableHeader columns={columns}>
@@ -413,9 +413,10 @@ function TicketListPage() {
               emptyContent={
                 <EmptyState
                   title={hasActiveFilters ? "No tickets found" : "No tickets yet"}
-                  description={hasActiveFilters ? "Try adjusting your filters" : "Create your first ticket to get started"}
-                  actionLabel={hasActiveFilters ? "Clear Filters" : "New Ticket"}
-                  onAction={hasActiveFilters ? clearFilters : () => navigate('/tickets/new')}
+                  description={hasActiveFilters ? "Try adjusting your filters to see more results." : "Create your first ticket to start tracking work."}
+                  actionLabel={hasActiveFilters ? undefined : "New Ticket"}
+                  onAction={hasActiveFilters ? undefined : () => navigate('/tickets/new')}
+                  icon={Ticket}
                 />
               }
             >

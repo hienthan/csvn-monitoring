@@ -97,12 +97,12 @@ function ThemePreviewPage() {
                     <h3 className="text-lg font-bold">Sidebar</h3>
                   </CardHeader>
                   <CardBody>
-                    <div className="bg-content1 dark:bg-[#0A1426] border-r border-divider p-4 rounded">
+                    <div className="bg-content1 dark:bg-[#0D1218] border-r border-divider p-4 rounded">
                       <div className="space-y-1">
-                        <div className="px-3 py-2 rounded-md bg-primary/10 text-primary font-medium">
+                        <div className="px-3 py-2 rounded-md bg-primary/10 dark:bg-[rgba(76,141,255,0.15)] text-primary font-medium">
                           Active Item
                         </div>
-                        <div className="px-3 py-2 rounded-md text-default-500 hover:bg-default-100 dark:hover:bg-[rgba(255,255,255,0.06)]">
+                        <div className="px-3 py-2 rounded-md text-default-500 hover:bg-default-100 dark:hover:bg-content3">
                           Inactive Item
                         </div>
                         <div className="px-3 py-2 rounded-md text-default-400">
@@ -111,7 +111,7 @@ function ThemePreviewPage() {
                       </div>
                     </div>
                     <p className="text-xs text-default-500 mt-2">
-                      Token: bg-content1, dark:bg-[#0A1426], border-divider, text-primary, text-default-500
+                      Token: bg-content1, dark:bg-[#0D1218], border-divider, text-primary, text-default-500
                     </p>
                   </CardBody>
                 </Card>
@@ -147,7 +147,7 @@ function ThemePreviewPage() {
                         base: "min-h-[200px]",
                         th: "bg-content2 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 border-b border-divider",
                         td: "py-2 px-4 border-b border-divider/50",
-                        tr: "hover:bg-default-200/30 dark:hover:bg-content3 transition-colors",
+                        tr: "hover:bg-content3 transition-colors",
                       }}
                     >
                       <TableHeader>
@@ -174,7 +174,7 @@ function ThemePreviewPage() {
                       </TableBody>
                     </Table>
                     <p className="text-xs text-default-500 mt-2">
-                      Token: bg-content2 (header), bg-content3 (hover), border-divider
+                      Token: bg-content1 (container), bg-content2 (header), bg-content3 (hover), border-divider
                     </p>
                   </CardBody>
                 </Card>
@@ -279,10 +279,10 @@ function ThemePreviewPage() {
                     <div>
                       <p className="font-bold text-foreground mb-2">Backgrounds</p>
                       <div className="space-y-1 text-default-500">
-                        <div>background: {isDark ? '#0B1220' : '#f5f6f8'}</div>
-                        <div>content1: {isDark ? '#101B2D' : '#ffffff'}</div>
-                        <div>content2: {isDark ? '#13223A' : '#f8f9fa'}</div>
-                        <div>content3: {isDark ? '#172844' : '#f1f3f5'}</div>
+                        <div>background: {isDark ? '#0F141A' : '#f5f6f8'}</div>
+                        <div>content1: {isDark ? '#151B22' : '#ffffff'}</div>
+                        <div>content2: {isDark ? '#1C2430' : '#f8f9fa'}</div>
+                        <div>content3: {isDark ? '#242F3D' : '#f1f3f5'}</div>
                       </div>
                     </div>
                     <div>
@@ -296,17 +296,17 @@ function ThemePreviewPage() {
                     <div>
                       <p className="font-bold text-foreground mb-2">Primary</p>
                       <div className="space-y-1 text-default-500">
-                        <div>primary: {isDark ? '#4B8DFF' : '#2a5ba7'}</div>
+                        <div>primary: {isDark ? '#4C8DFF' : '#2a5ba7'}</div>
                         <div>hover: {isDark ? '#3D7EF0' : '#356bb8'}</div>
-                        <div>indicator: {isDark ? '#4B8DFF' : '#2a5ba7'}</div>
+                        <div>indicator: {isDark ? '#4C8DFF' : '#2a5ba7'}</div>
                       </div>
                     </div>
                     <div>
                       <p className="font-bold text-foreground mb-2">Borders</p>
                       <div className="space-y-1 text-default-500">
                         <div>divider: {isDark ? '#22314A' : 'rgba(0,0,0,0.08)'}</div>
-                        <div>sidebar: {isDark ? '#0A1426' : '#ffffff'}</div>
-                        <div>hover: {isDark ? 'rgba(255,255,255,0.06)' : '#f1f3f5'}</div>
+                        <div>sidebar: {isDark ? '#0D1218' : '#ffffff'}</div>
+                        <div>hover: {isDark ? '#242F3D' : '#f1f3f5'}</div>
                       </div>
                     </div>
       </div>

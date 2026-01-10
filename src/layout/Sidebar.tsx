@@ -120,7 +120,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   return (
     <div
-      className={`dark:bg-[#0A1426] bg-content1 transition-all duration-300 flex flex-col relative z-20 ${collapsed ? 'w-16' : 'w-64'
+      className={`dark:bg-[#0D1218] bg-content1 transition-all duration-300 flex flex-col relative z-20 ${collapsed ? 'w-16' : 'w-64'
         } border-r border-divider`}
     >
       <div className="h-16 shrink-0 border-b border-divider flex items-center px-4 mb-2">
@@ -212,8 +212,8 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         end={child.path === '/tickets' || child.path === '/servers' || child.path === '/apps' || child.path === '/backup'}
                         className={({ isActive }) =>
                           `flex items-center gap-2 pl-7 pr-3 py-1.5 rounded-md text-[13px] transition-all relative group ${isActive
-                            ? 'text-primary font-medium dark:bg-[rgba(75,141,255,0.16)] bg-primary/10'
-                            : 'text-default-500 dark:hover:bg-[rgba(255,255,255,0.06)] hover:text-foreground hover:bg-default-100'
+                            ? 'text-primary font-medium dark:bg-[rgba(76,141,255,0.15)] bg-primary/10'
+                            : 'text-default-500 dark:hover:bg-content3 hover:text-foreground hover:bg-default-100'
                           }`
                         }
                       >

@@ -15,7 +15,7 @@ import {
   Button,
   Tooltip,
 } from '@heroui/react'
-import { Search, X, Plus } from 'lucide-react'
+import { Search, X, Plus, Package } from 'lucide-react'
 import { Select, SelectItem } from '@heroui/react'
 import { appService } from '@/services/appService'
 import { useApiError } from '@/lib/hooks/useApiError'
@@ -339,7 +339,7 @@ function AppListPage() {
         </div>
       </div>
 
-      <Card shadow="none" className="border border-divider bg-content1/50 overflow-hidden">
+      <Card shadow="none" className="border border-divider bg-content1 overflow-hidden">
         <CardBody className="p-0">
           <Table
             aria-label="Apps table"
@@ -349,9 +349,9 @@ function AppListPage() {
             isStriped
             classNames={{
               base: 'min-h-[400px]',
-              th: 'bg-default-100/30 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider/50',
-              td: 'py-2 px-4 border-b border-divider/20',
-              tr: 'hover:bg-default-200/20 cursor-pointer transition-colors',
+              th: 'bg-content2 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider',
+              td: 'py-2 px-4 border-b border-divider/50',
+              tr: 'hover:bg-content3 cursor-pointer transition-colors',
             }}
           >
             <TableHeader columns={columns}>
@@ -381,18 +381,13 @@ function AppListPage() {
                 </>
               }
               emptyContent={
-                <div className="py-20">
-                  <EmptyState
-                    title={(searchQuery || serverFilter || createdByFilter) ? 'No match found' : 'No apps yet'}
-                    description={(searchQuery || serverFilter || createdByFilter) ? `We couldn't find any app matching your filters` : "Start by adding your first app to the dashboard."}
-                    actionLabel={(searchQuery || serverFilter || createdByFilter) ? 'Clear Filters' : 'Add New App'}
-                    onAction={(searchQuery || serverFilter || createdByFilter) ? () => {
-                      setSearchQuery('')
-                      setServerFilter(undefined)
-                      setCreatedByFilter(undefined)
-                    } : () => navigate('/apps/new')}
-                  />
-                </div>
+                <EmptyState
+                  title={(searchQuery || serverFilter || createdByFilter) ? 'No applications found' : 'No applications found'}
+                  description={(searchQuery || serverFilter || createdByFilter) ? "Try adjusting your filters to see more results." : "Add an application to start tracking deployments."}
+                  actionLabel={(searchQuery || serverFilter || createdByFilter) ? undefined : "New Application"}
+                  onAction={(searchQuery || serverFilter || createdByFilter) ? undefined : () => navigate('/apps/new')}
+                  icon={Package}
+                />
               }
             >
               {(app) => (

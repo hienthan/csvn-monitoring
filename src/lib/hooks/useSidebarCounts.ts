@@ -18,15 +18,15 @@ export function useSidebarCounts() {
         })
         setTicketCount(ticketsResult.totalItems)
 
-        // Fetch servers with status "running" or "online"
+        // Fetch servers with is_active = true
         const serversResult = await pb.collection('ma_servers').getList(1, 1, {
-          filter: 'status = "running" || status = "online"',
+          filter: 'is_active = true',
         })
         setServerCount(serversResult.totalItems)
 
-        // Fetch apps with status "running" or "online"
+        // Fetch apps with status = "running"
         const appsResult = await pb.collection('ma_apps').getList(1, 1, {
-          filter: 'status = "running" || status = "online"',
+          filter: 'status = "running"',
         })
         setAppCount(appsResult.totalItems)
       } catch (error) {
@@ -37,8 +37,8 @@ export function useSidebarCounts() {
     }
 
     fetchCounts()
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchCounts, 30000)
+    // Refresh every 5 minutes (300 seconds) since counts change infrequently
+    const interval = setInterval(fetchCounts, 300000)
     return () => clearInterval(interval)
   }, [])
 

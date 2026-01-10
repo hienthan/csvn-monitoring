@@ -114,14 +114,14 @@ export default {
         },
         dark: {
           colors: {
-            background: '#0B1220', // Deep bluish-gray (NOT pure black)
+            background: '#0F141A', // Layered background (not pure black)
             foreground: '#E6EDF7', // Off-white text
-            content1: '#101B2D', // Slightly lighter than background
-            content2: '#13223A', // Secondary content surface (table headers, filter bars)
-            content3: '#172844', // Hover surface
-            content4: '#1a1d29', // Quaternary content surface
+            content1: '#151B22', // Card/table container
+            content2: '#1C2430', // Table headers, filter bars
+            content3: '#242F3D', // Hover surface
+            content4: '#2A3644', // Quaternary content surface
             divider: '#22314A', // Subtle divider/border
-            focus: '#4B8DFF', // Calm blue for focus
+            focus: '#4C8DFF', // Calm blue for focus
             overlay: 'rgba(0, 0, 0, 0.7)', // Overlay
             // Muted text colors
             muted: '#A8B3C7', // Secondary text
@@ -145,13 +145,13 @@ export default {
               100: '#1f4b96',
               200: '#2a5ba7',
               300: '#3D7EF0', // Hover
-              400: '#4B8DFF', // Main primary
+              400: '#4C8DFF', // Main primary (reduced saturation)
               500: '#5a9de6',
               600: '#6badf0',
               700: '#7cbdfa',
               800: '#8dcdf4',
               900: '#9dd5ff',
-              DEFAULT: '#4B8DFF',
+              DEFAULT: '#4C8DFF',
               foreground: '#ffffff',
             },
             secondary: {
