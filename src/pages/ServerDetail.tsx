@@ -148,10 +148,10 @@ function ServerDetail() {
         onSelectionChange={(key) => handleTabChange(key as string)}
         aria-label="Server detail tabs"
         classNames={{
-          tabList: "gap-6 w-full relative rounded-none border-b border-divider p-0",
-          cursor: "w-full bg-primary h-0.5",
-          tab: "max-w-fit px-0 h-12",
-          tabContent: "group-data-[selected=true]:text-primary font-bold transition-all"
+          tabList: "gap-8 w-full relative rounded-none border-b border-divider p-0 h-12",
+          cursor: "w-full bg-primary h-[2px]",
+          tab: "max-w-fit px-0 h-12 transition-all",
+          tabContent: "group-data-[selected=true]:text-primary group-data-[selected=true]:font-bold text-default-500 font-medium transition-all"
         }}
       >
         <Tab key="overview" title="Overview" />
@@ -160,9 +160,11 @@ function ServerDetail() {
       </Tabs>
 
       {/* Tab Content */}
-      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <Outlet />
-      </div>
+      <Card shadow="none" className="border border-divider bg-content1/50 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <CardBody className="p-6">
+          <Outlet />
+        </CardBody>
+      </Card>
     </PageContainer>
   )
 }

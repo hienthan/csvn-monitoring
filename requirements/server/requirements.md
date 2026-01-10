@@ -9,3 +9,5 @@
 - [x] **Port Tabs Error**: `@heroui_react.js?v=73d6fe73:44401 Uncaught TypeError: Cannot convert a Symbol value to a string`.
 - [x] **Apps Details**: Update API call to include `&expand=app`.
 - [x] **Apps GUI**: Show more detail columns: `app name`, `version`, `status`, `last updated time`, `created by`.
+
+show c

@@ -101,9 +101,9 @@ function ServerApps() {
           isStriped
           classNames={{
             base: 'min-h-[300px]',
-            th: 'bg-default-50 text-default-500 font-bold text-xs uppercase tracking-wider h-12 px-6 first:rounded-none last:rounded-none border-b border-divider',
-            td: 'py-4 px-6 border-b border-divider/50',
-            tr: 'hover:bg-default-100/50 transition-colors',
+            th: 'bg-default-100/50 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider',
+            td: 'py-2 px-4 border-b border-divider/50',
+            tr: 'hover:bg-default-200/30 transition-colors',
           }}
         >
           <TableHeader columns={columns}>

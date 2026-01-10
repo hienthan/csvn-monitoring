@@ -17,6 +17,7 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
+  Tooltip,
 } from '@heroui/react'
 import { Search, X, MoreVertical } from 'lucide-react'
 import { useServers } from '@/lib/hooks/useServers'
@@ -88,8 +89,7 @@ function Servers() {
   const columns = [
     { key: 'name', label: 'NAME' },
     { key: 'ip_host', label: 'IP/HOST' },
-    { key: 'docker_mode', label: 'DOCKER MODE' },
-    { key: 'environment', label: 'ENVIRONMENT' },
+    { key: 'docker_mode', label: 'DOCKER' },
     { key: 'os', label: 'OS' },
     { key: 'status', label: 'STATUS' },
     { key: 'updated', label: 'UPDATED' },
@@ -99,15 +99,24 @@ function Servers() {
   const renderCell = (server: Server, columnKey: string) => {
     switch (columnKey) {
       case 'name':
-        return <div className="font-medium text-foreground">{server.name || 'N/A'}</div>
+        return (
+          <div className="flex flex-col min-w-0 py-0.5">
+            <span className="font-bold text-sm text-foreground truncate leading-tight">
+              {server.name || 'N/A'}
+            </span>
+            <span className="text-[11px] text-default-400 mt-0.5 truncate uppercase tracking-wide font-medium">
+              {server.environment || 'Production'}
+            </span>
+          </div>
+        )
       case 'ip_host':
-        return <div className="text-default-600">{server.ip || server.host || 'N/A'}</div>
+        return <div className="text-sm font-mono text-primary font-medium">{server.ip || server.host || 'N/A'}</div>
       case 'docker_mode':
-        return <div className="text-default-600">{formatDockerMode(server.docker_mode)}</div>
+        return <div className="text-xs text-default-500 font-medium">{formatDockerMode(server.docker_mode)}</div>
       case 'environment':
-        return <div className="text-default-600">{server.environment || 'N/A'}</div>
+        return null // Removed as it is now in the Name cell
       case 'os':
-        return <div className="text-default-600">{server.os || 'N/A'}</div>
+        return <div className="text-xs text-default-500">{server.os || 'N/A'}</div>
       case 'status':
         const color = getStatusColor(server.status)
         const isOnline = server.status?.toLowerCase() === 'online' || server.status?.toLowerCase() === 'active'
@@ -133,7 +142,18 @@ function Servers() {
         )
       case 'actions':
         return (
-          <div className="flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <Tooltip content="View Details" size="sm">
+              <Button
+                isIconOnly
+                size="sm"
+                variant="light"
+                onPress={() => handleAction('view', server)}
+                className="text-default-400 hover:text-primary transition-colors"
+              >
+                <MoreVertical size={16} className="rotate-90" />
+              </Button>
+            </Tooltip>
             <Dropdown placement="bottom-end">
               <DropdownTrigger>
                 <Button
@@ -192,22 +212,14 @@ function Servers() {
   }
 
   return (
-    <PageContainer className="py-8 space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-end justify-between border-b border-divider pb-4">
+    <PageContainer className="py-6 space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-2">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Servers</h1>
-          <div className="flex items-center gap-2">
-            {loading ? (
-              <Skeleton className="h-4 w-32 rounded mt-1" />
-            ) : (
-              <>
-                <div className="h-1.5 w-1.5 rounded-full bg-success"></div>
-                <p className="text-sm font-medium text-default-500">
-                  {servers.length > 0 ? `${servers.length} Servers Active` : 'No servers configured'}
-                </p>
-              </>
-            )}
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-baseline gap-2">
+            Servers
+            {!loading && <span className="text-sm font-normal text-default-400">({servers.length})</span>}
+          </h1>
+          <p className="text-sm text-default-500">Infrastructure and node monitoring</p>
         </div>
       </div>
 
@@ -247,7 +259,7 @@ function Servers() {
         </div>
       </div>
 
-      <Card shadow="sm" className="border-none bg-content1 overflow-hidden">
+      <Card shadow="none" className="border border-divider bg-content1/50 overflow-hidden">
         <CardBody className="p-0">
           <Table
             aria-label="Servers table"
@@ -256,27 +268,17 @@ function Servers() {
             isHeaderSticky
             isStriped
             classNames={{
-              base: 'max-h-[70vh]',
-              table: 'min-w-[800px]',
-              th: 'bg-default-50 text-default-500 font-semibold border-b border-divider h-12 px-6 first:rounded-none last:rounded-none',
-              td: 'py-4 px-6',
-              tr: 'hover:bg-default-100/50 cursor-pointer transition-colors',
+              base: 'min-h-[400px]',
+              th: 'bg-default-100/30 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider/50',
+              td: 'py-2 px-4 border-b border-divider/20',
+              tr: 'hover:bg-default-200/20 cursor-pointer transition-colors',
             }}
           >
             <TableHeader columns={columns}>
               {(column) => (
                 <TableColumn
                   key={column.key}
-                  align={column.key === 'actions' ? 'end' : 'start'}
-                  className={
-                    column.key === 'actions'
-                      ? 'w-[80px]'
-                      : column.key === 'status'
-                        ? 'w-[140px]'
-                        : column.key === 'updated'
-                          ? 'w-[160px]'
-                          : ''
-                  }
+                  align={column.key === 'actions' ? 'center' : 'start'}
                 >
                   {column.label}
                 </TableColumn>

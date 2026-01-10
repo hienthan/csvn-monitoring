@@ -139,7 +139,7 @@ function TicketOverviewTab({ ticketId }: TicketOverviewTabProps) {
     ) : (
       <div className="font-medium text-default-900">{value}</div>
     )
-    
+
     return (
       <div className="py-2">
         <dt className="text-sm text-default-500 mb-1">{label}</dt>
@@ -164,364 +164,201 @@ function TicketOverviewTab({ ticketId }: TicketOverviewTabProps) {
   )
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      {/* Left: Description + Attachments (8 columns) */}
-      <div className="lg:col-span-8 space-y-6">
-        {/* Description Card */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-xl font-semibold">Description</h2>
-          </CardHeader>
-          <CardBody>
-            <div className="prose max-w-none">
-              <p className="text-default-700 whitespace-pre-wrap">
-                {ticket.description || 'No description provided.'}
-              </p>
-            </div>
-          </CardBody>
-        </Card>
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      {/* Left: Description + Requirements + Verification + Links + Attachments (col-span-2) */}
+      <div className="lg:col-span-2 space-y-4">
+        {/* Description Section */}
+        <div className="space-y-1 px-1">
+          <p className="text-[11px] uppercase tracking-[0.1em] font-bold text-default-400">Description</p>
+          <div className="text-default-700 whitespace-pre-wrap text-sm leading-relaxed font-medium">
+            {ticket.description || 'No description provided.'}
+          </div>
+        </div>
 
-        {/* Requirements Card */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-xl font-semibold">Requirements</h2>
-          </CardHeader>
-          <CardBody>
-            <div className="space-y-4">
-              {/* Ports */}
-              {requirements.ports && requirements.ports.length > 0 ? (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Server size={16} className="text-default-500" />
-                    <p className="text-sm font-medium text-default-700">Ports</p>
-                  </div>
-                  <ul className="list-disc list-inside space-y-1 ml-6">
-                    {requirements.ports.map((port, idx) => (
-                      <li key={idx} className="text-sm text-default-600">
-                        {port}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Server size={16} className="text-default-500" />
-                    <p className="text-sm font-medium text-default-700">Ports</p>
-                  </div>
-                  <p className="text-sm text-default-400 ml-6">Not specified</p>
-                </div>
-              )}
-
-              {/* Health Check */}
-              <Divider />
+        {/* Requirements */}
+        <div className="space-y-4 pt-4 border-t border-divider">
+          <p className="text-[11px] uppercase tracking-[0.1em] font-bold text-default-400 px-1">Requirements</p>
+          <div className="grid grid-cols-1 gap-6 px-1">
+            {requirements.ports && requirements.ports.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <Activity size={16} className="text-default-500" />
-                  <p className="text-sm font-medium text-default-700">Health Check</p>
+                  <Server size={14} className="text-primary" />
+                  <span className="text-xs font-bold text-default-600 uppercase">Ports</span>
                 </div>
-                <p className="text-sm text-default-600 ml-6">
-                  {requirements.healthCheck || 'Not specified'}
-                </p>
-              </div>
-
-              {/* Volumes */}
-              {requirements.volumes && requirements.volumes.length > 0 && (
-                <>
-                  <Divider />
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Database size={16} className="text-default-500" />
-                      <p className="text-sm font-medium text-default-700">Volumes</p>
-                    </div>
-                    <ul className="list-disc list-inside space-y-1 ml-6">
-                      {requirements.volumes.map((volume, idx) => (
-                        <li key={idx} className="text-sm text-default-600">
-                          {volume}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </>
-              )}
-
-              {/* Env Doc Link */}
-              {requirements.envDoc && (
-                <>
-                  <Divider />
-                  <div>
-                    <p className="text-sm font-medium text-default-700 mb-2">Environment Documentation</p>
-                    <Link
-                      href={requirements.envDoc}
-                      isExternal
-                      showAnchorIcon
-                      className="text-sm"
-                    >
-                      {requirements.envDoc}
-                    </Link>
-                  </div>
-                </>
-              )}
-            </div>
-          </CardBody>
-        </Card>
-
-        {/* Verification Card */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-xl font-semibold">Verification</h2>
-          </CardHeader>
-          <CardBody>
-            <div className="space-y-4">
-              {/* Health Endpoint */}
-              <div>
-                <p className="text-sm font-medium text-default-700 mb-2">Health Endpoint</p>
-                <div className="flex items-center gap-2 p-2 bg-default-100 rounded">
-                  <code className="flex-1 font-mono text-sm text-default-900 break-all">
-                    {healthEndpoint}
-                  </code>
-                  <Tooltip content={copiedUrl === healthEndpoint ? 'Copied!' : 'Copy URL'}>
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="light"
-                      onPress={() => handleCopyUrl(healthEndpoint)}
-                      aria-label="Copy health endpoint"
-                    >
-                      {copiedUrl === healthEndpoint ? (
-                        <Check size={16} className="text-success" />
-                      ) : (
-                        <Copy size={16} />
-                      )}
-                    </Button>
-                  </Tooltip>
+                <div className="flex flex-wrap gap-2 ml-6">
+                  {requirements.ports.map((port, idx) => (
+                    <code key={idx} className="bg-default-100 text-primary text-[11px] px-2 py-0.5 rounded-sm font-bold border border-primary/10">
+                      {port}
+                    </code>
+                  ))}
                 </div>
               </div>
+            )}
 
-              {/* Expected Status Code */}
-              <div>
-                <p className="text-sm font-medium text-default-700 mb-2">Expected Status Code</p>
-                <Chip size="sm" variant="flat" color="success">
-                  {expectedStatusCode}
-                </Chip>
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Activity size={14} className="text-primary" />
+                <span className="text-xs font-bold text-default-600 uppercase">Health Check</span>
               </div>
+              <p className="text-sm text-default-700 ml-6 font-medium">
+                {requirements.healthCheck || 'Not specified'}
+              </p>
             </div>
-          </CardBody>
-        </Card>
 
-        {/* Links Card */}
-        {links.length > 0 && (
-          <Card>
-            <CardHeader>
-              <h2 className="text-xl font-semibold">Links</h2>
-            </CardHeader>
-            <CardBody>
-              <div className="space-y-2">
-                {links.map((link, index) => (
-                  <Link
-                    key={index}
-                    href={link.url}
-                    isExternal
-                    showAnchorIcon
-                    className="flex items-center gap-2"
-                  >
-                    {link.label || link.url}
-                  </Link>
-                ))}
+            {requirements.volumes && requirements.volumes.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Database size={14} className="text-primary" />
+                  <span className="text-xs font-bold text-default-600 uppercase">Volumes</span>
+                </div>
+                <ul className="list-disc list-inside space-y-1 ml-6">
+                  {requirements.volumes.map((volume, idx) => (
+                    <li key={idx} className="text-xs text-default-700 font-mono font-bold italic">
+                      {volume}
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </CardBody>
-          </Card>
-        )}
+            )}
+          </div>
+        </div>
 
-        {/* Attachments Card */}
+        {/* Attachments */}
         {ticket.attachments && ticket.attachments.length > 0 && (
-          <Card>
-            <CardHeader>
-              <h2 className="text-xl font-semibold">Attachments</h2>
-            </CardHeader>
-            <CardBody>
-              <div className="space-y-2">
-                {pbFilesUrls('ma_tickets', ticket.id, ticket.attachments).map(
-                  (url, index) => {
-                    const fileName = ticket.attachments?.[index] || `file-${index}`
-                    return (
-                      <div
-                        key={index}
-                        className="flex items-center gap-2 p-2 hover:bg-default-100 rounded transition-colors"
-                      >
-                        <File size={16} className="text-default-500 flex-shrink-0" />
-                        <span className="flex-1 truncate text-sm">{fileName}</span>
-                        <div className="flex gap-1">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            as="a"
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="Open file"
-                          >
-                            <ExternalLink size={14} />
-                          </Button>
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            as="a"
-                            href={url}
-                            download
-                            aria-label="Download file"
-                          >
-                            <Download size={14} />
-                          </Button>
-                        </div>
+          <div className="space-y-2 pt-4 border-t border-divider">
+            <p className="text-[11px] uppercase tracking-[0.1em] font-bold text-default-400 px-1">Attachments</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 px-1">
+              {pbFilesUrls('ma_tickets', ticket.id, ticket.attachments).map(
+                (url, index) => {
+                  const fileName = ticket.attachments?.[index] || `file-${index}`
+                  return (
+                    <div key={index} className="flex items-center gap-3 p-2 rounded bg-default-100/30 border border-divider/50 hover:bg-default-100 transition-colors group cursor-pointer">
+                      <File size={16} className="text-default-400 group-hover:text-primary flex-shrink-0" />
+                      <span className="flex-1 truncate text-xs font-bold text-default-700">{fileName}</span>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant="light"
+                          as="a"
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="h-6 w-6 min-w-0"
+                        >
+                          <ExternalLink size={12} />
+                        </Button>
                       </div>
-                    )
-                  }
-                )}
-              </div>
-            </CardBody>
-          </Card>
+                    </div>
+                  )
+                }
+              )}
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Right: Summary + Quick Info (4 columns) */}
-      <div className="lg:col-span-4 space-y-6">
-        {/* Summary Card */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-xl font-semibold">Summary</h2>
-          </CardHeader>
-          <CardBody>
-            <dl className="space-y-0">
-              <KeyValue 
-                label="Code" 
-                value={ticket.code || 'N/A'} 
-                truncate={true}
-              />
-              <Divider className="my-2" />
-              <KeyValue label="Type" value={
-                <Chip size="sm" variant="flat" color="default">
-                  {TICKET_TYPE_LABELS[ticket.type] || ticket.type || 'N/A'}
-                </Chip>
-              } />
-              <Divider className="my-2" />
-              <KeyValue label="App Name" value={ticket.app_name || 'N/A'} truncate={true} />
-              <Divider className="my-2" />
-              <KeyValue label="Service Tags" value={
-                Array.isArray(ticket.service_tags) && ticket.service_tags.length > 0 ? (
-                  <div className="flex flex-wrap gap-1">
-                    {ticket.service_tags.map((tag) => (
-                      <Chip key={tag} size="sm" variant="flat" color="primary">
-                        {tag}
-                      </Chip>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-default-400 text-sm">None</span>
-                )
-              } />
-            </dl>
-          </CardBody>
-        </Card>
+      {/* Column 3: Summary (col-span-1) */}
+      <div className="lg:col-span-1 border-l border-divider px-4 space-y-6">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.1em] font-bold text-default-400 mb-3">Summary</p>
+          <dl className="space-y-4">
+            <KeyValue
+              label="CODE"
+              value={
+                <code className="text-primary font-bold text-xs tracking-tight">
+                  {ticket.code || 'N/A'}
+                </code>
+              }
+            />
+            <KeyValue label="TYPE" value={
+              <Chip size="sm" variant="flat" color="primary" className="font-black text-[10px] uppercase h-5">
+                {TICKET_TYPE_LABELS[ticket.type] || ticket.type || 'N/A'}
+              </Chip>
+            } />
+            <KeyValue label="APPLICATION" value={<span className="font-bold text-xs text-foreground">{ticket.app_name || 'N/A'}</span>} truncate={true} />
+            <KeyValue label="SERVICE TAGS" value={
+              Array.isArray(ticket.service_tags) && ticket.service_tags.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {ticket.service_tags.map((tag) => (
+                    <Chip key={tag} size="sm" variant="dot" color="primary" className="text-[10px] h-5 font-bold">
+                      {tag}
+                    </Chip>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-default-400 text-xs italic">none</span>
+              )
+            } />
+          </dl>
+        </div>
+      </div>
 
-        {/* Quick Info Card */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-xl font-semibold">Quick Info</h2>
-          </CardHeader>
-          <CardBody>
+      {/* Column 4: Quick Info (col-span-1) */}
+      <div className="lg:col-span-1 border-l border-divider px-4 space-y-6">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.1em] font-bold text-default-400 mb-3">Quick Info</p>
+          <div className="space-y-6">
             <div className="space-y-4">
-              {/* Status, Priority, Environment */}
-              <div className="space-y-2">
-                {ticket.status && (
-                  <div>
-                    <p className="text-sm text-default-500 mb-1">Status</p>
-                    <Chip
-                      size="sm"
-                      variant="flat"
-                      color={getTicketStatusColor(ticket.status)}
-                    >
-                      {TICKET_STATUS_LABELS[ticket.status]}
-                    </Chip>
-                  </div>
-                )}
-                {ticket.priority && (
-                  <div>
-                    <p className="text-sm text-default-500 mb-1">Priority</p>
-                    <Chip
-                      size="sm"
-                      variant="flat"
-                      color={getTicketPriorityColor(ticket.priority)}
-                    >
-                      {TICKET_PRIORITY_LABELS[ticket.priority]}
-                    </Chip>
-                  </div>
-                )}
-                {ticket.environment && (
-                  <div>
-                    <p className="text-sm text-default-500 mb-1">Environment</p>
-                    <Chip size="sm" variant="flat" color="default">
-                      {TICKET_ENVIRONMENT_LABELS[ticket.environment]}
-                    </Chip>
-                  </div>
-                )}
-              </div>
-
-              <Divider />
-
-              {/* Assignee */}
-              <div>
-                <p className="text-sm text-default-500 mb-2">Assignee</p>
-                {ticket.assignee ? (
-                  <UserDisplay name={ticket.assignee} />
-                ) : (
-                  <span className="text-default-400 text-sm">Unassigned</span>
-                )}
-              </div>
-
-              <Divider />
-
-              {/* Requester */}
-              <div>
-                <p className="text-sm text-default-500 mb-2">Requester</p>
-                {ticket.requester_name ? (
-                  <UserDisplay 
-                    name={ticket.requester_name} 
-                    subtitle={ticket.requester_contact}
-                  />
-                ) : (
-                  <span className="text-default-400 text-sm">N/A</span>
-                )}
-              </div>
-
-              <Divider />
-
-              {/* Dates */}
-              <div className="space-y-2">
-                <div>
-                  <p className="text-sm text-default-500 mb-1">Due Date</p>
-                  <p className="text-sm font-medium text-default-900">
-                    {ticket.due_at ? formatDate(ticket.due_at) : 'Not set'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-default-500 mb-1">Started At</p>
-                  <p className="text-sm font-medium text-default-900">
-                    {ticket.started_at ? formatDate(ticket.started_at) : 'Not started'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-default-500 mb-1">Resolved At</p>
-                  <p className="text-sm font-medium text-default-900">
-                    {ticket.resolved_at ? formatDate(ticket.resolved_at) : 'Not resolved'}
-                  </p>
-                </div>
-              </div>
+              <KeyValue
+                label="STATUS"
+                value={
+                  <Chip
+                    size="sm"
+                    variant="dot"
+                    color={getTicketStatusColor(ticket.status)}
+                    className="font-black text-[10px] uppercase h-5"
+                  >
+                    {TICKET_STATUS_LABELS[ticket.status]}
+                  </Chip>
+                }
+              />
+              <KeyValue
+                label="PRIORITY"
+                value={
+                  <Chip
+                    size="sm"
+                    variant="flat"
+                    color={getTicketPriorityColor(ticket.priority)}
+                    className="font-black text-[10px] uppercase h-5"
+                  >
+                    {TICKET_PRIORITY_LABELS[ticket.priority]}
+                  </Chip>
+                }
+              />
+              <KeyValue
+                label="ENVIRONMENT"
+                value={
+                  <Chip size="sm" variant="flat" color="default" className="font-black text-[10px] uppercase h-5">
+                    {TICKET_ENVIRONMENT_LABELS[ticket.environment]}
+                  </Chip>
+                }
+              />
             </div>
-          </CardBody>
-        </Card>
+
+            <div className="space-y-4 pt-4 border-t border-divider/50">
+              <KeyValue
+                label="ASSIGNEE"
+                value={ticket.assignee ? <UserDisplay name={ticket.assignee} /> : <span className="text-default-400 text-xs italic">Unassigned</span>}
+              />
+              <KeyValue
+                label="REQUESTER"
+                value={ticket.requester_name ? (
+                  <UserDisplay
+                    name={ticket.requester_name}
+                    subtitle={ticket.requester_contact || undefined}
+                  />
+                ) : <span className="text-default-400 text-xs italic">N/A</span>}
+              />
+            </div>
+
+            <div className="space-y-3 pt-4 border-t border-divider/50">
+              <KeyValue label="DUE DATE" value={<span className="text-xs font-bold text-foreground">{ticket.due_at ? formatDate(ticket.due_at) : 'NOT SET'}</span>} />
+              <KeyValue label="STARTED" value={<span className="text-xs font-bold text-foreground">{ticket.started_at ? formatDate(ticket.started_at) : 'NOT STARTED'}</span>} />
+              <KeyValue label="RESOLVED" value={<span className="text-xs font-bold text-foreground">{ticket.resolved_at ? formatDate(ticket.resolved_at) : 'NOT RESOLVED'}</span>} />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

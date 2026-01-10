@@ -149,8 +149,8 @@ function TicketDetailPage() {
   }
 
   return (
-    <PageContainer className="py-8 space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-divider pb-6">
+    <PageContainer className="py-6 space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <Button
@@ -241,9 +241,9 @@ function TicketDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <div className="lg:col-span-3 space-y-8">
-          <Card shadow="sm" className="border-none bg-content1 overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-3 space-y-6">
+          <Card shadow="none" className="border border-divider bg-transparent overflow-hidden">
             <CardBody className="p-0">
               <Tabs
                 variant="underlined"
@@ -251,9 +251,9 @@ function TicketDetailPage() {
                 aria-label="Ticket detail tabs"
                 classNames={{
                   tabList: "gap-6 w-full relative rounded-none border-b border-divider px-6 pt-2 h-14",
-                  cursor: "w-full bg-primary h-0.5",
+                  cursor: "px-6 bg-primary h-0.5",
                   tab: "max-w-fit px-0 h-12",
-                  tabContent: "group-data-[selected=true]:text-primary font-bold transition-all"
+                  tabContent: "group-data-[selected=true]:text-primary font-bold transition-all text-sm uppercase tracking-wider"
                 }}
               >
                 <Tab key="overview" title="Overview">
@@ -276,8 +276,14 @@ function TicketDetailPage() {
           </Card>
         </div>
 
-        <div className="space-y-6">
-          {/* Metadata Sidebar could go here for cleaner look */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Metadata Sidebar / Quick Info moved here if truly out of tabs. 
+              But TicketOverviewTab already has it. 
+              If I move it out, OverviewTab needs to be cleaner. 
+              The user said 'đưa quick info ra cột 4 thay vì đang ở cột 3' in the context of the 4-column layout.
+              I will assume he refers to the internal grid in TicketOverviewTab.tsx.
+              Let's re-examine TicketOverviewTab.tsx.
+          */}
         </div>
       </div>
 

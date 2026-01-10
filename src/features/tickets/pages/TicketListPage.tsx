@@ -20,6 +20,7 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
+  Tooltip,
 } from '@heroui/react'
 import { Plus, Search, X, Copy, Check, MoreVertical, User as UserIcon } from 'lucide-react'
 import { useTickets } from '../hooks/useTickets'
@@ -105,24 +106,26 @@ function TicketListPage() {
       case 'code':
         return (
           <div className="flex items-center gap-2 group">
-            <span className="font-mono text-sm font-medium text-foreground">
+            <span className="font-mono text-xs font-bold text-primary px-1.5 py-0.5 bg-primary/5 rounded border border-primary/10">
               {ticket.code || 'N/A'}
             </span>
             {ticket.code && (
-              <Button
-                isIconOnly
-                size="sm"
-                variant="light"
-                className="min-w-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                onPress={(e) => handleCopyCode(ticket.code, e as any)}
-                aria-label="Copy ticket code"
-              >
-                {copiedCode === ticket.code ? (
-                  <Check size={12} className="text-success" />
-                ) : (
-                  <Copy size={12} />
-                )}
-              </Button>
+              <Tooltip content="Copy Code" size="sm" closeDelay={0}>
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                  className="min-w-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onPress={(e) => handleCopyCode(ticket.code, e as any)}
+                  aria-label="Copy ticket code"
+                >
+                  {copiedCode === ticket.code ? (
+                    <Check size={12} className="text-success" />
+                  ) : (
+                    <Copy size={12} />
+                  )}
+                </Button>
+              </Tooltip>
             )}
           </div>
         )
@@ -132,12 +135,12 @@ function TicketListPage() {
           : ''
         const subtitleParts = [ticket.app_name, serviceTagsText].filter(Boolean)
         return (
-          <div className="flex flex-col min-w-0">
-            <span className="font-medium text-foreground truncate">
+          <div className="flex flex-col min-w-0 py-0.5">
+            <span className="font-bold text-sm text-foreground truncate leading-tight">
               {ticket.title || 'N/A'}
             </span>
             {subtitleParts.length > 0 && (
-              <span className="text-xs text-default-500 mt-0.5 truncate">
+              <span className="text-[11px] text-default-400 mt-0.5 truncate uppercase tracking-wide font-medium">
                 {subtitleParts.join(' · ')}
               </span>
             )}
@@ -344,6 +347,10 @@ function TicketListPage() {
                 const value = Array.from(keys)[0] as string
                 setFilter('status', value && value !== 'all' ? value : undefined)
               }}
+              items={[
+                { key: 'all', label: 'All Statuses' },
+                ...Object.entries(TICKET_STATUS_LABELS).map(([key, label]) => ({ key, label }))
+              ]}
               className="w-[140px]"
               variant="flat"
               classNames={{
@@ -351,10 +358,7 @@ function TicketListPage() {
               }}
               aria-label="Filter by status"
             >
-              <SelectItem key="all">All Statuses</SelectItem>
-              {Object.entries(TICKET_STATUS_LABELS).map(([key, label]) => (
-                <SelectItem key={key}>{label}</SelectItem>
-              ))}
+              {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
             </Select>
 
             <Select
@@ -364,6 +368,10 @@ function TicketListPage() {
                 const value = Array.from(keys)[0] as string
                 setFilter('priority', value && value !== 'all' ? value : undefined)
               }}
+              items={[
+                { key: 'all', label: 'All Priorities' },
+                ...Object.entries(TICKET_PRIORITY_LABELS).map(([key, label]) => ({ key, label }))
+              ]}
               className="w-[140px]"
               variant="flat"
               classNames={{
@@ -371,10 +379,7 @@ function TicketListPage() {
               }}
               aria-label="Filter by priority"
             >
-              <SelectItem key="all">All Priorities</SelectItem>
-              {Object.entries(TICKET_PRIORITY_LABELS).map(([key, label]) => (
-                <SelectItem key={key}>{label}</SelectItem>
-              ))}
+              {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
             </Select>
 
             {hasActiveFilters && (
@@ -392,7 +397,7 @@ function TicketListPage() {
         </div>
       </div>
 
-      <Card shadow="sm" className="border-none bg-content1 overflow-hidden">
+      <Card shadow="none" className="border border-divider bg-content1/50 overflow-hidden">
         <CardBody className="p-0">
           <Table
             aria-label="Tickets table"
@@ -401,9 +406,9 @@ function TicketListPage() {
             isStriped
             classNames={{
               base: 'min-h-[400px]',
-              th: 'bg-default-50 text-default-500 font-semibold border-b border-divider h-12 px-6 first:rounded-none last:rounded-none',
-              td: 'py-4 px-6',
-              tr: 'hover:bg-default-100/50 cursor-pointer transition-colors',
+              th: 'bg-default-100/30 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider/50',
+              td: 'py-2 px-4 border-b border-divider/20',
+              tr: 'hover:bg-default-200/20 cursor-pointer transition-colors',
             }}
           >
             <TableHeader columns={columns}>
