@@ -15,7 +15,7 @@ import {
   DropdownMenu,
   DropdownItem,
 } from '@heroui/react'
-import { ArrowLeft, RefreshCw, Edit, MoreVertical } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Edit, MoreVertical, Copy as CopyIcon } from 'lucide-react'
 import Breadcrumb from '@/components/Breadcrumb'
 import { useTicket } from '../hooks/useTicket'
 import TicketOverviewTab from '../components/TicketOverviewTab'
@@ -27,12 +27,15 @@ import {
   TICKET_STATUS_LABELS,
   TICKET_PRIORITY_LABELS,
   TICKET_ENVIRONMENT_LABELS,
+  TICKET_TYPE_LABELS,
   getTicketStatusColor,
   getTicketPriorityColor,
 } from '../constants'
 import type { TicketStatus, Ticket } from '../types'
 import { useApiError } from '@/lib/hooks/useApiError'
 import { addEvent } from '../services/events.service'
+import { copyTicketCode } from '../utils'
+import { copyToClipboard } from '@/lib/utils/clipboard'
 
 function TicketDetailPage() {
   const { ticketId } = useParams()
@@ -45,16 +48,17 @@ function TicketDetailPage() {
   const [isChangingStatus, setIsChangingStatus] = useState(false)
 
   const handleStatusChange = async (params: {
+    newStatus: TicketStatus
     actorName: string
     note?: string
     clearResolvedAt?: boolean
   }) => {
-    if (!ticket || !selectedNewStatus) return
+    if (!ticket) return
 
     setIsChangingStatus(true)
     try {
       await changeStatus(
-        selectedNewStatus,
+        params.newStatus,
         params.actorName,
         params.note,
         params.clearResolvedAt
@@ -74,14 +78,29 @@ function TicketDetailPage() {
     }
   }
 
-  const handleStatusSelect = (status: TicketStatus) => {
-    // Check if changing to Resolved/Closed status - show confirmation
-    if (status === 'done' || status === 'rejected') {
-      setSelectedNewStatus(status)
+  const handleStatusChangeInModal = (status: TicketStatus) => {
+    setSelectedNewStatus(status)
+  }
+
+  const handleStatusChangeClick = () => {
+    // Open modal with current status pre-selected
+    if (ticket) {
+      setSelectedNewStatus(ticket.status)
       setStatusModalOpen(true)
-    } else {
-      setSelectedNewStatus(status)
-      setStatusModalOpen(true)
+    }
+  }
+
+  const handleCopyLink = async () => {
+    try {
+      await copyToClipboard(window.location.href)
+    } catch (err) {
+      handleError(err)
+    }
+  }
+
+  const handleCopyCode = async () => {
+    if (ticket?.code) {
+      await copyTicketCode(ticket.code)
     }
   }
 
@@ -178,7 +197,7 @@ function TicketDetailPage() {
   ]
 
   return (
-    <div className="max-w-[1100px] mx-auto px-6 py-6 space-y-6">
+    <div className="max-w-[1100px] mx-auto px-6 py-6 space-y-4">
       {/* Breadcrumb */}
       <div className="flex items-center gap-4">
         <Button
@@ -187,7 +206,7 @@ function TicketDetailPage() {
           onPress={() => navigate('/tickets')}
           aria-label="Back to tickets"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={16} />
         </Button>
         <Breadcrumb
           items={[
@@ -200,137 +219,146 @@ function TicketDetailPage() {
         />
       </div>
 
-      {/* Ticket Info Header */}
-      <Card>
-        <CardBody className="p-6">
-          {loading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-8 w-64 rounded" />
-              <div className="flex gap-4">
-                <Skeleton className="h-4 w-32 rounded" />
-                <Skeleton className="h-4 w-32 rounded" />
-                <Skeleton className="h-4 w-32 rounded" />
-              </div>
+      {/* Sticky Ticket Header */}
+      {loading ? (
+        <div className="sticky top-0 z-20 bg-background/80 backdrop-blur border-b border-divider -mx-6 px-6 py-4">
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-64 rounded" />
+            <div className="flex gap-4">
+              <Skeleton className="h-4 w-32 rounded" />
+              <Skeleton className="h-4 w-32 rounded" />
+              <Skeleton className="h-4 w-32 rounded" />
             </div>
-          ) : error ? (
+          </div>
+        </div>
+      ) : error ? (
+        <Card>
+          <CardBody className="p-6">
             <div className="text-center space-y-4 py-8">
               <p className="text-danger">Error loading ticket: {error.message}</p>
               <Button color="primary" onPress={() => refetch()}>
                 Retry
               </Button>
             </div>
-          ) : ticket ? (
-            <div className="space-y-6">
-              {/* Header: Left (Title + Meta) and Right (Actions) */}
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                {/* Left: Title + Meta Chips */}
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-2xl lg:text-3xl font-bold mb-3 break-words">
-                    {ticket.title || 'Unknown Ticket'}
-                  </h1>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {ticket.status && (
-                      <Chip
-                        size="sm"
-                        variant="flat"
-                        color={getTicketStatusColor(ticket.status)}
-                      >
-                        {TICKET_STATUS_LABELS[ticket.status]}
-                      </Chip>
-                    )}
-                    {ticket.priority && (
-                      <Chip
-                        size="sm"
-                        variant="flat"
-                        color={getTicketPriorityColor(ticket.priority)}
-                      >
-                        {TICKET_PRIORITY_LABELS[ticket.priority]}
-                      </Chip>
-                    )}
-                    {ticket.environment && (
-                      <Chip
-                        size="sm"
-                        variant="flat"
-                        color="default"
-                      >
-                        {TICKET_ENVIRONMENT_LABELS[ticket.environment]}
-                      </Chip>
-                    )}
-                  </div>
-                </div>
-
-                {/* Right: Actions */}
-                <div className="flex flex-wrap items-center gap-2 justify-end lg:justify-start">
-                  {/* Primary: Change Status Select */}
-                  <Select
-                    placeholder="Change Status"
-                    selectedKeys={ticket.status ? new Set([ticket.status]) : new Set()}
-                    onSelectionChange={(keys) => {
-                      const value = Array.from(keys)[0] as TicketStatus
-                      if (value && value !== ticket.status) {
-                        handleStatusSelect(value)
-                      }
-                    }}
-                    isDisabled={isChangingStatus || loading}
-                    className="min-w-[160px]"
+          </CardBody>
+        </Card>
+      ) : ticket ? (
+        <div className="sticky top-0 z-20 bg-background/80 backdrop-blur border-b border-divider -mx-6 px-6 py-4">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            {/* Left: Title + Meta Chips */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-semibold mb-2 break-words">
+                {ticket.title || 'Unknown Ticket'}
+              </h1>
+              <div className="flex flex-wrap items-center gap-2">
+                {ticket.status && (
+                  <Chip
                     size="sm"
                     variant="flat"
-                    color="primary"
-                    aria-label="Change ticket status"
-                    selectionMode="single"
+                    color={getTicketStatusColor(ticket.status)}
                   >
-                    {allStatuses.map((status) => (
-                      <SelectItem key={status} textValue={TICKET_STATUS_LABELS[status]}>
-                        {TICKET_STATUS_LABELS[status]}
-                      </SelectItem>
-                    ))}
-                  </Select>
-
-                  {/* Secondary: Edit Button */}
-                  <Button
+                    {TICKET_STATUS_LABELS[ticket.status]}
+                  </Chip>
+                )}
+                {ticket.priority && (
+                  <Chip
+                    size="sm"
                     variant="flat"
-                    startContent={<Edit size={16} />}
-                    onPress={() => setEditModalOpen(true)}
-                    isDisabled={loading}
-                    aria-label="Edit ticket"
+                    color={getTicketPriorityColor(ticket.priority)}
                   >
-                    Edit
-                  </Button>
+                    {TICKET_PRIORITY_LABELS[ticket.priority]}
+                  </Chip>
+                )}
+                {ticket.environment && (
+                  <Chip
+                    size="sm"
+                    variant="flat"
+                    color="default"
+                  >
+                    {TICKET_ENVIRONMENT_LABELS[ticket.environment]}
+                  </Chip>
+                )}
+                {ticket.type && (
+                  <Chip
+                    size="sm"
+                    variant="flat"
+                    color="default"
+                  >
+                    {TICKET_TYPE_LABELS[ticket.type]}
+                  </Chip>
+                )}
+              </div>
+            </div>
 
-                  {/* Icon-only: Refresh */}
+            {/* Right: Actions */}
+            <div className="flex flex-wrap items-center gap-2 justify-end lg:justify-start">
+              {/* Primary: Change Status Button */}
+              <Button
+                variant="flat"
+                color="primary"
+                onPress={handleStatusChangeClick}
+                isDisabled={isChangingStatus || loading}
+                aria-label="Change ticket status"
+                size="sm"
+              >
+                Change status
+              </Button>
+
+              {/* Secondary: Edit Button */}
+              <Button
+                variant="flat"
+                startContent={<Edit size={16} />}
+                onPress={() => setEditModalOpen(true)}
+                isDisabled={loading}
+                aria-label="Edit ticket"
+                size="sm"
+              >
+                Edit
+              </Button>
+
+              {/* Icon-only: Refresh */}
+              <Button
+                isIconOnly
+                variant="light"
+                onPress={() => refetch()}
+                isDisabled={loading}
+                aria-label="Refresh ticket"
+                size="sm"
+              >
+                <RefreshCw size={16} />
+              </Button>
+
+              {/* Icon-only: More Menu */}
+              <Dropdown>
+                <DropdownTrigger>
                   <Button
                     isIconOnly
                     variant="light"
-                    onPress={() => refetch()}
-                    isDisabled={loading}
-                    aria-label="Refresh ticket"
+                    aria-label="More options"
+                    size="sm"
                   >
-                    <RefreshCw size={16} />
+                    <MoreVertical size={16} />
                   </Button>
-
-                  {/* Icon-only: More Menu */}
-                  <Dropdown>
-                    <DropdownTrigger>
-                      <Button
-                        isIconOnly
-                        variant="light"
-                        aria-label="More options"
-                      >
-                        <MoreVertical size={16} />
-                      </Button>
-                    </DropdownTrigger>
-                    <DropdownMenu aria-label="More options">
-                      <DropdownItem key="copy" textValue="Copy ticket link">
-                        Copy Link
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
-                </div>
-              </div>
+                </DropdownTrigger>
+                <DropdownMenu aria-label="More options" onAction={(key) => {
+                  if (key === 'copy-link') {
+                    handleCopyLink()
+                  } else if (key === 'copy-code') {
+                    handleCopyCode()
+                  }
+                }}>
+                  <DropdownItem key="copy-link" textValue="Copy ticket link" startContent={<CopyIcon size={16} />}>
+                    Copy Link
+                  </DropdownItem>
+                  <DropdownItem key="copy-code" textValue="Copy ticket code" startContent={<CopyIcon size={16} />}>
+                    Copy Code
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
             </div>
-          ) : null}
-        </CardBody>
-      </Card>
+          </div>
+        </div>
+      ) : null}
 
       {/* Tabs */}
       <Card>
@@ -341,23 +369,17 @@ function TicketDetailPage() {
             classNames={{
               base: "w-full",
               tabList: "px-6 pt-4",
-              panel: "px-6 pb-6",
+              panel: "px-6 py-5",
             }}
           >
             <Tab key="overview" title="Overview">
-              <div className="pt-4">
-                <TicketOverviewTab ticketId={ticketId} />
-              </div>
+              <TicketOverviewTab ticketId={ticketId} />
             </Tab>
             <Tab key="comments" title="Comments">
-              <div className="pt-4">
-                <TicketCommentsTab ticketId={ticketId} />
-              </div>
+              <TicketCommentsTab ticketId={ticketId} />
             </Tab>
             <Tab key="events" title="Events">
-              <div className="pt-4">
-                <TicketEventsTab ticketId={ticketId} />
-              </div>
+              <TicketEventsTab ticketId={ticketId} />
             </Tab>
           </Tabs>
         </CardBody>
@@ -375,6 +397,7 @@ function TicketDetailPage() {
           newStatus={selectedNewStatus}
           assignee={ticket.assignee}
           hasResolvedAt={!!ticket.resolved_at}
+          onStatusChange={handleStatusChangeInModal}
           onConfirm={handleStatusChange}
         />
       )}

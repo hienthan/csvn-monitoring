@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import {
   Card,
   CardBody,
-  CardHeader,
   Input,
   Textarea,
   Select,
@@ -195,7 +194,8 @@ function TicketCreatePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-[1100px] mx-auto px-6 py-6 space-y-4">
+      {/* Breadcrumb */}
       <div className="flex items-center gap-4">
         <Button
           isIconOnly
@@ -203,17 +203,50 @@ function TicketCreatePage() {
           onPress={() => navigate('/tickets')}
           aria-label="Back to tickets"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={16} />
         </Button>
-        <h1 className="text-3xl font-bold">Create New Ticket</h1>
+        <h1 className="text-2xl font-semibold">Create New Ticket</h1>
       </div>
 
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur border-b border-divider -mx-6 px-6 py-4">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          {/* Left: Title */}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl font-semibold mb-2">Ticket Information</h2>
+            <p className="text-sm text-default-500">
+              Fill in the details below to create a new ticket
+            </p>
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex flex-wrap items-center gap-2 justify-end lg:justify-start">
+            <Button
+              variant="light"
+              onPress={() => navigate('/tickets')}
+              isDisabled={loading}
+              size="sm"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="ticket-create-form"
+              color="primary"
+              startContent={<Save size={16} />}
+              isLoading={loading}
+              size="sm"
+            >
+              Create Ticket
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Form Card */}
       <Card>
-        <CardHeader>
-          <h2 className="text-xl font-semibold">Ticket Information</h2>
-        </CardHeader>
         <CardBody>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form id="ticket-create-form" onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Code"
               placeholder="Generating..."
@@ -521,23 +554,6 @@ function TicketCreatePage() {
               </div>
             </div>
 
-            <div className="flex gap-4 justify-end">
-              <Button
-                variant="light"
-                onPress={() => navigate('/tickets')}
-                isDisabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                color="primary"
-                startContent={<Save size={16} />}
-                isLoading={loading}
-              >
-                Create Ticket
-              </Button>
-            </div>
           </form>
         </CardBody>
       </Card>

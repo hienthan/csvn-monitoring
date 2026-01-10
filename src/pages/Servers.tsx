@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Table,
@@ -10,30 +11,25 @@ import {
   Skeleton,
   Card,
   CardBody,
+  Input,
+  Button,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
 } from '@heroui/react'
+import { Search, X, MoreVertical } from 'lucide-react'
 import { useServers } from '@/lib/hooks/useServers'
 import { useSearch } from '@/lib/contexts/SearchContext'
 import type { Server } from '@/types/server'
+import { formatRelativeTime } from '@/features/tickets/utils'
+import { EmptyState } from '@/components/EmptyState'
 
 function Servers() {
   const navigate = useNavigate()
-  const { searchQuery } = useSearch()
-  const { servers, loading, error } = useServers({ searchQuery })
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A'
-    try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    } catch {
-      return 'N/A'
-    }
-  }
+  const { searchQuery, setSearchQuery } = useSearch()
+  const { servers, loading, error, refetch } = useServers({ searchQuery })
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || '')
 
   const getStatusColor = (status?: string) => {
     const statusLower = status?.toLowerCase() || 'unknown'
@@ -69,14 +65,36 @@ function Servers() {
     navigate(`/servers/${serverId}`)
   }
 
+  const handleSearchChange = (value: string) => {
+    setLocalSearchQuery(value)
+    setSearchQuery(value)
+  }
+
+  const handleAction = (action: string, server: Server) => {
+    switch (action) {
+      case 'view':
+        navigate(`/servers/${server.id}`)
+        break
+      case 'edit':
+        // TODO: Implement edit functionality
+        console.log('Edit server', server.id)
+        break
+      case 'delete':
+        // TODO: Implement delete functionality
+        console.log('Delete server', server.id)
+        break
+    }
+  }
+
   const columns = [
-    { key: 'name', label: 'Name' },
-    { key: 'ip_host', label: 'IP/Host' },
-    { key: 'docker_mode', label: 'Docker Mode' },
-    { key: 'environment', label: 'Environment' },
+    { key: 'name', label: 'NAME' },
+    { key: 'ip_host', label: 'IP/HOST' },
+    { key: 'docker_mode', label: 'DOCKER MODE' },
+    { key: 'environment', label: 'ENVIRONMENT' },
     { key: 'os', label: 'OS' },
-    { key: 'status', label: 'Status' },
-    { key: 'updated', label: 'Updated' },
+    { key: 'status', label: 'STATUS' },
+    { key: 'updated', label: 'UPDATED' },
+    { key: 'actions', label: 'ACTIONS' },
   ]
 
   const renderCell = (server: Server, columnKey: string) => {
@@ -114,9 +132,51 @@ function Servers() {
           </Chip>
         )
       case 'updated':
+        const exactTime = server.updated ? new Date(server.updated).toLocaleString() : 'N/A'
         return (
-          <div className="text-default-500 text-sm">
-            {formatDate(server.updated)}
+          <div className="text-default-500 text-sm" title={exactTime}>
+            {formatRelativeTime(server.updated)}
+          </div>
+        )
+      case 'actions':
+        return (
+          <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            <Dropdown>
+              <DropdownTrigger>
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                  aria-label="More options"
+                >
+                  <MoreVertical size={16} />
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="Server actions"
+                onAction={(key) => {
+                  const actionMap: Record<string, string> = {
+                    view: 'view',
+                    edit: 'edit',
+                    delete: 'delete',
+                  }
+                  const action = actionMap[key as string]
+                  if (action) {
+                    handleAction(action, server)
+                  }
+                }}
+              >
+                <DropdownItem key="view" textValue="View server">
+                  View
+                </DropdownItem>
+                <DropdownItem key="edit" textValue="Edit server">
+                  Edit
+                </DropdownItem>
+                <DropdownItem key="delete" className="text-danger" textValue="Delete server">
+                  Delete
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
           </div>
         )
       default:
@@ -126,11 +186,21 @@ function Servers() {
 
   if (error) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Servers</h1>
+      <div className="max-w-[1200px] mx-auto px-6 py-6 space-y-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold">Servers</h1>
+            <p className="text-sm text-default-500 mt-1">Error loading servers</p>
+          </div>
+        </div>
         <Card>
-          <CardBody>
-            <p className="text-danger">Error loading servers: {error.message}</p>
+          <CardBody className="p-6">
+            <EmptyState
+              title="Error loading servers"
+              description={error.message}
+              actionLabel="Retry"
+              onAction={() => refetch()}
+            />
           </CardBody>
         </Card>
       </div>
@@ -138,22 +208,84 @@ function Servers() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Servers</h1>
+    <div className="max-w-[1200px] mx-auto px-6 py-6 space-y-4">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Servers</h1>
+          {loading ? (
+            <Skeleton className="h-4 w-32 rounded mt-1" />
+          ) : (
+            <p className="text-sm text-default-500 mt-1">
+              {servers.length > 0 ? `${servers.length} servers` : 'No servers'}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Sticky Toolbar */}
+      <div className="sticky top-0 z-20 backdrop-blur bg-background/80 border-b border-divider -mx-6 px-6">
+        <Card>
+          <CardBody className="py-3">
+            <div className="flex flex-wrap gap-2 items-center">
+              {/* Search */}
+              <Input
+                placeholder="Search servers..."
+                value={localSearchQuery}
+                onValueChange={handleSearchChange}
+                startContent={<Search size={16} />}
+                aria-label="Search servers"
+                className="flex-1 min-w-[200px]"
+                size="sm"
+                endContent={
+                  localSearchQuery && (
+                    <Button
+                      isIconOnly
+                      size="sm"
+                      variant="light"
+                      onPress={() => {
+                        setLocalSearchQuery('')
+                        setSearchQuery('')
+                      }}
+                      aria-label="Clear search"
+                    >
+                      <X size={16} />
+                    </Button>
+                  )
+                }
+              />
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+
+      {/* Servers Table */}
       <Card>
         <CardBody className="p-0">
           <Table
             aria-label="Servers table"
             selectionMode="none"
+            removeWrapper
             classNames={{
-              wrapper: 'min-h-[400px]',
-              th: 'text-left',
-              td: 'text-left',
+              base: 'min-h-[400px]',
+              th: 'text-left text-xs uppercase tracking-wide text-foreground-500 px-4 py-2',
+              td: 'text-left text-sm px-4 py-2 align-middle',
             }}
           >
             <TableHeader columns={columns}>
               {(column) => (
-                <TableColumn key={column.key} className="text-left">
+                <TableColumn
+                  key={column.key}
+                  className={
+                    column.key === 'actions'
+                      ? 'text-center w-[120px]'
+                      : column.key === 'status'
+                      ? 'w-[100px]'
+                      : column.key === 'updated'
+                      ? 'w-[120px]'
+                      : 'text-left'
+                  }
+                >
                   {column.label}
                 </TableColumn>
               )}
@@ -175,9 +307,26 @@ function Servers() {
                 </>
               }
               emptyContent={
-                <div className="py-12 text-center">
-                  <p className="text-default-500">No servers found</p>
-                </div>
+                <EmptyState
+                  title={
+                    localSearchQuery
+                      ? 'No servers found matching your search'
+                      : 'No servers yet'
+                  }
+                  actionLabel={
+                    localSearchQuery
+                      ? 'Clear search'
+                      : undefined
+                  }
+                  onAction={
+                    localSearchQuery
+                      ? () => {
+                          setLocalSearchQuery('')
+                          setSearchQuery('')
+                        }
+                      : undefined
+                  }
+                />
               }
             >
               {(server) => (
@@ -187,7 +336,9 @@ function Servers() {
                   onClick={() => handleRowClick(server.id)}
                 >
                   {(columnKey) => (
-                    <TableCell>{renderCell(server, columnKey as string)}</TableCell>
+                    <TableCell>
+                      {renderCell(server, columnKey as string)}
+                    </TableCell>
                   )}
                 </TableRow>
               )}
