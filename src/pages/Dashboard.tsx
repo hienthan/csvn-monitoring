@@ -19,11 +19,25 @@ function Dashboard() {
               Efficiency, reliability, and precision at your fingertips.
             </p>
             <div className="flex gap-4 pt-4">
-              <Button color="primary" variant="solid" size="lg" className="font-bold px-8">
+              <Button 
+                color="primary" 
+                variant="solid" 
+                size="lg" 
+                className="font-bold px-8"
+                as={Link}
+                to="/servers"
+              >
                 View Infrastructure
               </Button>
-              <Button color="default" variant="flat" size="lg" className="font-bold px-8">
-                System Logs
+              <Button 
+                color="default" 
+                variant="flat" 
+                size="lg" 
+                className="font-bold px-8"
+                as={Link}
+                to="/tickets"
+              >
+                View Tickets
               </Button>
             </div>
           </div>

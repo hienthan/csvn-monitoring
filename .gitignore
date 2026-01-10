@@ -25,3 +25,6 @@ dist-ssr
 *.sln
 *.sw?
 
+requirements/db
+dump_out
+pb.*

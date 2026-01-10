@@ -1,7 +1,7 @@
 import pb from '@/lib/pb'
 import type { ServerApp, AppListParams, AppListResponse } from '@/types/app'
 
-const COLLECTION_NAME = 'ma_server_apps'
+const COLLECTION_NAME = 'ma_apps'
 
 export const appService = {
   /**
@@ -77,6 +77,45 @@ export const appService = {
     params: Omit<AppListParams, 'filter'> = {}
   ): Promise<AppListResponse> {
     return this.list({ ...params, filter })
+  },
+
+  /**
+   * Create a new app
+   */
+  async create(data: Partial<ServerApp>): Promise<ServerApp> {
+    try {
+      const result = await pb.collection(COLLECTION_NAME).create<ServerApp>(data)
+      return result
+    } catch (error) {
+      console.error('Error creating app:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Update an app by ID
+   */
+  async update(id: string, data: Partial<ServerApp>): Promise<ServerApp> {
+    try {
+      const result = await pb.collection(COLLECTION_NAME).update<ServerApp>(id, data)
+      return result
+    } catch (error) {
+      console.error(`Error updating app ${id}:`, error)
+      throw error
+    }
+  },
+
+  /**
+   * Delete an app by ID
+   */
+  async delete(id: string): Promise<boolean> {
+    try {
+      await pb.collection(COLLECTION_NAME).delete(id)
+      return true
+    } catch (error) {
+      console.error(`Error deleting app ${id}:`, error)
+      throw error
+    }
   },
 }
 

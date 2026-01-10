@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
-import { serverService } from '@/services/serverService'
-import type { Server } from '@/types/server'
+import { appService } from '@/services/appService'
+import type { ServerApp } from '@/types/app'
 import { useApiError } from './useApiError'
 
-export function useServer(serverId: string | undefined) {
-  const [server, setServer] = useState<Server | null>(null)
+export function useApp(appId: string | undefined) {
+  const [app, setApp] = useState<ServerApp | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const { handleError } = useApiError()
 
-  const fetchServer = useCallback(async () => {
-    if (!serverId) {
+  const fetchApp = useCallback(async () => {
+    if (!appId) {
       setLoading(false)
       return
     }
@@ -19,48 +19,48 @@ export function useServer(serverId: string | undefined) {
       setLoading(true)
       setError(null)
 
-      const data = await serverService.getById(serverId)
-      setServer(data)
+      const data = await appService.getById(appId, 'server')
+      setApp(data)
     } catch (err) {
       const apiError = handleError(err)
       setError(new Error(apiError.message))
     } finally {
       setLoading(false)
     }
-  }, [serverId, handleError])
+  }, [appId, handleError])
 
   useEffect(() => {
-    fetchServer()
-  }, [fetchServer])
+    fetchApp()
+  }, [fetchApp])
 
-  const update = useCallback(async (data: Partial<Server>) => {
-    if (!serverId) return
+  const update = useCallback(async (data: Partial<ServerApp>) => {
+    if (!appId) return
     try {
-      const updated = await serverService.update(serverId, data)
-      setServer(updated)
+      const updated = await appService.update(appId, data)
+      setApp(updated)
       return updated
     } catch (err) {
       const apiError = handleError(err)
       throw new Error(apiError.message)
     }
-  }, [serverId, handleError])
+  }, [appId, handleError])
 
   const remove = useCallback(async () => {
-    if (!serverId) return
+    if (!appId) return
     try {
-      await serverService.delete(serverId)
+      await appService.delete(appId)
       return true
     } catch (err) {
       const apiError = handleError(err)
       throw new Error(apiError.message)
     }
-  }, [serverId, handleError])
+  }, [appId, handleError])
 
   return {
-    server,
+    app,
     loading,
     error,
-    refetch: fetchServer,
+    refetch: fetchApp,
     update,
     delete: remove,
   }

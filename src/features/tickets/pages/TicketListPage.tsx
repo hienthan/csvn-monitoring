@@ -22,7 +22,8 @@ import {
   DropdownItem,
   Tooltip,
 } from '@heroui/react'
-import { Plus, Search, X, Copy, Check, MoreVertical, User as UserIcon } from 'lucide-react'
+import { Plus, Search, X, Copy, Check, User as UserIcon } from 'lucide-react'
+import { EyeIcon, EditIcon, DeleteIcon } from '@/components/icons'
 import { useTickets } from '../hooks/useTickets'
 import { useTicketFilters } from '../hooks/useTicketFilters'
 import type { Ticket } from '../types'
@@ -186,43 +187,22 @@ function TicketListPage() {
         )
       case 'actions':
         return (
-          <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-            <Dropdown>
-              <DropdownTrigger>
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                  aria-label="More options"
-                >
-                  <MoreVertical size={16} />
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                aria-label="Ticket actions"
-                onAction={(key) => {
-                  const actionMap: Record<string, string> = {
-                    view: 'view',
-                    edit: 'edit',
-                    delete: 'delete',
-                  }
-                  const action = actionMap[key as string]
-                  if (action) {
-                    handleAction(action, ticket, {} as React.MouseEvent)
-                  }
-                }}
-              >
-                <DropdownItem key="view" textValue="View ticket">
-                  View
-                </DropdownItem>
-                <DropdownItem key="edit" textValue="Edit ticket">
-                  Edit
-                </DropdownItem>
-                <DropdownItem key="delete" className="text-danger" textValue="Delete ticket">
-                  Delete
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
+          <div className="relative flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <Tooltip content="Details">
+              <span className="text-lg text-default-400 cursor-pointer active:opacity-50 hover:text-primary transition-colors">
+                <EyeIcon onClick={(e) => handleAction('view', ticket, e)} />
+              </span>
+            </Tooltip>
+            <Tooltip content="Edit ticket">
+              <span className="text-lg text-default-400 cursor-pointer active:opacity-50 hover:text-primary transition-colors">
+                <EditIcon onClick={(e) => handleAction('edit', ticket, e)} />
+              </span>
+            </Tooltip>
+            <Tooltip color="danger" content="Delete ticket">
+              <span className="text-lg text-danger cursor-pointer active:opacity-50 hover:text-danger-600 transition-colors">
+                <DeleteIcon onClick={(e) => handleAction('delete', ticket, e)} />
+              </span>
+            </Tooltip>
           </div>
         )
       default:
@@ -415,7 +395,7 @@ function TicketListPage() {
               {(column) => (
                 <TableColumn
                   key={column.key}
-                  className={column.key === 'actions' ? 'text-center' : ''}
+                  align={column.key === 'actions' ? 'center' : 'start'}
                 >
                   {column.label}
                 </TableColumn>
