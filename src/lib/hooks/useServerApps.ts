@@ -23,6 +23,7 @@ export function useServerApps(serverId: string | undefined) {
         page: 1,
         perPage: 100,
         sort: '-created',
+        expand: 'app',
       })
 
       setApps(response.items)

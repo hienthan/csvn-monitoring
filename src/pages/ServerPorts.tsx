@@ -11,8 +11,9 @@ import {
   CardBody,
   Skeleton,
   Button,
+  Chip,
 } from '@heroui/react'
-import { ChevronRight, Copy, Check } from 'lucide-react'
+import { Copy, Check, Network } from 'lucide-react'
 import { useServerPorts } from '@/lib/hooks/useServerPorts'
 import { copyToClipboard } from '@/lib/utils/clipboard'
 import type { ServerPort, ServerAppRelation } from '@/types/port'
@@ -20,13 +21,7 @@ import type { ServerPort, ServerAppRelation } from '@/types/port'
 function ServerPorts() {
   const { serverId } = useParams()
   const { ports, loading, error } = useServerPorts(serverId)
-  const [expandedRow, setExpandedRow] = useState<string | null>(null)
   const [copiedValue, setCopiedValue] = useState<string | null>(null)
-
-  const handleExpand = (portId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setExpandedRow(expandedRow === portId ? null : portId)
-  }
 
   const handleCopy = async (text: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -37,297 +32,108 @@ function ServerPorts() {
     }
   }
 
-  const handleKeyDown = (
-    portId: string,
-    e: React.KeyboardEvent<HTMLButtonElement>
-  ) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      e.stopPropagation()
-      setExpandedRow(expandedRow === portId ? null : portId)
-    }
-  }
-
-  const getAppInfo = (port: ServerPort): ServerAppRelation | null => {
-    if (!port.app) return null
-    if (typeof port.app === 'string') return null
-    return port.app as ServerAppRelation
-  }
-
   const columns = [
-    { key: 'expand', label: '' },
-    { key: 'port', label: 'Port' },
-    { key: 'protocol', label: 'Protocol' },
-    { key: 'status', label: 'Status' },
-    { key: 'description', label: 'Description' },
+    { key: 'port', label: 'PORT' },
+    { key: 'protocol', label: 'PROTOCOL' },
+    { key: 'service', label: 'SERVICE' },
+    { key: 'internal_port', label: 'INTERNAL' },
+    { key: 'external_port', label: 'EXTERNAL' },
+    { key: 'status', label: 'STATUS' },
   ]
 
   const renderCell = (port: ServerPort, columnKey: string) => {
     switch (columnKey) {
-      case 'expand':
-        return (
-          <Button
-            isIconOnly
-            variant="light"
-            size="sm"
-            className="min-w-0"
-            onClick={(e) => handleExpand(port.id, e)}
-            onKeyDown={(e) => handleKeyDown(port.id, e)}
-            aria-label={expandedRow === port.id ? 'Collapse row' : 'Expand row'}
-            aria-expanded={expandedRow === port.id}
-          >
-            <ChevronRight
-              className={`w-4 h-4 transition-transform ${
-                expandedRow === port.id ? 'rotate-90' : ''
-              }`}
-            />
-          </Button>
-        )
       case 'port':
         return (
-          <div className="font-medium text-foreground font-mono">
-            {port.port || 'N/A'}
+          <div className="flex items-center gap-2 group">
+            <span className="font-bold text-foreground font-mono">
+              {port.port || 'N/A'}
+            </span>
+            <Button
+              isIconOnly
+              size="sm"
+              variant="light"
+              className="opacity-0 group-hover:opacity-100 h-6 w-6 min-w-0"
+              onClick={(e) => handleCopy(String(port.port), e)}
+            >
+              {copiedValue === String(port.port) ? <Check size={12} className="text-success" /> : <Copy size={12} />}
+            </Button>
           </div>
         )
       case 'protocol':
         return (
-          <div className="text-default-600 uppercase text-sm">
-            {port.protocol || 'N/A'}
+          <Chip size="sm" variant="flat" className="font-mono text-[10px] uppercase font-bold">
+            {port.protocol || 'TCP'}
+          </Chip>
+        )
+      case 'service':
+        return (
+          <div className="flex flex-col">
+            <span className="font-medium text-foreground">
+              {port.service_name || 'N/A'}
+            </span>
+            {port.container_name && (
+              <span className="text-[10px] text-default-400 truncate max-w-[150px]">
+                {port.container_name}
+              </span>
+            )}
           </div>
         )
-      case 'status':
+      case 'internal_port':
         return (
-          <div className="text-default-600">{port.status || 'N/A'}</div>
+          <span className="font-mono text-sm text-default-600">
+            {port.internal_port || '-'}
+          </span>
         )
-      case 'description':
+      case 'external_port':
         return (
-          <div className="text-default-600">{port.description || 'N/A'}</div>
+          <span className="font-mono text-sm font-bold text-primary">
+            {port.external_port || '-'}
+          </span>
+        )
+      case 'status':
+        const isListening = port.status?.toLowerCase() === 'listening' || port.status?.toLowerCase() === 'active'
+        return (
+          <Chip
+            size="sm"
+            variant="dot"
+            color={isListening ? 'success' : 'default'}
+            className="border-none bg-transparent h-6"
+          >
+            {port.status || 'N/A'}
+          </Chip>
         )
       default:
         return null
     }
   }
 
-  const renderExpandedContent = (port: ServerPort) => {
-    const appInfo = getAppInfo(port)
-
-    return (
-      <div className="px-4 py-3 bg-default-50 border-t border-divider">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Related App Info */}
-          {appInfo && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-default-700">
-                Related App
-              </h4>
-              <div className="space-y-1 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-default-500">Name:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{appInfo.name || 'N/A'}</span>
-                    {appInfo.name && (
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="light"
-                        className="min-w-0 h-6 w-6"
-                        onClick={(e) => handleCopy(appInfo.name || '', e)}
-                        aria-label="Copy app name"
-                      >
-                        {copiedValue === appInfo.name ? (
-                          <Check className="w-3 h-3 text-success" />
-                        ) : (
-                          <Copy className="w-3 h-3" />
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                {appInfo.path && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-default-500">Path:</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs">
-                        {appInfo.path}
-                      </span>
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="light"
-                        className="min-w-0 h-6 w-6"
-                        onClick={(e) => handleCopy(appInfo.path || '', e)}
-                        aria-label="Copy app path"
-                      >
-                        {copiedValue === appInfo.path ? (
-                          <Check className="w-3 h-3 text-success" />
-                        ) : (
-                          <Copy className="w-3 h-3" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Service & Container Info */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-default-700">
-              Service Info
-            </h4>
-            <div className="space-y-1 text-sm">
-              {port.service_name && (
-                <div className="flex items-center justify-between">
-                  <span className="text-default-500">Service:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{port.service_name}</span>
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="light"
-                      className="min-w-0 h-6 w-6"
-                      onClick={(e) => handleCopy(port.service_name || '', e)}
-                      aria-label="Copy service name"
-                    >
-                      {copiedValue === port.service_name ? (
-                        <Check className="w-3 h-3 text-success" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-              {port.container_name && (
-                <div className="flex items-center justify-between">
-                  <span className="text-default-500">Container:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{port.container_name}</span>
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="light"
-                      className="min-w-0 h-6 w-6"
-                      onClick={(e) => handleCopy(port.container_name || '', e)}
-                      aria-label="Copy container name"
-                    >
-                      {copiedValue === port.container_name ? (
-                        <Check className="w-3 h-3 text-success" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Port Mapping */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-default-700">
-              Port Mapping
-            </h4>
-            <div className="space-y-1 text-sm">
-              {port.internal_port && (
-                <div className="flex items-center justify-between">
-                  <span className="text-default-500">Internal:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono">{port.internal_port}</span>
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="light"
-                      className="min-w-0 h-6 w-6"
-                      onClick={(e) => handleCopy(String(port.internal_port), e)}
-                      aria-label="Copy internal port"
-                    >
-                      {copiedValue === String(port.internal_port) ? (
-                        <Check className="w-3 h-3 text-success" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-              {port.external_port && (
-                <div className="flex items-center justify-between">
-                  <span className="text-default-500">External:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono">{port.external_port}</span>
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="light"
-                      className="min-w-0 h-6 w-6"
-                      onClick={(e) => handleCopy(String(port.external_port), e)}
-                      aria-label="Copy external port"
-                    >
-                      {copiedValue === String(port.external_port) ? (
-                        <Check className="w-3 h-3 text-success" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-              {port.port && (
-                <div className="flex items-center justify-between">
-                  <span className="text-default-500">Port:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono">{port.port}</span>
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="light"
-                      className="min-w-0 h-6 w-6"
-                      onClick={(e) => handleCopy(String(port.port), e)}
-                      aria-label="Copy port"
-                    >
-                      {copiedValue === String(port.port) ? (
-                        <Check className="w-3 h-3 text-success" />
-                      ) : (
-                        <Copy className="w-3 h-3" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   if (error) {
     return (
-      <Card>
-        <CardBody>
-          <p className="text-danger">Error loading ports: {error.message}</p>
-        </CardBody>
+      <Card shadow="sm" className="border-none bg-danger-50 text-danger p-6">
+        <p className="font-medium">Error loading ports: {error.message}</p>
       </Card>
     )
   }
 
   return (
-    <Card>
+    <Card shadow="sm" className="border-none bg-content1 overflow-hidden">
       <CardBody className="p-0">
         <Table
           aria-label="Server ports table"
           selectionMode="none"
+          removeWrapper
+          isStriped
           classNames={{
-            wrapper: 'min-h-[400px]',
-            th: 'text-left',
-            td: 'text-left',
+            base: "min-h-[300px]",
+            th: "bg-default-50 text-default-500 font-bold text-xs uppercase tracking-wider h-12 px-6 first:rounded-none last:rounded-none border-b border-divider",
+            td: "py-4 px-6 border-b border-divider/50",
+            tr: "hover:bg-default-100/50 transition-colors",
           }}
         >
           <TableHeader columns={columns}>
             {(column) => (
-              <TableColumn key={column.key} className="text-left">
+              <TableColumn key={column.key}>
                 {column.label}
               </TableColumn>
             )}
@@ -336,41 +142,27 @@ function ServerPorts() {
             items={ports}
             isLoading={loading}
             loadingContent={
-              <>
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <TableRow key={index}>
-                    {columns.map((col) => (
-                      <TableCell key={col.key}>
-                        <Skeleton className="h-4 w-full rounded" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </>
+              <div className="flex flex-col items-center justify-center gap-2 py-20">
+                <Skeleton className="h-4 w-48 rounded" />
+                <Skeleton className="h-4 w-36 rounded" />
+              </div>
             }
             emptyContent={
-              <div className="py-12 text-center">
-                <p className="text-default-500">No ports found for this server</p>
+              <div className="py-20 text-center space-y-2">
+                <Network className="w-10 h-10 text-default-300 mx-auto" />
+                <p className="text-default-500 font-medium">No active ports detected</p>
+                <p className="text-xs text-default-400">Listening ports will appear here once identified.</p>
               </div>
             }
           >
             {(port) => (
-              <>
-                <TableRow key={port.id}>
-                  {(columnKey) => (
-                    <TableCell>
-                      {renderCell(port, columnKey as string)}
-                    </TableCell>
-                  )}
-                </TableRow>
-                {expandedRow === port.id && (
-                  <TableRow>
-                    <TableCell colSpan={columns.length}>
-                      {renderExpandedContent(port)}
-                    </TableCell>
-                  </TableRow>
+              <TableRow key={port.id}>
+                {(columnKey) => (
+                  <TableCell>
+                    {renderCell(port, String(columnKey))}
+                  </TableCell>
                 )}
-              </>
+              </TableRow>
             )}
           </TableBody>
         </Table>

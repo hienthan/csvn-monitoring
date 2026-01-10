@@ -37,6 +37,8 @@ import { formatRelativeTime, copyTicketCode } from '../utils'
 import { EmptyState } from '@/components/EmptyState'
 import { TicketEditModal } from '../components/TicketEditModal'
 
+import { PageContainer } from '@/components/PageContainer'
+
 function TicketListPage() {
   const navigate = useNavigate()
   const { filters, setFilter, clearFilters } = useTicketFilters()
@@ -47,7 +49,7 @@ function TicketListPage() {
   const [editModalOpen, setEditModalOpen] = useState(false)
 
   const handleCopyCode = async (code: string, e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent row click
+    e.stopPropagation()
     const success = await copyTicketCode(code)
     if (success) {
       setCopiedCode(code)
@@ -79,13 +81,11 @@ function TicketListPage() {
   ]
 
   const handleEditSave = async (_payload: Partial<Ticket>, _attachmentsFiles?: File[]) => {
-    // This will be handled by the modal's onSave prop
-    // Just refetch after save
     await refetch()
   }
 
   const handleAction = (action: string, ticket: Ticket, e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent row click
+    e.stopPropagation()
     switch (action) {
       case 'view':
         navigate(`/tickets/${ticket.id}`)
@@ -95,7 +95,6 @@ function TicketListPage() {
         setEditModalOpen(true)
         break
       case 'delete':
-        // TODO: Implement delete functionality
         console.log('Delete ticket', ticket.id)
         break
     }
@@ -228,7 +227,6 @@ function TicketListPage() {
     }
   }
 
-  // Build active filter summary
   const activeFilterSummary = []
   if (filters.status) {
     activeFilterSummary.push(`Status: ${TICKET_STATUS_LABELS[filters.status]}`)
@@ -245,16 +243,18 @@ function TicketListPage() {
 
   if (error) {
     return (
-      <div className="max-w-[1200px] mx-auto px-6 py-6 space-y-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold">Tickets</h1>
-            <p className="text-sm text-default-500 mt-1">Error loading tickets</p>
+      <PageContainer className="py-8 space-y-8">
+        <div className="flex items-end justify-between border-b border-divider pb-4">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight">Tickets</h1>
+            <p className="text-sm text-danger">Error loading tickets: {error.message}</p>
           </div>
           <Button
             color="primary"
-            startContent={<Plus size={16} />}
+            variant="shadow"
+            startContent={<Plus size={18} />}
             onPress={() => navigate('/tickets/new')}
+            className="font-bold"
           >
             New Ticket
           </Button>
@@ -269,232 +269,148 @@ function TicketListPage() {
             />
           </CardBody>
         </Card>
-      </div>
+      </PageContainer>
     )
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto px-6 py-6 space-y-4">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Tickets</h1>
-          {loading ? (
-            <Skeleton className="h-4 w-32 rounded mt-1" />
-          ) : (
-            <p className="text-sm text-default-500 mt-1">
-              {totalItems > 0 ? `${totalItems} tickets` : 'No tickets'}
-            </p>
-          )}
-          {activeFilterSummary.length > 0 && (
-            <p className="text-xs text-default-400 mt-0.5">
-              {activeFilterSummary.join(' · ')}
-            </p>
-          )}
+    <PageContainer className="py-8 space-y-8 animate-in fade-in duration-500">
+      <div className="flex items-end justify-between border-b border-divider pb-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">Tickets</h1>
+          <div className="flex items-center gap-2">
+            {loading ? (
+              <Skeleton className="h-4 w-32 rounded mt-1" />
+            ) : (
+              <p className="text-sm font-medium text-default-500">
+                {totalItems > 0 ? `${totalItems} Tickets active` : 'No tickets'}
+              </p>
+            )}
+            {activeFilterSummary.length > 0 && (
+              <>
+                <div className="h-1 w-1 rounded-full bg-default-300 mx-1" />
+                <p className="text-xs text-default-400">
+                  {activeFilterSummary.join(' · ')}
+                </p>
+              </>
+            )}
+          </div>
         </div>
         <Button
           color="primary"
-          startContent={<Plus size={16} />}
+          variant="shadow"
+          startContent={<Plus size={18} />}
           onPress={() => navigate('/tickets/new')}
+          className="font-bold"
         >
           New Ticket
         </Button>
       </div>
 
-      {/* Sticky Toolbar */}
-      <div className="sticky top-0 z-20 backdrop-blur bg-background/80 border-b border-divider -mx-6 px-6">
-        <Card>
-          <CardBody className="py-3">
-            <div className="flex flex-wrap gap-2 items-center">
-              {/* Search */}
-              <Input
-                placeholder="Search tickets..."
-                value={filters.q || ''}
-                onValueChange={(value) => setFilter('q', value)}
-                startContent={<Search size={16} />}
-                aria-label="Search tickets"
-                className="flex-1 min-w-[200px]"
-                size="sm"
-                endContent={
-                  filters.q && (
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="light"
-                      onPress={() => setFilter('q', undefined)}
-                      aria-label="Clear search"
-                    >
-                      <X size={16} />
-                    </Button>
-                  )
-                }
-              />
+      <div className="sticky top-0 z-20 transition-all">
+        <div className="glassmorphism rounded-2xl p-2 shadow-lg shadow-black/5">
+          <div className="flex flex-wrap gap-2 items-center">
+            <Input
+              placeholder="Search tickets..."
+              value={filters.q || ''}
+              onValueChange={(value) => setFilter('q', value)}
+              startContent={<Search size={18} className="text-default-400" />}
+              aria-label="Search tickets"
+              className="flex-1 min-w-[200px]"
+              variant="flat"
+              classNames={{
+                inputWrapper: "bg-default-100/50 hover:bg-default-200/50 transition-colors border-none",
+                input: "text-sm"
+              }}
+              endContent={
+                filters.q && (
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="light"
+                    onPress={() => setFilter('q', undefined)}
+                    aria-label="Clear search"
+                  >
+                    <X size={16} />
+                  </Button>
+                )
+              }
+            />
 
-              {/* Compact Selects */}
-              <Select
-                label="Status"
-                placeholder="All"
-                selectedKeys={filters.status ? new Set([filters.status]) : new Set()}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string
-                  setFilter('status', value && value !== 'all' ? value : undefined)
-                }}
-                className="min-w-[140px]"
-                size="sm"
-                selectionMode="single"
-              >
-                {Object.entries(TICKET_STATUS_LABELS).map(([key, label]) => (
-                  <SelectItem key={key}>{label}</SelectItem>
-                ))}
-              </Select>
+            <Select
+              placeholder="Status"
+              selectedKeys={filters.status ? new Set([filters.status]) : new Set()}
+              onSelectionChange={(keys) => {
+                const value = Array.from(keys)[0] as string
+                setFilter('status', value && value !== 'all' ? value : undefined)
+              }}
+              className="w-[140px]"
+              variant="flat"
+              classNames={{
+                trigger: "bg-default-100/50 hover:bg-default-200/50 transition-colors border-none"
+              }}
+              aria-label="Filter by status"
+            >
+              <SelectItem key="all">All Statuses</SelectItem>
+              {Object.entries(TICKET_STATUS_LABELS).map(([key, label]) => (
+                <SelectItem key={key}>{label}</SelectItem>
+              ))}
+            </Select>
 
-              <Select
-                label="Priority"
-                placeholder="All"
-                selectedKeys={filters.priority ? new Set([filters.priority]) : new Set()}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string
-                  setFilter('priority', value && value !== 'all' ? value : undefined)
-                }}
-                className="min-w-[140px]"
-                size="sm"
-                selectionMode="single"
-              >
-                {Object.entries(TICKET_PRIORITY_LABELS).map(([key, label]) => (
-                  <SelectItem key={key}>{label}</SelectItem>
-                ))}
-              </Select>
+            <Select
+              placeholder="Priority"
+              selectedKeys={filters.priority ? new Set([filters.priority]) : new Set()}
+              onSelectionChange={(keys) => {
+                const value = Array.from(keys)[0] as string
+                setFilter('priority', value && value !== 'all' ? value : undefined)
+              }}
+              className="w-[140px]"
+              variant="flat"
+              classNames={{
+                trigger: "bg-default-100/50 hover:bg-default-200/50 transition-colors border-none"
+              }}
+              aria-label="Filter by priority"
+            >
+              <SelectItem key="all">All Priorities</SelectItem>
+              {Object.entries(TICKET_PRIORITY_LABELS).map(([key, label]) => (
+                <SelectItem key={key}>{label}</SelectItem>
+              ))}
+            </Select>
 
-              <Select
-                label="Type"
-                placeholder="All"
-                selectedKeys={filters.type ? new Set([filters.type]) : new Set()}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string
-                  setFilter('type', value && value !== 'all' ? value : undefined)
-                }}
-                className="min-w-[160px]"
-                size="sm"
-                selectionMode="single"
-              >
-                {Object.entries(TICKET_TYPE_LABELS).map(([key, label]) => (
-                  <SelectItem key={key}>{label}</SelectItem>
-                ))}
-              </Select>
-
-              <Select
-                label="Environment"
-                placeholder="All"
-                selectedKeys={filters.environment ? new Set([filters.environment]) : new Set()}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string
-                  setFilter('environment', value && value !== 'all' ? value : undefined)
-                }}
-                className="min-w-[140px]"
-                size="sm"
-                selectionMode="single"
-              >
-                {Object.entries(TICKET_ENVIRONMENT_LABELS).map(([key, label]) => (
-                  <SelectItem key={key}>{label}</SelectItem>
-                ))}
-              </Select>
-
-              {/* Clear Filters Button */}
-              {hasActiveFilters && (
-                <Button
-                  variant="light"
-                  color="danger"
-                  startContent={<X size={16} />}
-                  onPress={clearFilters}
-                  size="sm"
-                >
-                  Clear
-                </Button>
-              )}
-            </div>
-
-            {/* Active Filter Chips */}
             {hasActiveFilters && (
-              <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-divider">
-                {filters.status && (
-                  <Chip
-                    size="sm"
-                    variant="flat"
-                    onClose={() => setFilter('status', undefined)}
-                  >
-                    Status: {TICKET_STATUS_LABELS[filters.status]}
-                  </Chip>
-                )}
-                {filters.priority && (
-                  <Chip
-                    size="sm"
-                    variant="flat"
-                    onClose={() => setFilter('priority', undefined)}
-                  >
-                    Priority: {TICKET_PRIORITY_LABELS[filters.priority]}
-                  </Chip>
-                )}
-                {filters.type && (
-                  <Chip
-                    size="sm"
-                    variant="flat"
-                    onClose={() => setFilter('type', undefined)}
-                  >
-                    Type: {TICKET_TYPE_LABELS[filters.type]}
-                  </Chip>
-                )}
-                {filters.environment && (
-                  <Chip
-                    size="sm"
-                    variant="flat"
-                    onClose={() => setFilter('environment', undefined)}
-                  >
-                    Environment: {TICKET_ENVIRONMENT_LABELS[filters.environment]}
-                  </Chip>
-                )}
-                {filters.q && (
-                  <Chip
-                    size="sm"
-                    variant="flat"
-                    onClose={() => setFilter('q', undefined)}
-                  >
-                    Search: {filters.q}
-                  </Chip>
-                )}
-              </div>
+              <Button
+                variant="light"
+                color="danger"
+                startContent={<X size={16} />}
+                onPress={clearFilters}
+                className="font-medium"
+              >
+                Clear
+              </Button>
             )}
-          </CardBody>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      {/* Tickets Table */}
-      <Card>
+      <Card shadow="sm" className="border-none bg-content1 overflow-hidden">
         <CardBody className="p-0">
           <Table
             aria-label="Tickets table"
             selectionMode="none"
             removeWrapper
+            isStriped
             classNames={{
               base: 'min-h-[400px]',
-              th: 'text-left text-xs uppercase tracking-wide text-foreground-500 px-4 py-2',
-              td: 'text-left text-sm px-4 py-2 align-middle',
+              th: 'bg-default-50 text-default-500 font-semibold border-b border-divider h-12 px-6 first:rounded-none last:rounded-none',
+              td: 'py-4 px-6',
+              tr: 'hover:bg-default-100/50 cursor-pointer transition-colors',
             }}
           >
             <TableHeader columns={columns}>
               {(column) => (
                 <TableColumn
                   key={column.key}
-                  className={
-                    column.key === 'actions'
-                      ? 'text-center w-[120px]'
-                      : column.key === 'status' || column.key === 'priority'
-                      ? 'w-[100px]'
-                      : column.key === 'code'
-                      ? 'w-[140px]'
-                      : column.key === 'updated'
-                      ? 'w-[120px]'
-                      : 'text-left'
-                  }
+                  className={column.key === 'actions' ? 'text-center' : ''}
                 >
                   {column.label}
                 </TableColumn>
@@ -504,42 +420,23 @@ function TicketListPage() {
               items={tickets}
               isLoading={loading}
               loadingContent={
-                <>
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <TableRow key={index}>
-                      {columns.map((col) => (
-                        <TableCell key={col.key}>
-                          <Skeleton className="h-4 w-full rounded" />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </>
+                <div className="flex flex-col items-center justify-center gap-2 py-20">
+                  <Skeleton className="h-4 w-48 rounded" />
+                  <Skeleton className="h-4 w-36 rounded" />
+                </div>
               }
               emptyContent={
                 <EmptyState
-                  title={
-                    hasActiveFilters
-                      ? 'No tickets found matching your filters'
-                      : 'No tickets yet'
-                  }
-                  actionLabel={
-                    hasActiveFilters
-                      ? 'Clear filters'
-                      : 'Create first ticket'
-                  }
-                  onAction={
-                    hasActiveFilters
-                      ? clearFilters
-                      : () => navigate('/tickets/new')
-                  }
+                  title={hasActiveFilters ? "No tickets found" : "No tickets yet"}
+                  description={hasActiveFilters ? "Try adjusting your filters" : "Create your first ticket to get started"}
+                  actionLabel={hasActiveFilters ? "Clear Filters" : "New Ticket"}
+                  onAction={hasActiveFilters ? clearFilters : () => navigate('/tickets/new')}
                 />
               }
             >
               {(ticket) => (
                 <TableRow
                   key={ticket.id}
-                  className="cursor-pointer hover:bg-default-100 transition-colors"
                   onClick={() => handleRowClick(ticket.id)}
                 >
                   {(columnKey) => (
@@ -554,21 +451,19 @@ function TicketListPage() {
         </CardBody>
       </Card>
 
-      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center pt-2">
+        <div className="flex justify-center pt-4">
           <Pagination
             total={totalPages}
             page={currentPage}
             onChange={handlePageChange}
             showControls
-            showShadow
-            size="sm"
+            variant="flat"
+            color="primary"
           />
         </div>
       )}
 
-      {/* Edit Modal */}
       {editTicket && (
         <TicketEditModal
           isOpen={editModalOpen}
@@ -584,7 +479,7 @@ function TicketListPage() {
           }}
         />
       )}
-    </div>
+    </PageContainer>
   )
 }
 
