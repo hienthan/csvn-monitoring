@@ -10,6 +10,8 @@ import {
   Textarea,
   Checkbox,
   Alert,
+  Select,
+  SelectItem,
 } from '@heroui/react'
 import { AlertCircle } from 'lucide-react'
 import type { TicketStatus } from '../types'
@@ -23,21 +25,25 @@ interface StatusChangeModalProps {
   assignee?: string
   hasResolvedAt: boolean
   onConfirm: (params: {
+    newStatus: TicketStatus
     actorName: string
     note?: string
     clearResolvedAt?: boolean
   }) => Promise<void>
+  onStatusChange?: (status: TicketStatus) => void
 }
 
 export function StatusChangeModal({
   isOpen,
   onClose,
   currentStatus,
-  newStatus,
+  newStatus: initialNewStatus,
   assignee,
   hasResolvedAt,
   onConfirm,
+  onStatusChange,
 }: StatusChangeModalProps) {
+  const [selectedNewStatus, setSelectedNewStatus] = useState<TicketStatus>(initialNewStatus)
   const [actorName, setActorName] = useState(assignee || 'DevOps')
   const [note, setNote] = useState('')
   const [clearResolvedAt, setClearResolvedAt] = useState(false)
@@ -45,11 +51,19 @@ export function StatusChangeModal({
 
   useEffect(() => {
     if (isOpen) {
+      setSelectedNewStatus(initialNewStatus)
       setActorName(assignee || 'DevOps')
       setNote('')
       setClearResolvedAt(false)
     }
-  }, [isOpen, assignee])
+  }, [isOpen, assignee, initialNewStatus])
+
+  const handleStatusSelect = (status: TicketStatus) => {
+    setSelectedNewStatus(status)
+    if (onStatusChange) {
+      onStatusChange(status)
+    }
+  }
 
   const handleSubmit = async () => {
     if (!actorName.trim()) return
@@ -57,6 +71,7 @@ export function StatusChangeModal({
     setLoading(true)
     try {
       await onConfirm({
+        newStatus: selectedNewStatus,
         actorName: actorName.trim(),
         note: note.trim() || undefined,
         clearResolvedAt: clearResolvedAt,
@@ -68,12 +83,22 @@ export function StatusChangeModal({
     }
   }
 
+  const allStatuses: TicketStatus[] = [
+    'new',
+    'triage',
+    'in_progress',
+    'waiting_dev',
+    'blocked',
+    'done',
+    'rejected',
+  ]
+
   const needsResolvedAtClear =
     hasResolvedAt &&
     (currentStatus === 'done' || currentStatus === 'rejected') &&
-    newStatus === 'in_progress'
+    selectedNewStatus === 'in_progress'
 
-  const isClosingStatus = newStatus === 'done' || newStatus === 'rejected'
+  const isClosingStatus = selectedNewStatus === 'done' || selectedNewStatus === 'rejected'
 
   return (
     <Modal 
@@ -102,22 +127,52 @@ export function StatusChangeModal({
                     title="Confirm Status Change"
                     startContent={<AlertCircle size={20} />}
                   >
-                    You are about to change this ticket to a final status ({TICKET_STATUS_LABELS[newStatus]}). 
+                    You are about to change this ticket to a final status ({TICKET_STATUS_LABELS[selectedNewStatus]}). 
                     This action will mark the ticket as resolved or closed. Please confirm this is correct.
                   </Alert>
                 )}
                 <div>
-                  <p className="text-sm text-default-600">
-                    Changing status from{' '}
+                  <p className="text-sm text-default-600 mb-2">
+                    Current status:{' '}
                     <span className="font-semibold">
                       {TICKET_STATUS_LABELS[currentStatus]}
-                    </span>{' '}
-                    to{' '}
-                    <span className="font-semibold">
-                      {TICKET_STATUS_LABELS[newStatus]}
                     </span>
                   </p>
                 </div>
+
+                <Select
+                  label="New Status"
+                  placeholder="Select new status"
+                  selectedKeys={selectedNewStatus ? new Set([selectedNewStatus]) : new Set()}
+                  onSelectionChange={(keys) => {
+                    const value = Array.from(keys)[0] as TicketStatus
+                    if (value) {
+                      handleStatusSelect(value)
+                    }
+                  }}
+                  isRequired
+                  isDisabled={loading}
+                  selectionMode="single"
+                >
+                  {allStatuses
+                    .filter((status) => status !== currentStatus)
+                    .map((status) => (
+                      <SelectItem key={status} textValue={TICKET_STATUS_LABELS[status]}>
+                        {TICKET_STATUS_LABELS[status]}
+                      </SelectItem>
+                    ))}
+                </Select>
+
+                {selectedNewStatus !== currentStatus && (
+                  <div>
+                    <p className="text-sm text-default-600">
+                      Changing to:{' '}
+                      <span className="font-semibold">
+                        {TICKET_STATUS_LABELS[selectedNewStatus]}
+                      </span>
+                    </p>
+                  </div>
+                )}
 
             <Input
               id="status-change-actor-name"

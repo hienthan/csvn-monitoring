@@ -7,6 +7,9 @@ export interface ServerApp {
   description?: string
   created?: string
   updated?: string
+  expand?: {
+    [key: string]: any
+  }
   [key: string]: unknown
 }
 

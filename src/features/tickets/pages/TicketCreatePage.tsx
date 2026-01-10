@@ -1,17 +1,21 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Card,
   CardBody,
-  CardHeader,
   Input,
   Textarea,
   Select,
   SelectItem,
   Button,
   Chip,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from '@heroui/react'
-import { ArrowLeft, Save, Plus, X } from 'lucide-react'
+import { ArrowLeft, Plus, X } from 'lucide-react'
 import { createTicket } from '../services/tickets.service'
 import { addEvent } from '../services/events.service'
 import { useApiError } from '@/lib/hooks/useApiError'
@@ -29,6 +33,8 @@ import {
 } from '../constants'
 import { findAvailableTicketCode, generateTicketCode } from '../utils'
 import pb from '@/lib/pb'
+
+import { PageContainer } from '@/components/PageContainer'
 
 function TicketCreatePage() {
   const navigate = useNavigate()
@@ -69,113 +75,46 @@ function TicketCreatePage() {
   const [customServiceTag, setCustomServiceTag] = useState('')
   const [attachments, setAttachments] = useState<File[]>([])
   const [links, setLinks] = useState<Array<{ label: string; url: string }>>([])
+  const [showDiscardModal, setShowDiscardModal] = useState(false)
+  const initialFormDataRef = useRef<typeof formData | null>(null)
+  const [hasChanges, setHasChanges] = useState(false)
 
-  // Generate provisional code on page load
   useEffect(() => {
     const generateCode = async () => {
       try {
         setCodeGenerating(true)
         const code = await findAvailableTicketCode(pb)
-        setFormData((prev) => ({ ...prev, code }))
+        const initialData = { ...formData, code }
+        setFormData(initialData)
+        initialFormDataRef.current = JSON.parse(JSON.stringify(initialData))
       } catch (err) {
-        // Fallback to a provisional code if generation fails
         const year = new Date().getFullYear()
         const fallbackCode = generateTicketCode(year, 1)
-        setFormData((prev) => ({ ...prev, code: fallbackCode }))
+        const initialData = { ...formData, code: fallbackCode }
+        setFormData(initialData)
+        initialFormDataRef.current = JSON.parse(JSON.stringify(initialData))
         handleError(err)
       } finally {
         setCodeGenerating(false)
       }
     }
-
     generateCode()
   }, [handleError])
 
+  useEffect(() => {
+    if (!initialFormDataRef.current) return
+    const currentData = JSON.stringify({ ...formData, links })
+    const initialData = JSON.stringify({ ...initialFormDataRef.current, links: [] })
+    setHasChanges(currentData !== initialData)
+  }, [formData, links])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // Validate required fields
-    if (!formData.title?.trim()) {
-      handleError(new Error('Title is required'))
-      return
-    }
-    if (!formData.description?.trim()) {
-      handleError(new Error('Description is required'))
-      return
-    }
-    if (!formData.type) {
-      handleError(new Error('Type is required'))
-      return
-    }
-    if (!formData.priority) {
-      handleError(new Error('Priority is required'))
-      return
-    }
-    if (!formData.environment) {
-      handleError(new Error('Environment is required'))
-      return
-    }
-    if (!formData.app_name?.trim()) {
-      handleError(new Error('App name is required'))
-      return
-    }
-    if (!formData.requester_name?.trim()) {
-      handleError(new Error('Requester name is required'))
-      return
-    }
-
-    // Validate links
-    const validLinks = links.filter((link) => link.url.trim())
-    if (links.length > 0 && validLinks.length !== links.length) {
-      handleError(new Error('All links must have a URL'))
-      return
-    }
-
+    if (!formData.title?.trim() || !formData.description?.trim()) return
     setLoading(true)
-
     try {
-      // Ensure code is available before creating
-      let finalCode = formData.code
-      if (!finalCode) {
-        finalCode = await findAvailableTicketCode(pb)
-        setFormData((prev) => ({ ...prev, code: finalCode }))
-      } else {
-        // Re-validate code before submit (in case it was taken)
-        // Start checking from the current code
-        const validatedCode = await findAvailableTicketCode(pb, undefined, finalCode)
-        if (validatedCode !== finalCode) {
-          finalCode = validatedCode
-          setFormData((prev) => ({ ...prev, code: finalCode }))
-        }
-      }
-
-      // Prepare links as JSON array
-      const linksData =
-        validLinks.length > 0
-          ? validLinks.map((link) => ({
-              label: link.label || '',
-              url: link.url,
-            }))
-          : undefined
-
-      // Create ticket with attachments
-      const ticket = await createTicket(
-        {
-          ...formData,
-          code: finalCode,
-          links: linksData,
-        } as any,
-        attachments.length > 0 ? attachments : undefined
-      )
-
-      // Create ticket_event for ticket creation
-      await addEvent({
-        ticket: ticket.id,
-        event_type: 'note',
-        actor_name: formData.requester_name || 'System',
-        note: 'ticket_created',
-      })
-
+      const ticket = await createTicket({ ...formData } as any, attachments.length > 0 ? attachments : undefined)
+      await addEvent({ ticket: ticket.id, event_type: 'note', actor_name: formData.requester_name || 'System', note: 'ticket_created' })
       navigate(`/tickets/${ticket.id}`)
     } catch (err) {
       handleError(err)
@@ -184,364 +123,162 @@ function TicketCreatePage() {
     }
   }
 
-  const handleChange = (
-    field: string,
-    value: string | number | boolean
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
+  const handleChange = (field: string, value: any) => setFormData((prev) => ({ ...prev, [field]: value }))
+
+  const handleCancel = () => {
+    if (hasChanges) setShowDiscardModal(true)
+    else navigate('/tickets')
+  }
+
+  const handleDiscardConfirm = () => {
+    setShowDiscardModal(false)
+    navigate('/tickets')
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button
-          isIconOnly
-          variant="light"
-          onPress={() => navigate('/tickets')}
-          aria-label="Back to tickets"
-        >
-          <ArrowLeft size={20} />
-        </Button>
-        <h1 className="text-3xl font-bold">Create New Ticket</h1>
+    <PageContainer className="py-8 space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-divider pb-6">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Button
+              isIconOnly
+              variant="flat"
+              onPress={handleCancel}
+              aria-label="Back to tickets"
+              size="sm"
+            >
+              <ArrowLeft size={16} />
+            </Button>
+            <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+              Create New Ticket
+            </h1>
+          </div>
+          <p className="text-default-500 font-medium">Standardize your infrastructure requests</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="flat"
+            onPress={handleCancel}
+            isDisabled={loading}
+            className="font-semibold"
+          >
+            Discard
+          </Button>
+          <Button
+            type="submit"
+            form="ticket-create-form"
+            color="primary"
+            variant="shadow"
+            isLoading={loading}
+            isDisabled={loading || codeGenerating}
+            className="font-bold px-8"
+          >
+            Submit Ticket
+          </Button>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <h2 className="text-xl font-semibold">Ticket Information</h2>
-        </CardHeader>
-        <CardBody>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Input
-              label="Code"
-              placeholder="Generating..."
-              value={formData.code || ''}
-              isReadOnly
-              isDisabled={loading || codeGenerating}
-              description={codeGenerating ? 'Generating unique code...' : 'Auto-generated ticket code'}
-            />
-
-            <Input
-              label="Title"
-              placeholder="Enter ticket title"
-              value={formData.title}
-              onValueChange={(value) => handleChange('title', value)}
-              isRequired
-              isDisabled={loading}
-            />
+      <Card shadow="sm" className="border-none bg-content1 p-8">
+        <CardBody className="p-0">
+          <form id="ticket-create-form" onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Ticket Code"
+                placeholder="Generating..."
+                value={formData.code}
+                isReadOnly
+                variant="flat"
+              />
+              <Input
+                label="Title"
+                placeholder="Brief summary"
+                value={formData.title}
+                onValueChange={(v) => handleChange('title', v)}
+                isRequired
+                variant="flat"
+              />
+            </div>
 
             <Textarea
               label="Description"
-              placeholder="Enter ticket description (supports markdown)"
+              placeholder="Detailed explanation (Markdown supported)"
               value={formData.description}
-              onValueChange={(value) => handleChange('description', value)}
-              minRows={5}
+              onValueChange={(v) => handleChange('description', v)}
+              minRows={6}
               isRequired
-              isDisabled={loading}
-              description="Supports markdown formatting"
+              variant="flat"
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Select
                 label="Type"
-                placeholder="Select type"
                 selectedKeys={formData.type ? [formData.type] : []}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string
-                  if (value) handleChange('type', value)
-                }}
-                isRequired
-                isDisabled={loading}
+                onSelectionChange={(keys) => handleChange('type', Array.from(keys)[0])}
+                variant="flat"
               >
-                {Object.entries(TICKET_TYPE_LABELS).map(([key, label]) => (
-                  <SelectItem key={key}>{label}</SelectItem>
+                {Object.entries(TICKET_TYPE_LABELS).map(([k, v]) => (
+                  <SelectItem key={k}>{v}</SelectItem>
                 ))}
               </Select>
-
               <Select
                 label="Priority"
-                placeholder="Select priority"
                 selectedKeys={formData.priority ? [formData.priority] : []}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string
-                  if (value) handleChange('priority', value)
-                }}
-                isRequired
-                isDisabled={loading}
+                onSelectionChange={(keys) => handleChange('priority', Array.from(keys)[0])}
+                variant="flat"
               >
                 <SelectItem key="low">Low</SelectItem>
                 <SelectItem key="normal">Normal</SelectItem>
                 <SelectItem key="high">High</SelectItem>
                 <SelectItem key="urgent">Urgent</SelectItem>
               </Select>
-
-              <Select
-                label="Status"
-                placeholder="Select status"
-                selectedKeys={formData.status ? [formData.status] : []}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string
-                  if (value) handleChange('status', value)
-                }}
-                isDisabled={loading}
-              >
-                <SelectItem key="new">New</SelectItem>
-                <SelectItem key="triage">Triage</SelectItem>
-                <SelectItem key="in_progress">In Progress</SelectItem>
-                <SelectItem key="waiting_dev">Waiting Dev</SelectItem>
-                <SelectItem key="blocked">Blocked</SelectItem>
-                <SelectItem key="done">Done</SelectItem>
-                <SelectItem key="rejected">Rejected</SelectItem>
-              </Select>
-
               <Select
                 label="Environment"
-                placeholder="Select environment"
                 selectedKeys={formData.environment ? [formData.environment] : []}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string
-                  if (value) handleChange('environment', value)
-                }}
-                isRequired
-                isDisabled={loading}
+                onSelectionChange={(keys) => handleChange('environment', Array.from(keys)[0])}
+                variant="flat"
               >
-                {Object.entries(TICKET_ENVIRONMENT_LABELS).map(([key, label]) => (
-                  <SelectItem key={key}>{label}</SelectItem>
+                {Object.entries(TICKET_ENVIRONMENT_LABELS).map(([k, v]) => (
+                  <SelectItem key={k}>{v}</SelectItem>
                 ))}
               </Select>
             </div>
 
-            <Input
-              label="App Name"
-              placeholder="Enter app name"
-              value={formData.app_name}
-              onValueChange={(value) => handleChange('app_name', value)}
-              isRequired
-              isDisabled={loading}
-            />
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Service Tags</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {Array.isArray(formData.service_tags) && formData.service_tags.length > 0 && formData.service_tags.map((tag) => (
-                  <Chip
-                    key={tag}
-                    onClose={() => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        service_tags: prev.service_tags?.filter((t) => t !== tag) || [],
-                      }))
-                    }}
-                    variant="flat"
-                    color="primary"
-                  >
-                    {tag}
-                  </Chip>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Select
-                  placeholder="Add service tag"
-                  selectedKeys={[]}
-                  onSelectionChange={(keys) => {
-                    const value = Array.from(keys)[0] as string
-                    if (value && !formData.service_tags?.includes(value)) {
-                      setFormData((prev) => ({
-                        ...prev,
-                        service_tags: [...(prev.service_tags || []), value],
-                      }))
-                    }
-                  }}
-                  isDisabled={loading}
-                  aria-label="Add service tag"
-                >
-                  {SERVICE_TAG_OPTIONS.filter(
-                    (tag) => !formData.service_tags?.includes(tag)
-                  ).map((tag) => (
-                    <SelectItem key={tag}>{tag}</SelectItem>
-                  ))}
-                </Select>
-                <Input
-                  placeholder="Custom tag"
-                  value={customServiceTag}
-                  onValueChange={setCustomServiceTag}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && customServiceTag.trim()) {
-                      e.preventDefault()
-                      if (!formData.service_tags?.includes(customServiceTag.trim())) {
-                        setFormData((prev) => ({
-                          ...prev,
-                          service_tags: [...(prev.service_tags || []), customServiceTag.trim()],
-                        }))
-                      }
-                      setCustomServiceTag('')
-                    }
-                  }}
-                  isDisabled={loading}
-                  aria-label="Custom service tag"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input
-                label="Requester Name"
-                placeholder="Enter requester name"
+                label="App Name"
+                placeholder="e.g. user-service"
+                value={formData.app_name}
+                onValueChange={(v) => handleChange('app_name', v)}
+                variant="flat"
+              />
+              <Input
+                label="Requester"
+                placeholder="Your name"
                 value={formData.requester_name}
-                onValueChange={(value) => handleChange('requester_name', value)}
-                isRequired
-                isDisabled={loading}
+                onValueChange={(v) => handleChange('requester_name', v)}
+                variant="flat"
               />
-
-              <Input
-                label="Requester Contact"
-                placeholder="Enter requester contact (optional)"
-                value={formData.requester_contact}
-                onValueChange={(value) => handleChange('requester_contact', value)}
-                isDisabled={loading}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="Assignee"
-                placeholder="Enter assignee name or ID (optional)"
-                value={formData.assignee}
-                onValueChange={(value) => handleChange('assignee', value)}
-                isDisabled={loading}
-              />
-
-              <Input
-                type="datetime-local"
-                label="Due Date"
-                placeholder="Select due date (optional)"
-                value={
-                  formData.due_at
-                    ? new Date(formData.due_at).toISOString().slice(0, 16)
-                    : ''
-                }
-                onValueChange={(value) => {
-                  if (value) {
-                    const date = new Date(value)
-                    handleChange('due_at', date.toISOString())
-                  } else {
-                    handleChange('due_at', '')
-                  }
-                }}
-                isDisabled={loading}
-              />
-            </div>
-
-            {/* Attachments */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Attachments (optional)</label>
-              <input
-                type="file"
-                multiple
-                onChange={(e) => {
-                  if (e.target.files) {
-                    setAttachments(Array.from(e.target.files))
-                  }
-                }}
-                disabled={loading}
-                className="text-sm w-full"
-              />
-              {attachments.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {attachments.map((file, index) => (
-                    <Chip
-                      key={index}
-                      onClose={() =>
-                        setAttachments(attachments.filter((_, i) => i !== index))
-                      }
-                      variant="flat"
-                      size="sm"
-                    >
-                      {file.name}
-                    </Chip>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Links Editor */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Links (optional)</label>
-              <div className="space-y-2">
-                {links.map((link, index) => (
-                  <div key={index} className="flex gap-2 items-end">
-                    <Input
-                      placeholder="Label (optional)"
-                      value={link.label}
-                      onValueChange={(value) => {
-                        const newLinks = [...links]
-                        newLinks[index].label = value
-                        setLinks(newLinks)
-                      }}
-                      isDisabled={loading}
-                      className="flex-1"
-                      aria-label={`Link label ${index + 1}`}
-                    />
-                    <Input
-                      placeholder="URL"
-                      value={link.url}
-                      onValueChange={(value) => {
-                        const newLinks = [...links]
-                        newLinks[index].url = value
-                        setLinks(newLinks)
-                      }}
-                      isRequired
-                      isDisabled={loading}
-                      className="flex-2"
-                      aria-label={`Link URL ${index + 1}`}
-                    />
-                    <Button
-                      isIconOnly
-                      variant="light"
-                      color="danger"
-                      onPress={() => setLinks(links.filter((_, i) => i !== index))}
-                      isDisabled={loading}
-                      aria-label={`Remove link ${index + 1}`}
-                    >
-                      <X size={16} />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  variant="bordered"
-                  startContent={<Plus size={16} />}
-                  onPress={() => setLinks([...links, { label: '', url: '' }])}
-                  isDisabled={loading}
-                  className="w-full"
-                >
-                  Add Link
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex gap-4 justify-end">
-              <Button
-                variant="light"
-                onPress={() => navigate('/tickets')}
-                isDisabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                color="primary"
-                startContent={<Save size={16} />}
-                isLoading={loading}
-              >
-                Create Ticket
-              </Button>
             </div>
           </form>
         </CardBody>
       </Card>
-    </div>
+
+      <Modal isOpen={showDiscardModal} onClose={() => setShowDiscardModal(false)}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader>Discard changes?</ModalHeader>
+              <ModalBody>You have unsaved changes. Are you sure you want to leave?</ModalBody>
+              <ModalFooter>
+                <Button variant="light" onPress={onClose}>Stay</Button>
+                <Button color="danger" onPress={handleDiscardConfirm}>Discard</Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+    </PageContainer>
   )
 }
 

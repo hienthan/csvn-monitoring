@@ -6,18 +6,18 @@ import {
   Chip,
   Card,
   CardBody,
-  Skeleton,
   Button,
-  Select,
-  SelectItem,
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
+  Skeleton,
 } from '@heroui/react'
-import { ArrowLeft, RefreshCw, Edit, MoreVertical } from 'lucide-react'
+import { ArrowLeft, Edit, MoreVertical, Copy as CopyIcon } from 'lucide-react'
 import Breadcrumb from '@/components/Breadcrumb'
 import { useTicket } from '../hooks/useTicket'
+import { useApiError } from '@/lib/hooks/useApiError'
+import { addEvent } from '../services/events.service'
 import TicketOverviewTab from '../components/TicketOverviewTab'
 import TicketCommentsTab from '../components/TicketCommentsTab'
 import TicketEventsTab from '../components/TicketEventsTab'
@@ -30,9 +30,11 @@ import {
   getTicketStatusColor,
   getTicketPriorityColor,
 } from '../constants'
+import { copyTicketCode } from '../utils'
+import { copyToClipboard } from '@/lib/utils/clipboard'
 import type { TicketStatus, Ticket } from '../types'
-import { useApiError } from '@/lib/hooks/useApiError'
-import { addEvent } from '../services/events.service'
+
+import { PageContainer } from '@/components/PageContainer'
 
 function TicketDetailPage() {
   const { ticketId } = useParams()
@@ -45,26 +47,23 @@ function TicketDetailPage() {
   const [isChangingStatus, setIsChangingStatus] = useState(false)
 
   const handleStatusChange = async (params: {
+    newStatus: TicketStatus
     actorName: string
     note?: string
     clearResolvedAt?: boolean
   }) => {
-    if (!ticket || !selectedNewStatus) return
+    if (!ticket) return
 
     setIsChangingStatus(true)
     try {
       await changeStatus(
-        selectedNewStatus,
+        params.newStatus,
         params.actorName,
         params.note,
         params.clearResolvedAt
       )
-      
-      // Close modal first
       setStatusModalOpen(false)
       setSelectedNewStatus(null)
-      
-      // Refetch to get updated ticket
       await refetch()
     } catch (err) {
       handleError(err)
@@ -74,14 +73,28 @@ function TicketDetailPage() {
     }
   }
 
-  const handleStatusSelect = (status: TicketStatus) => {
-    // Check if changing to Resolved/Closed status - show confirmation
-    if (status === 'done' || status === 'rejected') {
-      setSelectedNewStatus(status)
+  const handleStatusChangeInModal = (status: TicketStatus) => {
+    setSelectedNewStatus(status)
+  }
+
+  const handleStatusChangeClick = () => {
+    if (ticket) {
+      setSelectedNewStatus(ticket.status)
       setStatusModalOpen(true)
-    } else {
-      setSelectedNewStatus(status)
-      setStatusModalOpen(true)
+    }
+  }
+
+  const handleCopyLink = async () => {
+    try {
+      await copyToClipboard(window.location.href)
+    } catch (err) {
+      handleError(err)
+    }
+  }
+
+  const handleCopyCode = async () => {
+    if (ticket?.code) {
+      await copyTicketCode(ticket.code)
     }
   }
 
@@ -92,74 +105,25 @@ function TicketDetailPage() {
     if (!ticket) return
 
     try {
-      // Calculate changed fields for event log
       const changedFields: string[] = []
-      if (payload.title !== undefined && payload.title !== ticket.title) {
-        changedFields.push('title')
-      }
-      if (payload.description !== undefined && payload.description !== ticket.description) {
-        changedFields.push('description')
-      }
-      if (payload.type !== undefined && payload.type !== ticket.type) {
-        changedFields.push('type')
-      }
-      if (payload.priority !== undefined && payload.priority !== ticket.priority) {
-        changedFields.push('priority')
-      }
-      if (payload.environment !== undefined && payload.environment !== ticket.environment) {
-        changedFields.push('environment')
-      }
-      if (payload.app_name !== undefined && payload.app_name !== ticket.app_name) {
-        changedFields.push('app_name')
-      }
-      if (payload.service_tags !== undefined) {
-        const payloadTags = Array.isArray(payload.service_tags) ? payload.service_tags : []
-        const ticketTags = Array.isArray(ticket.service_tags) ? ticket.service_tags : []
-        if (JSON.stringify(payloadTags) !== JSON.stringify(ticketTags)) {
-          changedFields.push('service_tags')
-        }
-      }
-      if (
-        payload.requester_name !== undefined &&
-        payload.requester_name !== ticket.requester_name
-      ) {
-        changedFields.push('requester_name')
-      }
-      if (
-        payload.requester_contact !== undefined &&
-        payload.requester_contact !== ticket.requester_contact
-      ) {
-        changedFields.push('requester_contact')
-      }
-      if (payload.assignee !== undefined && payload.assignee !== ticket.assignee) {
-        changedFields.push('assignee')
-      }
-      if (payload.due_at !== undefined && payload.due_at !== ticket.due_at) {
-        changedFields.push('due_at')
-      }
-      if (
-        payload.links !== undefined &&
-        JSON.stringify(payload.links) !== JSON.stringify(ticket.links)
-      ) {
-        changedFields.push('links')
-      }
+      if (payload.title !== undefined && payload.title !== ticket.title) changedFields.push('title')
+      if (payload.description !== undefined && payload.description !== ticket.description) changedFields.push('description')
+      if (payload.type !== undefined && payload.type !== ticket.type) changedFields.push('type')
+      if (payload.priority !== undefined && payload.priority !== ticket.priority) changedFields.push('priority')
+      if (payload.environment !== undefined && payload.environment !== ticket.environment) changedFields.push('environment')
+      if (payload.app_name !== undefined && payload.app_name !== ticket.app_name) changedFields.push('app_name')
 
-      // Get actor name from payload or use default
       const actorName = (payload as any).actorName || ticket.assignee || 'System'
-
-      // Update ticket
       await update(payload, attachmentsFiles)
 
-      // Create event if there are changes
       if (changedFields.length > 0) {
         await addEvent({
           ticket: ticket.id,
           event_type: 'note',
           actor_name: actorName,
-          note: `ticket_updated: ${changedFields.join(', ')}`,
+          note: `ticket_updated: ${changedFields.join(', ')} `,
         })
       }
-
       await refetch()
     } catch (err) {
       handleError(err)
@@ -167,203 +131,162 @@ function TicketDetailPage() {
     }
   }
 
-  const allStatuses: TicketStatus[] = [
-    'new',
-    'triage',
-    'in_progress',
-    'waiting_dev',
-    'blocked',
-    'done',
-    'rejected',
-  ]
-
-  return (
-    <div className="max-w-[1100px] mx-auto px-6 py-6 space-y-6">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-4">
-        <Button
-          isIconOnly
-          variant="light"
-          onPress={() => navigate('/tickets')}
-          aria-label="Back to tickets"
-        >
-          <ArrowLeft size={20} />
-        </Button>
-        <Breadcrumb
-          items={[
-            { label: 'Tickets', path: '/tickets' },
-            {
-              label: ticket?.code || `Ticket ${ticketId}`,
-              path: `/tickets/${ticketId}`,
-            },
-          ]}
-        />
-      </div>
-
-      {/* Ticket Info Header */}
-      <Card>
-        <CardBody className="p-6">
-          {loading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-8 w-64 rounded" />
-              <div className="flex gap-4">
-                <Skeleton className="h-4 w-32 rounded" />
-                <Skeleton className="h-4 w-32 rounded" />
-                <Skeleton className="h-4 w-32 rounded" />
-              </div>
-            </div>
-          ) : error ? (
+  if (error) {
+    return (
+      <PageContainer className="py-8">
+        <Card>
+          <CardBody className="p-6">
             <div className="text-center space-y-4 py-8">
               <p className="text-danger">Error loading ticket: {error.message}</p>
-              <Button color="primary" onPress={() => refetch()}>
-                Retry
+              <Button color="primary" onPress={() => navigate('/tickets')}>
+                Back to Tickets
               </Button>
             </div>
-          ) : ticket ? (
-            <div className="space-y-6">
-              {/* Header: Left (Title + Meta) and Right (Actions) */}
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                {/* Left: Title + Meta Chips */}
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-2xl lg:text-3xl font-bold mb-3 break-words">
-                    {ticket.title || 'Unknown Ticket'}
-                  </h1>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {ticket.status && (
-                      <Chip
-                        size="sm"
-                        variant="flat"
-                        color={getTicketStatusColor(ticket.status)}
-                      >
-                        {TICKET_STATUS_LABELS[ticket.status]}
-                      </Chip>
-                    )}
-                    {ticket.priority && (
-                      <Chip
-                        size="sm"
-                        variant="flat"
-                        color={getTicketPriorityColor(ticket.priority)}
-                      >
-                        {TICKET_PRIORITY_LABELS[ticket.priority]}
-                      </Chip>
-                    )}
-                    {ticket.environment && (
-                      <Chip
-                        size="sm"
-                        variant="flat"
-                        color="default"
-                      >
-                        {TICKET_ENVIRONMENT_LABELS[ticket.environment]}
-                      </Chip>
-                    )}
-                  </div>
-                </div>
+          </CardBody>
+        </Card>
+      </PageContainer>
+    )
+  }
 
-                {/* Right: Actions */}
-                <div className="flex flex-wrap items-center gap-2 justify-end lg:justify-start">
-                  {/* Primary: Change Status Select */}
-                  <Select
-                    placeholder="Change Status"
-                    selectedKeys={ticket.status ? new Set([ticket.status]) : new Set()}
-                    onSelectionChange={(keys) => {
-                      const value = Array.from(keys)[0] as TicketStatus
-                      if (value && value !== ticket.status) {
-                        handleStatusSelect(value)
-                      }
-                    }}
-                    isDisabled={isChangingStatus || loading}
-                    className="min-w-[160px]"
-                    size="sm"
-                    variant="flat"
-                    color="primary"
-                    aria-label="Change ticket status"
-                    selectionMode="single"
-                  >
-                    {allStatuses.map((status) => (
-                      <SelectItem key={status} textValue={TICKET_STATUS_LABELS[status]}>
-                        {TICKET_STATUS_LABELS[status]}
-                      </SelectItem>
-                    ))}
-                  </Select>
-
-                  {/* Secondary: Edit Button */}
-                  <Button
-                    variant="flat"
-                    startContent={<Edit size={16} />}
-                    onPress={() => setEditModalOpen(true)}
-                    isDisabled={loading}
-                    aria-label="Edit ticket"
-                  >
-                    Edit
-                  </Button>
-
-                  {/* Icon-only: Refresh */}
-                  <Button
-                    isIconOnly
-                    variant="light"
-                    onPress={() => refetch()}
-                    isDisabled={loading}
-                    aria-label="Refresh ticket"
-                  >
-                    <RefreshCw size={16} />
-                  </Button>
-
-                  {/* Icon-only: More Menu */}
-                  <Dropdown>
-                    <DropdownTrigger>
-                      <Button
-                        isIconOnly
-                        variant="light"
-                        aria-label="More options"
-                      >
-                        <MoreVertical size={16} />
-                      </Button>
-                    </DropdownTrigger>
-                    <DropdownMenu aria-label="More options">
-                      <DropdownItem key="copy" textValue="Copy ticket link">
-                        Copy Link
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
-                </div>
-              </div>
+  return (
+    <PageContainer className="py-6 space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Button
+              isIconOnly
+              variant="flat"
+              onPress={() => navigate('/tickets')}
+              aria-label="Back to tickets"
+              size="sm"
+            >
+              <ArrowLeft size={16} />
+            </Button>
+            <Breadcrumb
+              items={[
+                { label: 'Tickets', path: '/tickets' },
+                {
+                  label: ticket?.code || `Ticket ${ticketId} `,
+                  path: `/ tickets / ${ticketId} `,
+                },
+              ]}
+            />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+              {loading ? <Skeleton className="h-9 w-64 rounded" /> : (ticket?.title || 'Unknown Ticket')}
+            </h1>
+            <div className="flex flex-wrap items-center gap-2">
+              {loading ? (
+                <Skeleton className="h-6 w-20 rounded" />
+              ) : ticket?.status && (
+                <Chip
+                  size="sm"
+                  variant="shadow"
+                  color={getTicketStatusColor(ticket.status)}
+                  className="font-bold uppercase tracking-wider"
+                >
+                  {TICKET_STATUS_LABELS[ticket.status]}
+                </Chip>
+              )}
+              {loading ? (
+                <Skeleton className="h-6 w-24 rounded" />
+              ) : ticket?.priority && (
+                <Chip
+                  size="sm"
+                  variant="flat"
+                  color={getTicketPriorityColor(ticket.priority)}
+                  className="font-semibold"
+                >
+                  {TICKET_PRIORITY_LABELS[ticket.priority]}
+                </Chip>
+              )}
             </div>
-          ) : null}
-        </CardBody>
-      </Card>
+          </div>
+        </div>
 
-      {/* Tabs */}
-      <Card>
-        <CardBody className="p-0">
-          <Tabs
-            defaultSelectedKey="overview"
-            aria-label="Ticket detail tabs"
-            classNames={{
-              base: "w-full",
-              tabList: "px-6 pt-4",
-              panel: "px-6 pb-6",
-            }}
+        <div className="flex items-center gap-2">
+          <Button
+            color="primary"
+            variant="shadow"
+            onPress={handleStatusChangeClick}
+            isDisabled={isChangingStatus || loading}
+            className="font-bold px-6"
           >
-            <Tab key="overview" title="Overview">
-              <div className="pt-4">
-                <TicketOverviewTab ticketId={ticketId} />
-              </div>
-            </Tab>
-            <Tab key="comments" title="Comments">
-              <div className="pt-4">
-                <TicketCommentsTab ticketId={ticketId} />
-              </div>
-            </Tab>
-            <Tab key="events" title="Events">
-              <div className="pt-4">
-                <TicketEventsTab ticketId={ticketId} />
-              </div>
-            </Tab>
-          </Tabs>
-        </CardBody>
-      </Card>
+            Update Status
+          </Button>
+          <Button
+            variant="flat"
+            startContent={<Edit size={16} />}
+            onPress={() => setEditModalOpen(true)}
+            isDisabled={loading}
+            className="font-semibold"
+          >
+            Edit
+          </Button>
+          <Dropdown placement="bottom-end">
+            <DropdownTrigger>
+              <Button isIconOnly variant="light">
+                <MoreVertical size={20} />
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu onAction={(key) => {
+              if (key === 'copy-link') handleCopyLink()
+              if (key === 'copy-code') handleCopyCode()
+            }}>
+              <DropdownItem key="copy-link" startContent={<CopyIcon size={16} />}>Copy Link</DropdownItem>
+              <DropdownItem key="copy-code" startContent={<CopyIcon size={16} />}>Copy Code</DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+        </div>
+      </div>
 
-      {/* Status Change Modal */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-3 space-y-6">
+          <Card shadow="none" className="border border-divider bg-transparent overflow-hidden">
+            <CardBody className="p-0">
+              <Tabs
+                variant="underlined"
+                color="primary"
+                aria-label="Ticket detail tabs"
+                classNames={{
+                  tabList: "gap-6 w-full relative rounded-none border-b border-divider px-6 pt-2 h-14",
+                  cursor: "px-6 bg-primary h-0.5",
+                  tab: "max-w-fit px-0 h-12",
+                  tabContent: "group-data-[selected=true]:text-primary font-bold transition-all text-sm uppercase tracking-wider"
+                }}
+              >
+                <Tab key="overview" title="Overview">
+                  <div className="p-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <TicketOverviewTab ticketId={ticketId!} />
+                  </div>
+                </Tab>
+                <Tab key="comments" title="Comments">
+                  <div className="p-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <TicketCommentsTab ticketId={ticketId!} />
+                  </div>
+                </Tab>
+                <Tab key="events" title="Events">
+                  <div className="p-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <TicketEventsTab ticketId={ticketId!} />
+                  </div>
+                </Tab>
+              </Tabs>
+            </CardBody>
+          </Card>
+        </div>
+
+        <div className="lg:col-span-1 space-y-6">
+          {/* Metadata Sidebar / Quick Info moved here if truly out of tabs. 
+              But TicketOverviewTab already has it. 
+              If I move it out, OverviewTab needs to be cleaner. 
+              The user said 'đưa quick info ra cột 4 thay vì đang ở cột 3' in the context of the 4-column layout.
+              I will assume he refers to the internal grid in TicketOverviewTab.tsx.
+              Let's re-examine TicketOverviewTab.tsx.
+          */}
+        </div>
+      </div>
+
       {ticket && selectedNewStatus && (
         <StatusChangeModal
           isOpen={statusModalOpen}
@@ -375,11 +298,11 @@ function TicketDetailPage() {
           newStatus={selectedNewStatus}
           assignee={ticket.assignee}
           hasResolvedAt={!!ticket.resolved_at}
+          onStatusChange={handleStatusChangeInModal}
           onConfirm={handleStatusChange}
         />
       )}
 
-      {/* Edit Modal */}
       {ticket && (
         <TicketEditModal
           isOpen={editModalOpen}
@@ -388,7 +311,7 @@ function TicketDetailPage() {
           onSave={handleEditSave}
         />
       )}
-    </div>
+    </PageContainer>
   )
 }
 

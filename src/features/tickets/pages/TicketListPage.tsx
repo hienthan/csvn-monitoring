@@ -16,9 +16,13 @@ import {
   Select,
   SelectItem,
   Input,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
   Tooltip,
 } from '@heroui/react'
-import { Plus, Search, X, Copy, Check, Eye, Edit, Trash2, User as UserIcon } from 'lucide-react'
+import { Plus, Search, X, Copy, Check, MoreVertical, User as UserIcon } from 'lucide-react'
 import { useTickets } from '../hooks/useTickets'
 import { useTicketFilters } from '../hooks/useTicketFilters'
 import type { Ticket } from '../types'
@@ -32,16 +36,21 @@ import {
 } from '../constants'
 import { formatRelativeTime, copyTicketCode } from '../utils'
 import { EmptyState } from '@/components/EmptyState'
+import { TicketEditModal } from '../components/TicketEditModal'
+
+import { PageContainer } from '@/components/PageContainer'
 
 function TicketListPage() {
   const navigate = useNavigate()
   const { filters, setFilter, clearFilters } = useTicketFilters()
-  const { tickets, loading, error, totalPages, currentPage, setCurrentPage, refetch } =
+  const { tickets, loading, error, totalPages, currentPage, setCurrentPage, refetch, totalItems } =
     useTickets(filters)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [editTicket, setEditTicket] = useState<Ticket | null>(null)
+  const [editModalOpen, setEditModalOpen] = useState(false)
 
   const handleCopyCode = async (code: string, e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent row click
+    e.stopPropagation()
     const success = await copyTicketCode(code)
     if (success) {
       setCopiedCode(code)
@@ -72,18 +81,22 @@ function TicketListPage() {
     { key: 'actions', label: 'ACTIONS' },
   ]
 
-  const handleAction = (action: string, ticketId: string, e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent row click
+  const handleEditSave = async (_payload: Partial<Ticket>, _attachmentsFiles?: File[]) => {
+    await refetch()
+  }
+
+  const handleAction = (action: string, ticket: Ticket, e: React.MouseEvent) => {
+    e.stopPropagation()
     switch (action) {
       case 'view':
-        navigate(`/tickets/${ticketId}`)
+        navigate(`/tickets/${ticket.id}`)
         break
       case 'edit':
-        navigate(`/tickets/${ticketId}`, { state: { edit: true } })
+        setEditTicket(ticket)
+        setEditModalOpen(true)
         break
       case 'delete':
-        // TODO: Implement delete functionality
-        console.log('Delete ticket', ticketId)
+        console.log('Delete ticket', ticket.id)
         break
     }
   }
@@ -92,37 +105,43 @@ function TicketListPage() {
     switch (columnKey) {
       case 'code':
         return (
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-sm font-medium text-foreground">
+          <div className="flex items-center gap-2 group">
+            <span className="font-mono text-xs font-bold text-primary px-1.5 py-0.5 bg-primary/5 rounded border border-primary/10">
               {ticket.code || 'N/A'}
             </span>
             {ticket.code && (
-              <Button
-                isIconOnly
-                size="sm"
-                variant="light"
-                className="min-w-0 h-6 w-6"
-                onPress={(e) => handleCopyCode(ticket.code, e as any)}
-                aria-label="Copy ticket code"
-              >
-                {copiedCode === ticket.code ? (
-                  <Check size={12} className="text-success" />
-                ) : (
-                  <Copy size={12} />
-                )}
-              </Button>
+              <Tooltip content="Copy Code" size="sm" closeDelay={0}>
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                  className="min-w-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onPress={(e) => handleCopyCode(ticket.code, e as any)}
+                  aria-label="Copy ticket code"
+                >
+                  {copiedCode === ticket.code ? (
+                    <Check size={12} className="text-success" />
+                  ) : (
+                    <Copy size={12} />
+                  )}
+                </Button>
+              </Tooltip>
             )}
           </div>
         )
       case 'title':
+        const serviceTagsText = Array.isArray(ticket.service_tags) && ticket.service_tags.length > 0
+          ? ticket.service_tags.join(', ')
+          : ''
+        const subtitleParts = [ticket.app_name, serviceTagsText].filter(Boolean)
         return (
-          <div className="flex flex-col">
-            <span className="font-medium text-foreground">
+          <div className="flex flex-col min-w-0 py-0.5">
+            <span className="font-bold text-sm text-foreground truncate leading-tight">
               {ticket.title || 'N/A'}
             </span>
-            {ticket.app_name && (
-              <span className="text-xs text-default-500 mt-0.5">
-                {ticket.app_name}
+            {subtitleParts.length > 0 && (
+              <span className="text-[11px] text-default-400 mt-0.5 truncate uppercase tracking-wide font-medium">
+                {subtitleParts.join(' · ')}
               </span>
             )}
           </div>
@@ -159,48 +178,51 @@ function TicketListPage() {
           </div>
         )
       case 'updated':
+        const exactTime = ticket.updated ? new Date(ticket.updated).toLocaleString() : 'N/A'
         return (
-          <div className="text-default-500 text-sm" title={ticket.updated}>
+          <div className="text-default-500 text-sm" title={exactTime}>
             {formatRelativeTime(ticket.updated)}
           </div>
         )
       case 'actions':
         return (
-          <div className="flex items-center gap-1">
-            <Tooltip content="View">
-              <Button
-                isIconOnly
-                size="sm"
-                variant="light"
-                onPress={(e) => handleAction('view', ticket.id, e as any)}
-                aria-label="View ticket"
+          <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            <Dropdown>
+              <DropdownTrigger>
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                  aria-label="More options"
+                >
+                  <MoreVertical size={16} />
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="Ticket actions"
+                onAction={(key) => {
+                  const actionMap: Record<string, string> = {
+                    view: 'view',
+                    edit: 'edit',
+                    delete: 'delete',
+                  }
+                  const action = actionMap[key as string]
+                  if (action) {
+                    handleAction(action, ticket, {} as React.MouseEvent)
+                  }
+                }}
               >
-                <Eye size={16} />
-              </Button>
-            </Tooltip>
-            <Tooltip content="Edit">
-              <Button
-                isIconOnly
-                size="sm"
-                variant="light"
-                onPress={(e) => handleAction('edit', ticket.id, e as any)}
-                aria-label="Edit ticket"
-              >
-                <Edit size={16} />
-              </Button>
-            </Tooltip>
-            <Tooltip content="Delete" color="danger">
-              <Button
-                isIconOnly
-                size="sm"
-                variant="light"
-                color="danger"
-                onPress={(e) => handleAction('delete', ticket.id, e as any)}
-                aria-label="Delete ticket"
-              >
-                <Trash2 size={16} />
-              </Button>
-            </Tooltip>
+                <DropdownItem key="view" textValue="View ticket">
+                  View
+                </DropdownItem>
+                <DropdownItem key="edit" textValue="Edit ticket">
+                  Edit
+                </DropdownItem>
+                <DropdownItem key="delete" className="text-danger" textValue="Delete ticket">
+                  Delete
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
           </div>
         )
       default:
@@ -208,15 +230,34 @@ function TicketListPage() {
     }
   }
 
+  const activeFilterSummary = []
+  if (filters.status) {
+    activeFilterSummary.push(`Status: ${TICKET_STATUS_LABELS[filters.status]}`)
+  }
+  if (filters.priority) {
+    activeFilterSummary.push(`Priority: ${TICKET_PRIORITY_LABELS[filters.priority]}`)
+  }
+  if (filters.type) {
+    activeFilterSummary.push(`Type: ${TICKET_TYPE_LABELS[filters.type]}`)
+  }
+  if (filters.environment) {
+    activeFilterSummary.push(`Environment: ${TICKET_ENVIRONMENT_LABELS[filters.environment]}`)
+  }
+
   if (error) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Tickets</h1>
+      <PageContainer className="py-8 space-y-8">
+        <div className="flex items-end justify-between border-b border-divider pb-4">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight">Tickets</h1>
+            <p className="text-sm text-danger">Error loading tickets: {error.message}</p>
+          </div>
           <Button
             color="primary"
-            startContent={<Plus size={16} />}
+            variant="shadow"
+            startContent={<Plus size={18} />}
             onPress={() => navigate('/tickets/new')}
+            className="font-bold"
           >
             New Ticket
           </Button>
@@ -231,34 +272,59 @@ function TicketListPage() {
             />
           </CardBody>
         </Card>
-      </div>
+      </PageContainer>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Tickets</h1>
+    <PageContainer className="py-8 space-y-8 animate-in fade-in duration-500">
+      <div className="flex items-end justify-between border-b border-divider pb-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">Tickets</h1>
+          <div className="flex items-center gap-2">
+            {loading ? (
+              <Skeleton className="h-4 w-32 rounded mt-1" />
+            ) : (
+              <p className="text-sm font-medium text-default-500">
+                {totalItems > 0 ? `${totalItems} Tickets active` : 'No tickets'}
+              </p>
+            )}
+            {activeFilterSummary.length > 0 && (
+              <>
+                <div className="h-1 w-1 rounded-full bg-default-300 mx-1" />
+                <p className="text-xs text-default-400">
+                  {activeFilterSummary.join(' · ')}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
         <Button
           color="primary"
-          startContent={<Plus size={16} />}
+          variant="shadow"
+          startContent={<Plus size={18} />}
           onPress={() => navigate('/tickets/new')}
+          className="font-bold"
         >
           New Ticket
         </Button>
       </div>
 
-      {/* Search and Filters */}
-      <Card>
-        <CardBody className="p-4">
-          <div className="space-y-4">
-            {/* Search */}
+      <div className="sticky top-0 z-20 transition-all">
+        <div className="glassmorphism rounded-2xl p-2 shadow-lg shadow-black/5">
+          <div className="flex flex-wrap gap-2 items-center">
             <Input
               placeholder="Search tickets..."
               value={filters.q || ''}
               onValueChange={(value) => setFilter('q', value)}
-              startContent={<Search size={16} />}
+              startContent={<Search size={18} className="text-default-400" />}
               aria-label="Search tickets"
+              className="flex-1 min-w-[200px]"
+              variant="flat"
+              classNames={{
+                inputWrapper: "bg-default-100/50 hover:bg-default-200/50 transition-colors border-none",
+                input: "text-sm"
+              }}
               endContent={
                 filters.q && (
                   <Button
@@ -274,122 +340,82 @@ function TicketListPage() {
               }
             />
 
-            {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <Select
-                label="Status"
-                placeholder="All"
-                selectedKeys={filters.status ? [filters.status] : []}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string
-                  setFilter('status', value || undefined)
-                }}
-              >
-                {[
-                  <SelectItem key="all">All</SelectItem>,
-                  ...Object.entries(TICKET_STATUS_LABELS).map(([key, label]) => (
-                    <SelectItem key={key}>{label}</SelectItem>
-                  )),
-                ]}
-              </Select>
+            <Select
+              placeholder="Status"
+              selectedKeys={filters.status ? new Set([filters.status]) : new Set()}
+              onSelectionChange={(keys) => {
+                const value = Array.from(keys)[0] as string
+                setFilter('status', value && value !== 'all' ? value : undefined)
+              }}
+              items={[
+                { key: 'all', label: 'All Statuses' },
+                ...Object.entries(TICKET_STATUS_LABELS).map(([key, label]) => ({ key, label }))
+              ]}
+              className="w-[140px]"
+              variant="flat"
+              classNames={{
+                trigger: "bg-default-100/50 hover:bg-default-200/50 transition-colors border-none"
+              }}
+              aria-label="Filter by status"
+            >
+              {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
+            </Select>
 
-              <Select
-                label="Priority"
-                placeholder="All"
-                selectedKeys={filters.priority ? [filters.priority] : []}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string
-                  setFilter('priority', value || undefined)
-                }}
-              >
-                {[
-                  <SelectItem key="all">All</SelectItem>,
-                  ...Object.entries(TICKET_PRIORITY_LABELS).map(([key, label]) => (
-                    <SelectItem key={key}>{label}</SelectItem>
-                  )),
-                ]}
-              </Select>
+            <Select
+              placeholder="Priority"
+              selectedKeys={filters.priority ? new Set([filters.priority]) : new Set()}
+              onSelectionChange={(keys) => {
+                const value = Array.from(keys)[0] as string
+                setFilter('priority', value && value !== 'all' ? value : undefined)
+              }}
+              items={[
+                { key: 'all', label: 'All Priorities' },
+                ...Object.entries(TICKET_PRIORITY_LABELS).map(([key, label]) => ({ key, label }))
+              ]}
+              className="w-[140px]"
+              variant="flat"
+              classNames={{
+                trigger: "bg-default-100/50 hover:bg-default-200/50 transition-colors border-none"
+              }}
+              aria-label="Filter by priority"
+            >
+              {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
+            </Select>
 
-              <Select
-                label="Type"
-                placeholder="All"
-                selectedKeys={filters.type ? [filters.type] : []}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string
-                  setFilter('type', value || undefined)
-                }}
+            {hasActiveFilters && (
+              <Button
+                variant="light"
+                color="danger"
+                startContent={<X size={16} />}
+                onPress={clearFilters}
+                className="font-medium"
               >
-                {[
-                  <SelectItem key="all">All</SelectItem>,
-                  ...Object.entries(TICKET_TYPE_LABELS).map(([key, label]) => (
-                    <SelectItem key={key}>{label}</SelectItem>
-                  )),
-                ]}
-              </Select>
-
-              <Select
-                label="Environment"
-                placeholder="All"
-                selectedKeys={filters.environment ? [filters.environment] : []}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string
-                  setFilter('environment', value || undefined)
-                }}
-              >
-                {[
-                  <SelectItem key="all">All</SelectItem>,
-                  ...Object.entries(TICKET_ENVIRONMENT_LABELS).map(([key, label]) => (
-                    <SelectItem key={key}>{label}</SelectItem>
-                  )),
-                ]}
-              </Select>
-
-              <div className="flex items-end">
-                {hasActiveFilters && (
-                  <Button
-                    variant="light"
-                    color="danger"
-                    startContent={<X size={16} />}
-                    onPress={clearFilters}
-                    className="w-full"
-                  >
-                    Clear Filters
-                  </Button>
-                )}
-              </div>
-            </div>
+                Clear
+              </Button>
+            )}
           </div>
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
-      {/* Tickets Table */}
-      <Card>
+      <Card shadow="none" className="border border-divider bg-content1/50 overflow-hidden">
         <CardBody className="p-0">
           <Table
             aria-label="Tickets table"
             selectionMode="none"
             removeWrapper
+            isStriped
             classNames={{
               base: 'min-h-[400px]',
-              th: 'text-left text-xs font-semibold text-default-500 uppercase px-4 py-3',
-              td: 'text-left text-sm px-4 py-3 align-middle',
+              th: 'bg-default-100/30 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider/50',
+              td: 'py-2 px-4 border-b border-divider/20',
+              tr: 'hover:bg-default-200/20 cursor-pointer transition-colors',
             }}
           >
             <TableHeader columns={columns}>
               {(column) => (
                 <TableColumn
                   key={column.key}
-                  className={
-                    column.key === 'actions'
-                      ? 'text-center w-[120px]'
-                      : column.key === 'status' || column.key === 'priority'
-                      ? 'w-[100px]'
-                      : column.key === 'code'
-                      ? 'w-[140px]'
-                      : column.key === 'updated'
-                      ? 'w-[120px]'
-                      : 'text-left'
-                  }
+                  className={column.key === 'actions' ? 'text-center' : ''}
                 >
                   {column.label}
                 </TableColumn>
@@ -399,42 +425,23 @@ function TicketListPage() {
               items={tickets}
               isLoading={loading}
               loadingContent={
-                <>
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <TableRow key={index}>
-                      {columns.map((col) => (
-                        <TableCell key={col.key}>
-                          <Skeleton className="h-4 w-full rounded" />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </>
+                <div className="flex flex-col items-center justify-center gap-2 py-20">
+                  <Skeleton className="h-4 w-48 rounded" />
+                  <Skeleton className="h-4 w-36 rounded" />
+                </div>
               }
               emptyContent={
                 <EmptyState
-                  title={
-                    hasActiveFilters
-                      ? 'No tickets found matching your filters'
-                      : 'No tickets yet'
-                  }
-                  actionLabel={
-                    hasActiveFilters
-                      ? 'Clear filters'
-                      : 'Create first ticket'
-                  }
-                  onAction={
-                    hasActiveFilters
-                      ? clearFilters
-                      : () => navigate('/tickets/new')
-                  }
+                  title={hasActiveFilters ? "No tickets found" : "No tickets yet"}
+                  description={hasActiveFilters ? "Try adjusting your filters" : "Create your first ticket to get started"}
+                  actionLabel={hasActiveFilters ? "Clear Filters" : "New Ticket"}
+                  onAction={hasActiveFilters ? clearFilters : () => navigate('/tickets/new')}
                 />
               }
             >
               {(ticket) => (
                 <TableRow
                   key={ticket.id}
-                  className="cursor-pointer hover:bg-default-100 transition-colors"
                   onClick={() => handleRowClick(ticket.id)}
                 >
                   {(columnKey) => (
@@ -449,19 +456,35 @@ function TicketListPage() {
         </CardBody>
       </Card>
 
-      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center">
+        <div className="flex justify-center pt-4">
           <Pagination
             total={totalPages}
             page={currentPage}
             onChange={handlePageChange}
             showControls
-            showShadow
+            variant="flat"
+            color="primary"
           />
         </div>
       )}
-    </div>
+
+      {editTicket && (
+        <TicketEditModal
+          isOpen={editModalOpen}
+          onClose={() => {
+            setEditModalOpen(false)
+            setEditTicket(null)
+          }}
+          ticket={editTicket}
+          onSave={async (payload, attachmentsFiles) => {
+            await handleEditSave(payload, attachmentsFiles)
+            setEditModalOpen(false)
+            setEditTicket(null)
+          }}
+        />
+      )}
+    </PageContainer>
   )
 }
 
