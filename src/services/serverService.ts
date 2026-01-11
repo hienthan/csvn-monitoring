@@ -64,5 +64,44 @@ export const serverService = {
   ): Promise<ServerListResponse> {
     return this.list({ ...params, filter })
   },
+
+  /**
+   * Create a new server
+   */
+  async create(data: Partial<Server>): Promise<Server> {
+    try {
+      const result = await pb.collection(COLLECTION_NAME).create<Server>(data)
+      return result
+    } catch (error) {
+      console.error('Error creating server:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Update a server by ID
+   */
+  async update(id: string, data: Partial<Server>): Promise<Server> {
+    try {
+      const result = await pb.collection(COLLECTION_NAME).update<Server>(id, data)
+      return result
+    } catch (error) {
+      console.error(`Error updating server ${id}:`, error)
+      throw error
+    }
+  },
+
+  /**
+   * Delete a server by ID
+   */
+  async delete(id: string): Promise<boolean> {
+    try {
+      await pb.collection(COLLECTION_NAME).delete(id)
+      return true
+    } catch (error) {
+      console.error(`Error deleting server ${id}:`, error)
+      throw error
+    }
+  },
 }
 

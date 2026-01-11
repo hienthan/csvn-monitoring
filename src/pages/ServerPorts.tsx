@@ -126,9 +126,9 @@ function ServerPorts() {
           isStriped
           classNames={{
             base: "min-h-[300px]",
-            th: "bg-default-100/50 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider",
+            th: "bg-content2 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider",
             td: "py-2 px-4 border-b border-divider/50",
-            tr: "hover:bg-default-200/30 transition-colors",
+            tr: "hover:bg-content3 transition-colors",
           }}
         >
           <TableHeader columns={columns}>
@@ -142,10 +142,17 @@ function ServerPorts() {
             items={ports}
             isLoading={loading}
             loadingContent={
-              <div className="flex flex-col items-center justify-center gap-2 py-20">
-                <Skeleton className="h-4 w-48 rounded" />
-                <Skeleton className="h-4 w-36 rounded" />
-              </div>
+              <>
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={index}>
+                    {columns.map((col) => (
+                      <TableCell key={col.key}>
+                        <Skeleton className="h-5 w-full rounded bg-content1" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </>
             }
             emptyContent={
               <div className="py-20 text-center space-y-2">

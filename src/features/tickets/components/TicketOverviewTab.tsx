@@ -37,15 +37,15 @@ function TicketOverviewTab({ ticketId }: TicketOverviewTabProps) {
         <Card>
           <CardBody>
             <div className="space-y-4">
-              <Skeleton className="h-4 w-full rounded" />
-              <Skeleton className="h-4 w-3/4 rounded" />
-              <Skeleton className="h-4 w-1/2 rounded" />
+              <Skeleton className="h-4 w-full rounded bg-content1" />
+              <Skeleton className="h-4 w-3/4 rounded bg-content1" />
+              <Skeleton className="h-4 w-1/2 rounded bg-content1" />
             </div>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <Skeleton className="h-32 w-full rounded" />
+            <Skeleton className="h-32 w-full rounded bg-content1" />
           </CardBody>
         </Card>
       </div>

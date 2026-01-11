@@ -19,7 +19,8 @@ import {
   DropdownItem,
   Tooltip,
 } from '@heroui/react'
-import { Search, X, MoreVertical } from 'lucide-react'
+import { Search, X, Plus, Server as ServerIcon } from 'lucide-react'
+import { EyeIcon, EditIcon, DeleteIcon } from '@/components/icons'
 import { useServers } from '@/lib/hooks/useServers'
 import { useSearch } from '@/lib/contexts/SearchContext'
 import type { Server } from '@/types/server'
@@ -72,15 +73,19 @@ function Servers() {
     setSearchQuery(value)
   }
 
-  const handleAction = (action: string, server: Server) => {
+  const handleAction = (action: string, server: Server, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation()
+    }
     switch (action) {
       case 'view':
         navigate(`/servers/${server.id}`)
         break
       case 'edit':
-        console.log('Edit server', server.id)
+        navigate(`/servers/${server.id}/edit`)
         break
       case 'delete':
+        // TODO: Implement delete confirmation modal
         console.log('Delete server', server.id)
         break
     }
@@ -142,45 +147,22 @@ function Servers() {
         )
       case 'actions':
         return (
-          <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
-            <Tooltip content="View Details" size="sm">
-              <Button
-                isIconOnly
-                size="sm"
-                variant="light"
-                onPress={() => handleAction('view', server)}
-                className="text-default-400 hover:text-primary transition-colors"
-              >
-                <MoreVertical size={16} className="rotate-90" />
-              </Button>
+          <div className="relative flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <Tooltip content="Details">
+              <span className="text-lg text-default-400 cursor-pointer active:opacity-50 hover:text-primary transition-colors">
+                <EyeIcon onClick={(e) => handleAction('view', server, e)} />
+              </span>
             </Tooltip>
-            <Dropdown placement="bottom-end">
-              <DropdownTrigger>
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                  aria-label="More options"
-                  className="text-default-400 hover:text-foreground"
-                >
-                  <MoreVertical size={16} />
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                aria-label="Server actions"
-                variant="flat"
-                onAction={(key) => {
-                  const action = key as string
-                  if (action) {
-                    handleAction(action, server)
-                  }
-                }}
-              >
-                <DropdownItem key="view" textValue="View server">View Details</DropdownItem>
-                <DropdownItem key="edit" textValue="Edit server">Edit</DropdownItem>
-                <DropdownItem key="delete" className="text-danger" color="danger" textValue="Delete server">Delete</DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
+            <Tooltip content="Edit server">
+              <span className="text-lg text-default-400 cursor-pointer active:opacity-50 hover:text-primary transition-colors">
+                <EditIcon onClick={(e) => handleAction('edit', server, e)} />
+              </span>
+            </Tooltip>
+            <Tooltip color="danger" content="Delete server">
+              <span className="text-lg text-danger cursor-pointer active:opacity-50 hover:text-danger-600 transition-colors">
+                <DeleteIcon onClick={(e) => handleAction('delete', server, e)} />
+              </span>
+            </Tooltip>
           </div>
         )
       default:
@@ -221,6 +203,15 @@ function Servers() {
           </h1>
           <p className="text-sm text-default-500">Infrastructure and node monitoring</p>
         </div>
+        <Button
+          color="primary"
+          variant="shadow"
+          startContent={<Plus size={18} />}
+          onPress={() => navigate('/servers/new')}
+          className="font-bold"
+        >
+          New Server
+        </Button>
       </div>
 
       <div className="sticky top-0 z-20 transition-all">
@@ -259,7 +250,7 @@ function Servers() {
         </div>
       </div>
 
-      <Card shadow="none" className="border border-divider bg-content1/50 overflow-hidden">
+      <Card shadow="none" className="border border-divider bg-content1 overflow-hidden">
         <CardBody className="p-0">
           <Table
             aria-label="Servers table"
@@ -269,9 +260,9 @@ function Servers() {
             isStriped
             classNames={{
               base: 'min-h-[400px]',
-              th: 'bg-default-100/30 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider/50',
-              td: 'py-2 px-4 border-b border-divider/20',
-              tr: 'hover:bg-default-200/20 cursor-pointer transition-colors',
+              th: 'bg-content2 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider',
+              td: 'py-2 px-4 border-b border-divider/50',
+              tr: 'hover:bg-content3 cursor-pointer transition-colors',
             }}
           >
             <TableHeader columns={columns}>
@@ -289,11 +280,11 @@ function Servers() {
               isLoading={loading}
               loadingContent={
                 <>
-                  {Array.from({ length: 6 }).map((_, index) => (
+                  {Array.from({ length: 7 }).map((_, index) => (
                     <TableRow key={index}>
                       {columns.map((col) => (
                         <TableCell key={col.key}>
-                          <Skeleton className="h-5 w-full rounded-lg bg-default-200" />
+                          <Skeleton className="h-5 w-full rounded bg-content1" />
                         </TableCell>
                       ))}
                     </TableRow>
@@ -301,14 +292,13 @@ function Servers() {
                 </>
               }
               emptyContent={
-                <div className="py-20">
-                  <EmptyState
-                    title={localSearchQuery ? 'No match found' : 'Infrastructure is quiet'}
-                    description={localSearchQuery ? `We couldn't find any server matching "${localSearchQuery}"` : "Start by adding your first server to the dashboard."}
-                    actionLabel={localSearchQuery ? 'Clear Filters' : 'Add New Server'}
-                    onAction={localSearchQuery ? () => { setLocalSearchQuery(''); setSearchQuery(''); } : undefined}
-                  />
-                </div>
+                <EmptyState
+                  title={localSearchQuery ? 'No servers found' : 'No servers found'}
+                  description={localSearchQuery ? "Try adjusting your search to see more results." : "Add a server to start monitoring infrastructure."}
+                  actionLabel={localSearchQuery ? undefined : "New Server"}
+                  onAction={localSearchQuery ? undefined : () => navigate('/servers/new')}
+                  icon={ServerIcon}
+                />
               }
             >
               {(server) => (

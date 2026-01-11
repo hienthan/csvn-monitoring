@@ -26,5 +26,5 @@ dist-ssr
 *.sw?
 
 requirements/db
-requirements/dump_out
 dump_out
+pb.*

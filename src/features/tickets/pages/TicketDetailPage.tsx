@@ -174,11 +174,11 @@ function TicketDetailPage() {
           </div>
           <div className="space-y-2">
             <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-              {loading ? <Skeleton className="h-9 w-64 rounded" /> : (ticket?.title || 'Unknown Ticket')}
+              {loading ? <Skeleton className="h-9 w-64 rounded bg-content1" /> : (ticket?.title || 'Unknown Ticket')}
             </h1>
             <div className="flex flex-wrap items-center gap-2">
               {loading ? (
-                <Skeleton className="h-6 w-20 rounded" />
+                <Skeleton className="h-6 w-20 rounded bg-content1" />
               ) : ticket?.status && (
                 <Chip
                   size="sm"
@@ -190,7 +190,7 @@ function TicketDetailPage() {
                 </Chip>
               )}
               {loading ? (
-                <Skeleton className="h-6 w-24 rounded" />
+                <Skeleton className="h-6 w-24 rounded bg-content1" />
               ) : ticket?.priority && (
                 <Chip
                   size="sm"

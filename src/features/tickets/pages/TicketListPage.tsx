@@ -22,7 +22,8 @@ import {
   DropdownItem,
   Tooltip,
 } from '@heroui/react'
-import { Plus, Search, X, Copy, Check, MoreVertical, User as UserIcon } from 'lucide-react'
+import { Plus, Search, X, Copy, Check, User as UserIcon, Ticket as TicketIcon } from 'lucide-react'
+import { EyeIcon, EditIcon, DeleteIcon } from '@/components/icons'
 import { useTickets } from '../hooks/useTickets'
 import { useTicketFilters } from '../hooks/useTicketFilters'
 import type { Ticket } from '../types'
@@ -186,43 +187,22 @@ function TicketListPage() {
         )
       case 'actions':
         return (
-          <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-            <Dropdown>
-              <DropdownTrigger>
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                  aria-label="More options"
-                >
-                  <MoreVertical size={16} />
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                aria-label="Ticket actions"
-                onAction={(key) => {
-                  const actionMap: Record<string, string> = {
-                    view: 'view',
-                    edit: 'edit',
-                    delete: 'delete',
-                  }
-                  const action = actionMap[key as string]
-                  if (action) {
-                    handleAction(action, ticket, {} as React.MouseEvent)
-                  }
-                }}
-              >
-                <DropdownItem key="view" textValue="View ticket">
-                  View
-                </DropdownItem>
-                <DropdownItem key="edit" textValue="Edit ticket">
-                  Edit
-                </DropdownItem>
-                <DropdownItem key="delete" className="text-danger" textValue="Delete ticket">
-                  Delete
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
+          <div className="relative flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <Tooltip content="Details">
+              <span className="text-lg text-default-400 cursor-pointer active:opacity-50 hover:text-primary transition-colors">
+                <EyeIcon onClick={(e) => handleAction('view', ticket, e)} />
+              </span>
+            </Tooltip>
+            <Tooltip content="Edit ticket">
+              <span className="text-lg text-default-400 cursor-pointer active:opacity-50 hover:text-primary transition-colors">
+                <EditIcon onClick={(e) => handleAction('edit', ticket, e)} />
+              </span>
+            </Tooltip>
+            <Tooltip color="danger" content="Delete ticket">
+              <span className="text-lg text-danger cursor-pointer active:opacity-50 hover:text-danger-600 transition-colors">
+                <DeleteIcon onClick={(e) => handleAction('delete', ticket, e)} />
+              </span>
+            </Tooltip>
           </div>
         )
       default:
@@ -283,7 +263,7 @@ function TicketListPage() {
           <h1 className="text-3xl font-bold tracking-tight">Tickets</h1>
           <div className="flex items-center gap-2">
             {loading ? (
-              <Skeleton className="h-4 w-32 rounded mt-1" />
+              <Skeleton className="h-4 w-32 rounded mt-1 bg-content1" />
             ) : (
               <p className="text-sm font-medium text-default-500">
                 {totalItems > 0 ? `${totalItems} Tickets active` : 'No tickets'}
@@ -397,7 +377,7 @@ function TicketListPage() {
         </div>
       </div>
 
-      <Card shadow="none" className="border border-divider bg-content1/50 overflow-hidden">
+      <Card shadow="none" className="border border-divider bg-content1 overflow-hidden">
         <CardBody className="p-0">
           <Table
             aria-label="Tickets table"
@@ -406,16 +386,16 @@ function TicketListPage() {
             isStriped
             classNames={{
               base: 'min-h-[400px]',
-              th: 'bg-default-100/30 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider/50',
-              td: 'py-2 px-4 border-b border-divider/20',
-              tr: 'hover:bg-default-200/20 cursor-pointer transition-colors',
+              th: 'bg-content2 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider',
+              td: 'py-2 px-4 border-b border-divider/50',
+              tr: 'hover:bg-content3 cursor-pointer transition-colors',
             }}
           >
             <TableHeader columns={columns}>
               {(column) => (
                 <TableColumn
                   key={column.key}
-                  className={column.key === 'actions' ? 'text-center' : ''}
+                  align={column.key === 'actions' ? 'center' : 'start'}
                 >
                   {column.label}
                 </TableColumn>
@@ -425,17 +405,25 @@ function TicketListPage() {
               items={tickets}
               isLoading={loading}
               loadingContent={
-                <div className="flex flex-col items-center justify-center gap-2 py-20">
-                  <Skeleton className="h-4 w-48 rounded" />
-                  <Skeleton className="h-4 w-36 rounded" />
-                </div>
+                <>
+                  {Array.from({ length: 7 }).map((_, index) => (
+                    <TableRow key={index}>
+                      {columns.map((col) => (
+                        <TableCell key={col.key}>
+                          <Skeleton className="h-5 w-full rounded bg-content1" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </>
               }
               emptyContent={
                 <EmptyState
                   title={hasActiveFilters ? "No tickets found" : "No tickets yet"}
-                  description={hasActiveFilters ? "Try adjusting your filters" : "Create your first ticket to get started"}
-                  actionLabel={hasActiveFilters ? "Clear Filters" : "New Ticket"}
-                  onAction={hasActiveFilters ? clearFilters : () => navigate('/tickets/new')}
+                  description={hasActiveFilters ? "Try adjusting your filters to see more results." : "Create your first ticket to start tracking work."}
+                  actionLabel={hasActiveFilters ? undefined : "New Ticket"}
+                  onAction={hasActiveFilters ? undefined : () => navigate('/tickets/new')}
+                  icon={TicketIcon}
                 />
               }
             >

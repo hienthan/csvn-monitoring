@@ -1,14 +1,20 @@
+import { useState } from 'react'
 import { useParams, useNavigate, Outlet, useLocation } from 'react-router-dom'
-import { Tabs, Tab, Chip, Card, CardBody, Skeleton } from '@heroui/react'
+import { Tabs, Tab, Chip, Card, CardBody, Skeleton, Button } from '@heroui/react'
+import { Edit } from 'lucide-react'
 import Breadcrumb from '@/components/Breadcrumb'
 import { useServer } from '@/lib/hooks/useServer'
+import { useApiError } from '@/lib/hooks/useApiError'
 import { PageContainer } from '@/components/PageContainer'
+import { ServerEditModal } from '@/components/ServerEditModal'
 
 function ServerDetail() {
   const { serverId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
-  const { server, loading } = useServer(serverId)
+  const { server, loading, refetch, update } = useServer(serverId)
+  const { handleError } = useApiError()
+  const [editModalOpen, setEditModalOpen] = useState(false)
 
   const getActiveTab = () => {
     if (location.pathname.includes('/apps')) return 'apps'
@@ -33,6 +39,17 @@ function ServerDetail() {
     return String(mode)
   }
 
+  const handleEditSave = async (payload: Partial<typeof server>) => {
+    if (!server) return
+    try {
+      await update(payload)
+      await refetch()
+    } catch (err) {
+      handleError(err)
+      throw err
+    }
+  }
+
   return (
     <PageContainer className="space-y-6 py-6">
       <Breadcrumb
@@ -50,12 +67,12 @@ function ServerDetail() {
         <CardBody className="p-0">
           {loading ? (
             <div className="p-8 space-y-6">
-              <Skeleton className="h-10 w-1/3 rounded-xl" />
+              <Skeleton className="h-10 w-1/3 rounded bg-content1" />
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 {[1, 2, 3, 4].map(i => (
                   <div key={i} className="space-y-2">
-                    <Skeleton className="h-3 w-16 rounded" />
-                    <Skeleton className="h-5 w-24 rounded" />
+                    <Skeleton className="h-3 w-16 rounded bg-content1" />
+                    <Skeleton className="h-5 w-24 rounded bg-content1" />
                   </div>
                 ))}
               </div>
@@ -77,24 +94,35 @@ function ServerDetail() {
                     </p>
                   </div>
 
-                  {server?.status && (
-                    <Chip
-                      size="lg"
-                      variant="shadow"
-                      color={
-                        server.status.toLowerCase() === 'online' ||
-                          server.status.toLowerCase() === 'active'
-                          ? 'success'
-                          : server.status.toLowerCase() === 'offline' ||
-                            server.status.toLowerCase() === 'inactive'
-                            ? 'danger'
-                            : 'default'
-                      }
-                      className="px-6 py-2 h-auto text-sm font-bold uppercase tracking-wider animate-status-pulse"
+                  <div className="flex items-center gap-2">
+                    {server?.status && (
+                      <Chip
+                        size="lg"
+                        variant="shadow"
+                        color={
+                          server.status.toLowerCase() === 'online' ||
+                            server.status.toLowerCase() === 'active'
+                            ? 'success'
+                            : server.status.toLowerCase() === 'offline' ||
+                              server.status.toLowerCase() === 'inactive'
+                              ? 'danger'
+                              : 'default'
+                        }
+                        className="px-6 py-2 h-auto text-sm font-bold uppercase tracking-wider animate-status-pulse"
+                      >
+                        {server.status}
+                      </Chip>
+                    )}
+                    <Button
+                      variant="flat"
+                      startContent={<Edit size={16} />}
+                      onPress={() => setEditModalOpen(true)}
+                      isDisabled={loading}
+                      className="font-semibold"
                     >
-                      {server.status}
-                    </Chip>
-                  )}
+                      Edit
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="w-full min-w-0 max-w-full overflow-x-hidden">
@@ -165,6 +193,15 @@ function ServerDetail() {
           <Outlet />
         </CardBody>
       </Card>
+
+      {server && (
+        <ServerEditModal
+          isOpen={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          server={server}
+          onSave={handleEditSave}
+        />
+      )}
     </PageContainer>
   )
 }

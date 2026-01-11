@@ -5,6 +5,7 @@ import Layout from '@/layout/Layout'
 // Lazy load pages
 const DashboardPage = lazy(() => import('@/pages/Dashboard'))
 const ServersPage = lazy(() => import('@/pages/Servers'))
+const ServerCreatePage = lazy(() => import('@/pages/ServerCreatePage'))
 const ServerDetailPage = lazy(() => import('@/pages/ServerDetail'))
 const ServerOverviewPage = lazy(() => import('@/pages/ServerOverview'))
 const ServerAppsPage = lazy(() => import('@/pages/ServerApps'))
@@ -12,7 +13,11 @@ const ServerPortsPage = lazy(() => import('@/pages/ServerPorts'))
 const TicketListPage = lazy(() => import('@/features/tickets/pages/TicketListPage'))
 const TicketCreatePage = lazy(() => import('@/features/tickets/pages/TicketCreatePage'))
 const TicketDetailPage = lazy(() => import('@/features/tickets/pages/TicketDetailPage'))
+const AppListPage = lazy(() => import('@/pages/AppListPage'))
+const AppCreatePage = lazy(() => import('@/pages/AppCreatePage'))
+const AppDetailPage = lazy(() => import('@/pages/AppDetailPage'))
 const BackupPage = lazy(() => import('@/pages/BackupStatus'))
+const ThemePreviewPage = lazy(() => import('@/pages/ThemePreviewPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFound'))
 
 export const routes: RouteObject[] = [
@@ -27,6 +32,10 @@ export const routes: RouteObject[] = [
       {
         path: 'servers',
         element: <ServersPage />,
+      },
+      {
+        path: 'servers/new',
+        element: <ServerCreatePage />,
       },
       {
         path: 'servers/:serverId',
@@ -67,8 +76,24 @@ export const routes: RouteObject[] = [
         element: <TicketDetailPage />,
       },
       {
+        path: 'apps',
+        element: <AppListPage />,
+      },
+      {
+        path: 'apps/new',
+        element: <AppCreatePage />,
+      },
+      {
+        path: 'apps/:appId',
+        element: <AppDetailPage />,
+      },
+      {
         path: 'backup',
         element: <BackupPage />,
+      },
+      {
+        path: 'theme-preview',
+        element: <ThemePreviewPage />,
       },
       {
         path: '*',

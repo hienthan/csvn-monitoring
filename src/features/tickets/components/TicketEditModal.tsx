@@ -162,11 +162,11 @@ export function TicketEditModal({
       size="2xl"
       placement="center"
       scrollBehavior="inside"
-      isDismissable={!loading}
-      isKeyboardDismissDisabled={loading}
+      isDismissable={true}
+      hideCloseButton={false}
       classNames={{
-        base: "z-[100]",
-        backdrop: "z-[90]",
+        base: "z-50",
+        backdrop: "z-40",
       }}
     >
       <ModalContent>
@@ -210,10 +210,16 @@ export function TicketEditModal({
                     name="type"
                     label="Type"
                     placeholder="Select type"
-                    selectedKeys={formData.type ? new Set([formData.type]) : new Set()}
+                    selectedKeys={
+                      formData.type && Object.keys(TICKET_TYPE_LABELS).includes(formData.type)
+                        ? new Set([formData.type])
+                        : new Set()
+                    }
                     onSelectionChange={(keys) => {
                       const value = Array.from(keys)[0] as TicketType
-                      if (value) setFormData((prev) => ({ ...prev, type: value }))
+                      if (value && Object.keys(TICKET_TYPE_LABELS).includes(value)) {
+                        setFormData((prev) => ({ ...prev, type: value }))
+                      }
                     }}
                     isRequired
                     isDisabled={loading}
@@ -229,10 +235,16 @@ export function TicketEditModal({
                     name="priority"
                     label="Priority"
                     placeholder="Select priority"
-                    selectedKeys={formData.priority ? new Set([formData.priority]) : new Set()}
+                    selectedKeys={
+                      formData.priority && Object.keys(TICKET_PRIORITY_LABELS).includes(formData.priority)
+                        ? new Set([formData.priority])
+                        : new Set()
+                    }
                     onSelectionChange={(keys) => {
                       const value = Array.from(keys)[0] as TicketPriority
-                      if (value) setFormData((prev) => ({ ...prev, priority: value }))
+                      if (value && Object.keys(TICKET_PRIORITY_LABELS).includes(value)) {
+                        setFormData((prev) => ({ ...prev, priority: value }))
+                      }
                     }}
                     isRequired
                     isDisabled={loading}

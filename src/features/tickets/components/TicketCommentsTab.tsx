@@ -182,8 +182,8 @@ function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
             <Card key={index}>
               <CardBody>
                 <div className="space-y-2">
-                  <Skeleton className="h-4 w-32 rounded" />
-                  <Skeleton className="h-20 w-full rounded" />
+                  <Skeleton className="h-4 w-32 rounded bg-content1" />
+                  <Skeleton className="h-20 w-full rounded bg-content1" />
                 </div>
               </CardBody>
             </Card>
