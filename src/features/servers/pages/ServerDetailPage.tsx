@@ -3,12 +3,13 @@ import { useParams, useNavigate, Outlet, useLocation } from 'react-router-dom'
 import { Tabs, Tab, Chip, Card, CardBody, Skeleton, Button } from '@heroui/react'
 import { Edit } from 'lucide-react'
 import Breadcrumb from '@/components/Breadcrumb'
-import { useServer } from '@/lib/hooks/useServer'
+import { useServer } from '../hooks/useServer'
 import { useApiError } from '@/lib/hooks/useApiError'
 import { PageContainer } from '@/components/PageContainer'
 import { ServerEditModal } from '@/components/ServerEditModal'
+import type { Server } from '../types'
 
-function ServerDetail() {
+function ServerDetailPage() {
   const { serverId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -39,7 +40,7 @@ function ServerDetail() {
     return String(mode)
   }
 
-  const handleEditSave = async (payload: Partial<typeof server>) => {
+  const handleEditSave = async (payload: Partial<Server>) => {
     if (!server) return
     try {
       await update(payload)
@@ -206,4 +207,4 @@ function ServerDetail() {
   )
 }
 
-export default ServerDetail
+export default ServerDetailPage

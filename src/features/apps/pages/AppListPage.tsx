@@ -17,14 +17,14 @@ import {
 } from '@heroui/react'
 import { Search, X, Plus, Package } from 'lucide-react'
 import { Select, SelectItem } from '@heroui/react'
-import { appService } from '@/services/appService'
+import { appService } from '../services/appService'
 import { useApiError } from '@/lib/hooks/useApiError'
-import { useServers } from '@/lib/hooks/useServers'
+import { useServers } from '@/features/servers/hooks/useServers'
 import { EyeIcon, EditIcon, DeleteIcon } from '@/components/icons'
 import { formatRelativeTime } from '@/features/tickets/utils'
-import { EmptyState } from '@/components/EmptyState'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { PageContainer } from '@/components/PageContainer'
-import type { ServerApp } from '@/types/app'
+import type { ServerApp } from '../types'
 
 function AppListPage() {
   const navigate = useNavigate()

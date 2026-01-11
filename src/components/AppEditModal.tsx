@@ -12,8 +12,8 @@ import {
   SelectItem,
   Switch,
 } from '@heroui/react'
-import { useServers } from '@/lib/hooks/useServers'
-import type { ServerApp } from '@/types/app'
+import { useServers } from '@/features/servers/hooks/useServers'
+import type { ServerApp } from '@/features/apps/types'
 
 interface AppEditModalProps {
   isOpen: boolean
@@ -184,7 +184,7 @@ export function AppEditModal({
                       aria-label="Server"
                     >
                       {servers.map((server) => (
-                        <SelectItem key={server.id} value={server.id}>
+                        <SelectItem key={server.id}>
                           {server.name || server.id}
                         </SelectItem>
                       ))}

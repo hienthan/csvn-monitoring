@@ -10,7 +10,7 @@ import {
   Button,
 } from '@heroui/react'
 import { ArrowLeft } from 'lucide-react'
-import { serverService } from '@/services/serverService'
+import { serverService } from '../services/serverService'
 import { useApiError } from '@/lib/hooks/useApiError'
 import { PageContainer } from '@/components/PageContainer'
 

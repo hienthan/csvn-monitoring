@@ -36,7 +36,7 @@ import {
   getTicketPriorityColor,
 } from '../constants'
 import { formatRelativeTime, copyTicketCode } from '../utils'
-import { EmptyState } from '@/components/EmptyState'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { TicketEditModal } from '../components/TicketEditModal'
 
 import { PageContainer } from '@/components/PageContainer'

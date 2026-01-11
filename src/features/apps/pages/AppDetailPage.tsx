@@ -10,10 +10,11 @@ import {
 } from '@heroui/react'
 import { ArrowLeft, Edit } from 'lucide-react'
 import Breadcrumb from '@/components/Breadcrumb'
-import { useApp } from '@/lib/hooks/useApp'
+import { useApp } from '../hooks/useApp'
 import { useApiError } from '@/lib/hooks/useApiError'
 import { PageContainer } from '@/components/PageContainer'
 import { AppEditModal } from '@/components/AppEditModal'
+import type { ServerApp } from '../types'
 
 function AppDetailPage() {
   const { appId } = useParams()
@@ -22,7 +23,7 @@ function AppDetailPage() {
   const { handleError } = useApiError()
   const [editModalOpen, setEditModalOpen] = useState(false)
 
-  const handleEditSave = async (payload: Partial<typeof app>) => {
+  const handleEditSave = async (payload: Partial<ServerApp>) => {
     if (!app) return
     try {
       await update(payload)

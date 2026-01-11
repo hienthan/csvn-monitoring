@@ -21,14 +21,14 @@ import {
 } from '@heroui/react'
 import { Search, X, Plus, Server as ServerIcon } from 'lucide-react'
 import { EyeIcon, EditIcon, DeleteIcon } from '@/components/icons'
-import { useServers } from '@/lib/hooks/useServers'
+import { useServers } from '../hooks/useServers'
 import { useSearch } from '@/lib/contexts/SearchContext'
-import type { Server } from '@/types/server'
+import type { Server } from '../types'
 import { formatRelativeTime } from '@/features/tickets/utils'
-import { EmptyState } from '@/components/EmptyState'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { PageContainer } from '@/components/PageContainer'
 
-function Servers() {
+function ServerListPage() {
   const navigate = useNavigate()
   const { searchQuery, setSearchQuery } = useSearch()
   const { servers, loading, error, refetch } = useServers({ searchQuery })
@@ -316,4 +316,4 @@ function Servers() {
   )
 }
 
-export default Servers
+export default ServerListPage

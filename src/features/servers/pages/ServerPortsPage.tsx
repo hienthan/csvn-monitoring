@@ -14,11 +14,11 @@ import {
   Chip,
 } from '@heroui/react'
 import { Copy, Check, Network } from 'lucide-react'
-import { useServerPorts } from '@/lib/hooks/useServerPorts'
+import { useServerPorts } from '../hooks/useServerPorts'
 import { copyToClipboard } from '@/lib/utils/clipboard'
-import type { ServerPort, ServerAppRelation } from '@/types/port'
+import type { ServerPort } from '@/types/port'
 
-function ServerPorts() {
+function ServerPortsPage() {
   const { serverId } = useParams()
   const { ports, loading, error } = useServerPorts(serverId)
   const [copiedValue, setCopiedValue] = useState<string | null>(null)
@@ -178,4 +178,4 @@ function ServerPorts() {
   )
 }
 
-export default ServerPorts
+export default ServerPortsPage

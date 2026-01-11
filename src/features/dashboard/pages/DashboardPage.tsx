@@ -2,7 +2,7 @@ import { Card, CardBody, Button } from '@heroui/react'
 import { Link } from 'react-router-dom'
 import { PageContainer } from '@/components/PageContainer'
 
-function Dashboard() {
+export default function DashboardPage() {
   return (
     <PageContainer className="py-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="space-y-1">
@@ -47,6 +47,3 @@ function Dashboard() {
     </PageContainer>
   )
 }
-
-export default Dashboard
-

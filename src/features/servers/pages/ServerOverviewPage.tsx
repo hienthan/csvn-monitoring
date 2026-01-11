@@ -1,7 +1,7 @@
 import { Card, CardBody, CardHeader, Button } from '@heroui/react'
 import { Ticket, Database } from 'lucide-react'
 
-function ServerOverview() {
+function ServerOverviewPage() {
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
@@ -89,5 +89,5 @@ function ServerOverview() {
   )
 }
 
-export default ServerOverview
+export default ServerOverviewPage
 

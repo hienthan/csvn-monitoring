@@ -10,7 +10,7 @@ import {
   Select,
   SelectItem,
 } from '@heroui/react'
-import type { Server } from '@/types/server'
+import type { Server } from '@/features/servers/types'
 
 interface ServerEditModalProps {
   isOpen: boolean

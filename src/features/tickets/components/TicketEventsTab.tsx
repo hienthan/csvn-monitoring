@@ -17,7 +17,7 @@ import {
   getTicketEventTypeColor,
 } from '../constants'
 import type { TicketEventType } from '../types'
-import { EmptyState } from '@/components/EmptyState'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 interface TicketEventsTabProps {
   ticketId?: string

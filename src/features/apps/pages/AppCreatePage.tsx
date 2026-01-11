@@ -8,7 +8,7 @@ import {
   Button,
 } from '@heroui/react'
 import { ArrowLeft } from 'lucide-react'
-import { appService } from '@/services/appService'
+import { appService } from '../services/appService'
 import { useApiError } from '@/lib/hooks/useApiError'
 import { PageContainer } from '@/components/PageContainer'
 

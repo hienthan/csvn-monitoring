@@ -11,10 +11,10 @@ import {
   Skeleton,
   Chip,
 } from '@heroui/react'
-import { useServerApps } from '@/lib/hooks/useServerApps'
-import type { ServerApp } from '@/types/app'
+import { useServerApps } from '../hooks/useServerApps'
+import type { ServerApp } from '@/features/apps/types'
 
-function ServerApps() {
+function ServerAppsPage() {
   const { serverId } = useParams()
   const { apps, loading, error } = useServerApps(serverId)
 
@@ -152,5 +152,5 @@ function ServerApps() {
   )
 }
 
-export default ServerApps
+export default ServerAppsPage
 

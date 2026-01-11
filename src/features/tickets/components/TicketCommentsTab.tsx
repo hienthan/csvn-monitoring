@@ -18,7 +18,7 @@ import { useTicketComments } from '../hooks/useTicketComments'
 import { useTicket } from '../hooks/useTicket'
 import { useApiError } from '@/lib/hooks/useApiError'
 import { pbFilesUrls } from '../utils'
-import { EmptyState } from '@/components/EmptyState'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 interface TicketCommentsTabProps {
   ticketId?: string
