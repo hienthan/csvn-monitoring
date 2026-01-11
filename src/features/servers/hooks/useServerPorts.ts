@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { portService } from '@/services/portService'
-import type { ServerPort } from '@/types/port'
+import { portService } from '../services/portService'
+import type { ServerPort } from '../types'
 import { useApiError } from '@/lib/hooks/useApiError'
 
 export function useServerPorts(serverId: string | undefined) {

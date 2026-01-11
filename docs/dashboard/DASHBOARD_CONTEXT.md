@@ -1,77 +1,172 @@
-# Dashboard Context (UI-focused)
-Scope: Dashboard only — UI, UX, behavior
-Do NOT include ticket logic, backend rules, or infra details here.
+Dashboard Context — Ticket Monitoring (DevOps Internal Tool)
+1. Purpose
 
-## 1. Purpose
-The Dashboard is an internal overview screen.
-Its goals are:
-- Provide a clean, calm, professional UI
-- Help users quickly understand system state at a glance
-- Act as a navigation hub to deeper sections (Servers, Apps, Tickets later)
+This dashboard provides operational visibility into DevOps tickets:
 
-This is NOT:
-- A heavy analytics page
-- A configuration or form-heavy screen
+Workload volume
 
-## 2. Design Principles (Strict)
-- Visual style: calm, neutral, non-distracting (YouTrack-like feel)
-- One visual language only (no multiple themes)
-- Readability > decoration
-- Information density must be controlled
+Bottlenecks
 
-## 3. Layout Rules
-- Clear visual hierarchy:
-  - Page title
-  - High-level summary blocks
-  - Lists / tables / widgets
-- Avoid clutter:
-  - No nested cards inside cards
-  - No excessive borders
-- Consistent padding and alignment across sections
+Status transitions
 
-## 4. Components & Patterns
-- Use HeroUI components consistently
-- Cards:
-  - Used only for grouping related information
-  - Same radius, padding, and header style
-- Tables:
-  - Custom cells allowed
-  - Alignment must be pixel-consistent
-- Buttons:
-  - Primary actions only
-  - Avoid multiple CTA styles in one view
+Completion efficiency
 
-## 5. Empty / Loading / Error States
-All dashboard widgets must support:
-- Loading: skeleton matching final layout
-- Empty: clear message + subtle icon (no loud illustrations)
-- Error: short explanation + retry action
+It is designed for real-life DevOps operations, not for cosmetic reporting.
 
-No raw spinners. No blank areas.
+2. Data Sources & Responsibilities
+2.1 tickets collection — Current State
 
-## 6. Dark Mode Rules
-- No pure black backgrounds
-- Text contrast must remain comfortable for long viewing
-- Cards and sections must still be visually separated
-- Chips / badges must remain readable in dark mode
+The tickets collection represents the current snapshot of each ticket.
 
-Dark mode is NOT an afterthought.
+Fields in scope:
 
-## 7. Interaction Rules
-- No surprise interactions
-- Hover states must be subtle
-- Click targets must be clear
-- Avoid hidden actions inside icons unless obvious
+created (timestamp)
 
-## 8. Non-goals (Explicit)
-- Do not refactor unrelated pages
-- Do not introduce new UI libraries
-- Do not redesign navigation unless explicitly asked
+status:
+new | triage | waiting_dev | blocked | done | rejected
 
-## 9. AI Working Rules (For Cursor)
-Before making changes:
-1. Read this file first
-2. Only touch dashboard-related files
-3. Apply minimal diffs
-4. Preserve existing behavior unless explicitly requested
-5. Re-check dark mode + empty/loading states after changes
+Rules:
+
+tickets MUST ONLY be used for:
+
+Snapshot metrics
+
+Current status distribution
+
+KPI cards (total, open, done, blocked, rejected)
+
+tickets MUST NOT be used to infer historical status over time.
+
+2.2 ticket_events collection — Historical Truth
+
+The ticket_events collection is the single source of truth for all historical and timeline-based metrics.
+
+Relevant fields:
+
+ticket (relation → tickets)
+
+created (timestamp)
+
+event_type:
+note | priority | assigned | unassigned | type_changed | status_changed
+
+For status_changed events:
+
+from_status
+
+to_status
+
+Rules:
+
+All timeline charts (status transitions, lead time, aging) MUST be derived from ticket_events.
+
+No assumptions about status continuity are allowed without events.
+
+Never reconstruct history from the current ticket state.
+
+3. Status Definitions
+
+Canonical statuses:
+
+new
+
+triage
+
+waiting_dev
+
+blocked
+
+done
+
+rejected
+
+Business groupings:
+
+Open / Pending: new, triage, waiting_dev, blocked
+
+Completed: done
+
+Closed (Not Completed): rejected
+
+4. Dashboard Filters
+
+Shared filters for the Ticket Dashboard:
+
+dateRange (from, to)
+
+granularity: day | week | month
+
+Filter behavior:
+
+dateRange applies to:
+
+tickets.created (snapshot & creation trends)
+
+ticket_events.created (timeline & transitions)
+
+Granularity affects all time-bucketed charts.
+
+5. Supported Metrics (Current Scope)
+5.1 Snapshot Metrics (from tickets)
+
+Total tickets
+
+Open tickets
+
+Done tickets
+
+Rejected tickets
+
+Blocked tickets
+
+Completion rate
+
+Closure rate
+
+5.2 Timeline Metrics (from ticket_events)
+
+Tickets created over time
+
+Status transitions over time
+
+Lead time (created → done)
+
+Aging of open tickets
+
+6. Architectural Principles (Non-Negotiable)
+
+Charts NEVER fetch raw data.
+
+Charts ONLY receive aggregated data via props.
+
+All aggregation logic lives outside UI components.
+
+ticket_events is mandatory for any time-based or lifecycle metric.
+
+No duplicated status history inside tickets.
+
+7. Current Scope & Future Expansion
+
+Current:
+
+Ticket dashboard only.
+
+Planned:
+
+App dashboard
+
+Server dashboard
+
+Cross-linking tickets → apps / servers
+
+Design must remain backward-compatible.
+
+8. Design Intent
+
+This dashboard prioritizes:
+
+Accuracy over simplicity
+
+Operational truth over visual shortcuts
+
+Long-term maintainability
