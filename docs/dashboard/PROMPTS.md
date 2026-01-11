@@ -12,41 +12,9 @@ Charts must be responsive using ResponsiveContainer.
 
 Charts must be rendered inside HeroUI Card components.
 
-2. Folder Structure (DO NOT DEVIATE)
-src/
-├── features/
-│   ├── tickets/
-│   │   ├── pages/
-│   │   │   └── TicketDashboardPage.tsx
-│   │   ├── components/
-│   │   │   └── charts/
-│   │   │       ├── TicketStatusDonutChart.tsx
-│   │   │       ├── TicketsCreatedOverTimeChart.tsx
-│   │   │       └── TicketStatusTransitionChart.tsx
-│   │   ├── hooks/
-│   │   │   └── useTicketDashboardFilters.ts
-│   │   ├── services/
-│   │   │   └── ticketDashboardService.ts
-│   │   ├── utils/
-│   │   │   ├── ticketAggregations.ts
-│   │   │   └── ticketEventAggregations.ts
-│   │   └── types.ts
-│   │
-│   └── servers/
-│       ├── pages/
-│       ├── services/
-│       ├── hooks/
-│       └── types.ts
-│
-├── constants/
-│   └── tickets.ts
-│
-├── components/
-│   └── ui/
-│       └── EmptyState.tsx
-│
-└── pages/
-    └── Dashboard.tsx
+2. Folder Structure
+
+dựa theo cấu trúc hiện tại.
 
 3. Architecture Rules (Mandatory)
 
@@ -54,8 +22,7 @@ Chart components MUST NOT fetch data.
 
 Chart components MUST NOT contain aggregation logic.
 
-All aggregation logic MUST live under:
-features/tickets/utils/
+All aggregation logic MUST live under cấu trúc thư mục hợp lý
 
 Data flow MUST be:
 PocketBase → service → aggregation → charts
@@ -144,3 +111,55 @@ Follow strictly:
 Raw data → Aggregation → Charts
 
 The implementation must comply with dashboard_context.md.
+
+--
+Prompt fix charts
+The Recharts axes are not visible because axis line stroke is being set to an invalid SVG color string like "0 0% 6.67%" (missing hsl(...)).
+Implement a color normalizer and use it for all Recharts stroke/fill.
+
+Steps
+
+Create features/dashboard/utils/normalizeCssColor.ts:
+
+If value starts with # or rgb( or hsl( or oklch( or oklab(, return as-is.
+
+If it matches the pattern ^\s*\d+(\.\d+)?\s+\d+(\.\d+)?%\s+\d+(\.\d+)?%\s*$ (e.g. "0 0% 6.67%"), return hsl(${value.trim()}).
+
+Otherwise return the original string.
+
+In your chart theme hook (where you read computed CSS vars), run every token through normalizeCssColor() before returning theme.
+
+Use the normalized theme values in:
+
+XAxis/YAxis tick.fill
+
+axisLine.stroke, tickLine.stroke
+
+CartesianGrid.stroke
+
+Tooltip border/background/text
+
+Acceptance:
+
+In DevTools, axis <line> stroke must be valid like stroke="hsl(0 0% 6.67%)" or rgb(...), never raw "0 0% 6.67%".
+
+Axes are visible in dark mode without hardcoded hex.
+----
+improve charts
+In the status transition chart:
+
+Remove the dashed horizontal grid lines and the vertical dashed line at the right edge by disabling the grid:
+
+Either remove <CartesianGrid ... /> entirely, or set horizontal={false} and vertical={false} (preferred).
+
+Make X-axis date labels compact (e.g. 2026-01-09) and stop them from taking extra height:
+
+Set angle={0} and textAnchor="middle" (no rotation)
+
+Reduce axis height: height={24} (or similar)
+
+Use smaller font + spacing: tick={{ fontSize: 12 }} and tickMargin={6}
+
+Ensure the XAxis uses a formatter that returns YYYY-MM-DD exactly (no time), e.g. tickFormatter={(v) => String(v).slice(0, 10)}
+
+Apply these changes only to this chart and verify the bottom padding is reduced.
