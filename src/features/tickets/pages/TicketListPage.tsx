@@ -22,7 +22,7 @@ import {
   DropdownItem,
   Tooltip,
 } from '@heroui/react'
-import { Plus, Search, X, Copy, Check, User as UserIcon, Ticket } from 'lucide-react'
+import { Plus, Search, X, Copy, Check, User as UserIcon, Ticket as TicketIcon } from 'lucide-react'
 import { EyeIcon, EditIcon, DeleteIcon } from '@/components/icons'
 import { useTickets } from '../hooks/useTickets'
 import { useTicketFilters } from '../hooks/useTicketFilters'
@@ -263,7 +263,7 @@ function TicketListPage() {
           <h1 className="text-3xl font-bold tracking-tight">Tickets</h1>
           <div className="flex items-center gap-2">
             {loading ? (
-              <Skeleton className="h-4 w-32 rounded mt-1" />
+              <Skeleton className="h-4 w-32 rounded mt-1 bg-content1" />
             ) : (
               <p className="text-sm font-medium text-default-500">
                 {totalItems > 0 ? `${totalItems} Tickets active` : 'No tickets'}
@@ -405,10 +405,17 @@ function TicketListPage() {
               items={tickets}
               isLoading={loading}
               loadingContent={
-                <div className="flex flex-col items-center justify-center gap-2 py-20">
-                  <Skeleton className="h-4 w-48 rounded" />
-                  <Skeleton className="h-4 w-36 rounded" />
-                </div>
+                <>
+                  {Array.from({ length: 7 }).map((_, index) => (
+                    <TableRow key={index}>
+                      {columns.map((col) => (
+                        <TableCell key={col.key}>
+                          <Skeleton className="h-5 w-full rounded bg-content1" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </>
               }
               emptyContent={
                 <EmptyState
@@ -416,7 +423,7 @@ function TicketListPage() {
                   description={hasActiveFilters ? "Try adjusting your filters to see more results." : "Create your first ticket to start tracking work."}
                   actionLabel={hasActiveFilters ? undefined : "New Ticket"}
                   onAction={hasActiveFilters ? undefined : () => navigate('/tickets/new')}
-                  icon={Ticket}
+                  icon={TicketIcon}
                 />
               }
             >

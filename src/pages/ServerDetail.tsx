@@ -67,12 +67,12 @@ function ServerDetail() {
         <CardBody className="p-0">
           {loading ? (
             <div className="p-8 space-y-6">
-              <Skeleton className="h-10 w-1/3 rounded-xl" />
+              <Skeleton className="h-10 w-1/3 rounded bg-content1" />
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 {[1, 2, 3, 4].map(i => (
                   <div key={i} className="space-y-2">
-                    <Skeleton className="h-3 w-16 rounded" />
-                    <Skeleton className="h-5 w-24 rounded" />
+                    <Skeleton className="h-3 w-16 rounded bg-content1" />
+                    <Skeleton className="h-5 w-24 rounded bg-content1" />
                   </div>
                 ))}
               </div>

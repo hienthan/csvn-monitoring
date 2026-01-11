@@ -117,10 +117,17 @@ function ServerApps() {
             items={apps}
             isLoading={loading}
             loadingContent={
-              <div className="flex flex-col items-center justify-center gap-2 py-20">
-                <Skeleton className="h-4 w-40 rounded" />
-                <Skeleton className="h-4 w-32 rounded" />
-              </div>
+              <>
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={index}>
+                    {columns.map((col) => (
+                      <TableCell key={col.key}>
+                        <Skeleton className="h-5 w-full rounded bg-content1" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </>
             }
             emptyContent={
               <div className="py-20 text-center space-y-2">

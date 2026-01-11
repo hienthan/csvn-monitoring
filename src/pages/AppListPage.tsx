@@ -369,11 +369,11 @@ function AppListPage() {
               isLoading={loading}
               loadingContent={
                 <>
-                  {Array.from({ length: 6 }).map((_, index) => (
+                  {Array.from({ length: 7 }).map((_, index) => (
                     <TableRow key={index}>
                       {columns.map((col) => (
                         <TableCell key={col.key}>
-                          <Skeleton className="h-5 w-full rounded-lg bg-default-200" />
+                          <Skeleton className="h-5 w-full rounded bg-content1" />
                         </TableCell>
                       ))}
                     </TableRow>

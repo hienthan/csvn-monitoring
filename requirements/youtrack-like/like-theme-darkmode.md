@@ -212,3 +212,20 @@ Examples:
   Action: "New Server"
 
 Ensure empty states feel calm and professional, similar to YouTrack.
+
+🔹 Prompt Loading / Skeleton (copy dùng ngay)
+Replace all loading indicators with skeleton loaders that match the real layout.
+
+Rules:
+- Use skeleton blocks instead of spinners.
+- Skeleton colors must follow dark mode layers:
+  - Base: content1
+  - Highlight: content2
+- Skeleton size must match actual components (table rows, headers, inputs).
+
+Examples:
+- Table loading: render 5–7 skeleton rows.
+- Page header loading: skeleton title + skeleton button.
+- Detail page loading: skeleton cards instead of empty boxes.
+
+Ensure skeletons feel calm and unobtrusive, consistent with YouTrack dark mode.

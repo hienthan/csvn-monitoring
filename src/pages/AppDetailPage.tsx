@@ -76,13 +76,13 @@ function AppDetailPage() {
           </div>
           <div className="space-y-2">
             <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-              {loading ? <Skeleton className="h-9 w-64 rounded" /> : (app?.name || 'Unknown App')}
+              {loading ? <Skeleton className="h-9 w-64 rounded bg-content1" /> : (app?.name || 'Unknown App')}
             </h1>
             <div className="flex flex-wrap items-center gap-2">
               {loading ? (
                 <>
-                  <Skeleton className="h-6 w-20 rounded" />
-                  <Skeleton className="h-6 w-24 rounded" />
+                  <Skeleton className="h-6 w-20 rounded bg-content1" />
+                  <Skeleton className="h-6 w-24 rounded bg-content1" />
                 </>
               ) : (
                 <>
