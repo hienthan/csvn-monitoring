@@ -21,7 +21,6 @@ import { appService } from '../services/appService'
 import { useApiError } from '@/lib/hooks/useApiError'
 import { useServers } from '@/features/servers/hooks/useServers'
 import { EyeIcon, EditIcon, DeleteIcon } from '@/components/icons'
-import { formatRelativeTime } from '@/features/tickets/utils'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageContainer } from '@/components/PageContainer'
 import type { ServerApp } from '../types'
@@ -41,21 +40,21 @@ function AppListPage() {
     try {
       setLoading(true)
       setError(null)
-      
+
       const filters: string[] = []
-      
+
       if (searchQuery) {
         filters.push(`name ~ "${searchQuery}" || description ~ "${searchQuery}"`)
       }
-      
+
       if (serverFilter) {
         filters.push(`server = "${serverFilter}"`)
       }
-      
+
       if (createdByFilter) {
         filters.push(`created_by = "${createdByFilter}"`)
       }
-      
+
       const filter = filters.length > 0 ? filters.join(' && ') : ''
       const result = await appService.list({ filter, perPage: 100, expand: 'server' })
       setApps(result.items)
@@ -103,6 +102,7 @@ function AppListPage() {
     { key: 'server', label: 'SERVER' },
     { key: 'port', label: 'PORT' },
     { key: 'environment', label: 'ENV' },
+    { key: 'created_by', label: 'CREATED BY' },
     { key: 'actions', label: 'ACTIONS' },
   ]
 
@@ -111,7 +111,7 @@ function AppListPage() {
       case 'key':
         return (
           <div className="flex items-center justify-center">
-            <div className="font-mono text-xs font-bold text-primary px-1.5 py-0.5 bg-primary/5 rounded border border-primary/10">
+            <div className="font-mono text-[11px] font-black text-primary px-1.5 py-0.5 bg-primary/5 rounded border border-primary/15 shadow-sm">
               {app.key || 'N/A'}
             </div>
           </div>
@@ -119,16 +119,21 @@ function AppListPage() {
       case 'name':
         return (
           <div className="flex items-center justify-center">
-            <div className="flex flex-col min-w-0 py-0.5">
+            <div className="flex flex-col min-w-0 py-0.5 items-center">
               <span className="font-bold text-sm text-foreground truncate leading-tight">
                 {app.name || 'N/A'}
               </span>
+              {app.description && (
+                <span className="text-[10px] text-default-400 mt-0.5 truncate max-w-[150px] font-medium">
+                  {app.description}
+                </span>
+              )}
             </div>
           </div>
         )
       case 'department':
         return (
-          <div className="flex items-center justify-center text-sm text-default-600">
+          <div className="flex items-center justify-center text-[11px] text-default-500 font-black uppercase tracking-tighter">
             {app.department || 'N/A'}
           </div>
         )
@@ -136,22 +141,26 @@ function AppListPage() {
         const server = app.expand?.server
         return (
           <div className="flex items-center justify-center">
-            <div className="flex flex-col min-w-0 py-0.5">
-              <span className="font-bold text-sm text-foreground truncate leading-tight">
+            <div className="flex flex-col min-w-0 py-0.5 items-center">
+              <span className="font-bold text-sm text-foreground truncate leading-tight flex items-center gap-1.5 group">
                 {server?.name || 'N/A'}
               </span>
               {server && (
-                <span className="text-[11px] text-default-400 mt-0.5 truncate font-mono">
-                  {server.ip || server.host || ''}
-                </span>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="text-[10px] text-primary font-black truncate font-mono bg-primary/5 px-1.5 rounded-full border border-primary/10 shadow-sm">
+                    {server.ip || server.host || ''}
+                  </span>
+                </div>
               )}
             </div>
           </div>
         )
       case 'port':
         return (
-          <div className="flex items-center justify-center text-sm font-mono text-default-700">
-            {app.port || 'N/A'}
+          <div className="flex items-center justify-center">
+            <span className="text-[11px] font-mono font-bold text-default-700 bg-default-100 px-2 rounded-full border border-divider">
+              {app.port || '—'}
+            </span>
           </div>
         )
       case 'environment':
@@ -170,13 +179,27 @@ function AppListPage() {
                 size="sm"
                 variant="flat"
                 color={getEnvColor(app.environment)}
-                className="capitalize"
+                className="capitalize font-black text-[10px] h-5"
+                startContent={<div className="ml-1 h-1 w-1 rounded-full bg-current" />}
               >
                 {app.environment}
               </Chip>
             ) : (
-              <span className="text-sm text-default-600">N/A</span>
+              <span className="text-[10px] text-default-400 font-bold uppercase">N/A</span>
             )}
+          </div>
+        )
+      case 'created_by':
+        return (
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-5 h-5 rounded-full bg-default-100 flex items-center justify-center border border-divider/50 shadow-sm">
+              <span className="text-[9px] font-black text-default-600">
+                {(app.created_by || 'S')[0].toUpperCase()}
+              </span>
+            </div>
+            <span className="text-[11px] text-default-600 font-black uppercase tracking-tighter">
+              {app.created_by || 'System'}
+            </span>
           </div>
         )
       case 'actions':
@@ -393,7 +416,7 @@ function AppListPage() {
               {(app) => (
                 <TableRow key={app.id} onClick={() => handleRowClick(app.id)}>
                   {(columnKey) => (
-                    <TableCell>{renderCell(app, columnKey as string)}</TableCell>
+                    <TableCell align="center">{renderCell(app, columnKey as string)}</TableCell>
                   )}
                 </TableRow>
               )}

@@ -27,4 +27,5 @@ dist-ssr
 
 requirements/db
 dump_out
-pb.*
+pb.config.js
+pb.ts
