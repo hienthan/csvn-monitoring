@@ -16,7 +16,7 @@ import {
 import { Copy, Check, Network } from 'lucide-react'
 import { useServerPorts } from '../hooks/useServerPorts'
 import { copyToClipboard } from '@/lib/utils/clipboard'
-import type { ServerPort } from '@/types/port'
+import type { ServerPort } from '../types'
 
 function ServerPortsPage() {
   const { serverId } = useParams()

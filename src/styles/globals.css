@@ -29,3 +29,14 @@
   }
 }
 
+/* Prevent Recharts tooltip from causing layout shifts */
+.recharts-tooltip-wrapper {
+  pointer-events: none !important;
+  position: absolute !important;
+}
+
+.recharts-default-tooltip {
+  margin: 0 !important;
+  padding: 8px !important;
+}
+

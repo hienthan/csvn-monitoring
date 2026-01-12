@@ -3,7 +3,7 @@ import type {
   ServerPort,
   PortListParams,
   PortListResponse,
-} from '@/types/port'
+} from '../types'
 
 const COLLECTION_NAME = 'ma_server_ports'
 
@@ -83,4 +83,3 @@ export const portService = {
     return this.list({ ...params, filter })
   },
 }
-
