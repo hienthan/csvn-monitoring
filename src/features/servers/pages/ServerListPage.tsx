@@ -7,16 +7,11 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  Chip,
   Skeleton,
   Card,
   CardBody,
   Input,
   Button,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
   Tooltip,
 } from '@heroui/react'
 import { Search, X, Plus, Server as ServerIcon } from 'lucide-react'
@@ -34,30 +29,13 @@ function ServerListPage() {
   const { servers, loading, error, refetch } = useServers({ searchQuery })
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || '')
 
-  const getStatusColor = (status?: string) => {
-    const statusLower = status?.toLowerCase() || 'unknown'
-    if (statusLower === 'online' || statusLower === 'active') {
-      return 'success'
-    }
-    if (statusLower === 'offline' || statusLower === 'inactive') {
-      return 'danger'
-    }
-    return 'default'
+  const getStatusLabel = (isActive?: boolean) => {
+    return isActive ? 'Active' : 'Inactive'
   }
 
-  const getStatusLabel = (status?: string) => {
-    const statusLower = status?.toLowerCase() || 'unknown'
-    if (statusLower === 'online' || statusLower === 'active') {
-      return 'Online'
-    }
-    if (statusLower === 'offline' || statusLower === 'inactive') {
-      return 'Offline'
-    }
-    return 'Unknown'
-  }
-
-  const formatDockerMode = (mode?: string | boolean) => {
+  const formatDockerMode = (mode?: string | boolean | string[]) => {
     if (mode === undefined || mode === null) return 'N/A'
+    if (Array.isArray(mode)) return mode.join(', ')
     if (typeof mode === 'boolean') {
       return mode ? 'Enabled' : 'Disabled'
     }
@@ -94,6 +72,7 @@ function ServerListPage() {
   const columns = [
     { key: 'name', label: 'NAME' },
     { key: 'ip_host', label: 'IP/HOST' },
+    { key: 'location', label: 'LOCATION' },
     { key: 'docker_mode', label: 'DOCKER' },
     { key: 'os', label: 'OS' },
     { key: 'status', label: 'STATUS' },
@@ -105,43 +84,68 @@ function ServerListPage() {
     switch (columnKey) {
       case 'name':
         return (
-          <div className="flex flex-col min-w-0 py-0.5">
-            <span className="font-bold text-sm text-foreground truncate leading-tight">
+          <div className="flex flex-col min-w-0 py-0.5 items-center">
+            <span className="font-bold text-base text-foreground truncate leading-tight">
               {server.name || 'N/A'}
             </span>
-            <span className="text-[11px] text-default-400 mt-0.5 truncate uppercase tracking-wide font-medium">
-              {server.environment || 'Production'}
+            <span className="text-[10px] text-default-400 mt-0.5 truncate uppercase tracking-widest font-black opacity-70 scale-90">
+              {server.environment || (server as any).env || 'Production'}
             </span>
           </div>
         )
       case 'ip_host':
-        return <div className="text-sm font-mono text-primary font-medium">{server.ip || server.host || 'N/A'}</div>
-      case 'docker_mode':
-        return <div className="text-xs text-default-500 font-medium">{formatDockerMode(server.docker_mode)}</div>
-      case 'environment':
-        return null // Removed as it is now in the Name cell
-      case 'os':
-        return <div className="text-xs text-default-500">{server.os || 'N/A'}</div>
-      case 'status':
-        const color = getStatusColor(server.status)
-        const isOnline = server.status?.toLowerCase() === 'online' || server.status?.toLowerCase() === 'active'
         return (
-          <div className="flex items-center gap-2">
-            {isOnline && (
+          <div className="flex flex-col items-center">
+            <div className="text-sm font-mono text-primary font-bold">
+              {server.ip || server.host || 'N/A'}
+            </div>
+          </div>
+        )
+      case 'location':
+        return (
+          <div className="flex items-center justify-center">
+            <span className="text-sm font-bold text-default-700">
+              {(server as any).location || 'Unknown'}
+            </span>
+          </div>
+        )
+      case 'docker_mode':
+        const modeValue = server.docker_mode
+        const displayMode = formatDockerMode(modeValue)
+        return (
+          <div className="flex justify-center">
+            <span className="text-[11px] text-default-600 font-bold uppercase tracking-tight text-center">
+              {displayMode}
+            </span>
+          </div>
+        )
+      case 'os':
+        return (
+          <div className="flex justify-center">
+            <span className="text-xs font-bold text-default-500 uppercase">
+              {server.os || 'Linux'}
+            </span>
+          </div>
+        )
+      case 'status':
+        const isActive = (server as any).is_active
+        return (
+          <div className="flex items-center justify-center gap-2">
+            {isActive && (
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
               </span>
             )}
-            <Chip size="sm" variant="flat" color={color} className="capitalize">
-              {getStatusLabel(server.status)}
-            </Chip>
+            <span className={`text-[11px] font-black uppercase tracking-widest ${isActive ? 'text-success' : 'text-danger'}`}>
+              {getStatusLabel(isActive)}
+            </span>
           </div>
         )
       case 'updated':
         const exactTime = server.updated ? new Date(server.updated).toLocaleString() : 'N/A'
         return (
-          <div className="text-default-400 text-xs font-medium" title={exactTime}>
+          <div className="text-default-400 text-[10px] font-bold text-center tracking-tighter" title={exactTime}>
             {formatRelativeTime(server.updated)}
           </div>
         )
@@ -269,7 +273,7 @@ function ServerListPage() {
               {(column) => (
                 <TableColumn
                   key={column.key}
-                  align={column.key === 'actions' ? 'center' : 'start'}
+                  align="center"
                 >
                   {column.label}
                 </TableColumn>
@@ -304,7 +308,7 @@ function ServerListPage() {
               {(server) => (
                 <TableRow key={server.id} onClick={() => handleRowClick(server.id)}>
                   {(columnKey) => (
-                    <TableCell>{renderCell(server, columnKey as string)}</TableCell>
+                    <TableCell align="center">{renderCell(server, columnKey as string)}</TableCell>
                   )}
                 </TableRow>
               )}

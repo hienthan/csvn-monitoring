@@ -16,10 +16,6 @@ import {
   Select,
   SelectItem,
   Input,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
   Tooltip,
 } from '@heroui/react'
 import { Plus, Search, X, Copy, Check, User as UserIcon, Ticket as TicketIcon } from 'lucide-react'
@@ -106,7 +102,7 @@ function TicketListPage() {
     switch (columnKey) {
       case 'code':
         return (
-          <div className="flex items-center gap-2 group">
+          <div className="flex items-center justify-center gap-2 group">
             <span className="font-mono text-xs font-bold text-primary px-1.5 py-0.5 bg-primary/5 rounded border border-primary/10">
               {ticket.code || 'N/A'}
             </span>
@@ -136,7 +132,7 @@ function TicketListPage() {
           : ''
         const subtitleParts = [ticket.app_name, serviceTagsText].filter(Boolean)
         return (
-          <div className="flex flex-col min-w-0 py-0.5">
+          <div className="flex flex-col min-w-0 py-0.5 items-center">
             <span className="font-bold text-sm text-foreground truncate leading-tight">
               {ticket.title || 'N/A'}
             </span>
@@ -149,27 +145,31 @@ function TicketListPage() {
         )
       case 'status':
         return (
-          <Chip
-            size="sm"
-            variant="flat"
-            color={getTicketStatusColor(ticket.status)}
-          >
-            {TICKET_STATUS_LABELS[ticket.status] || ticket.status || 'N/A'}
-          </Chip>
+          <div className="flex justify-center">
+            <Chip
+              size="sm"
+              variant="flat"
+              color={getTicketStatusColor(ticket.status)}
+            >
+              {TICKET_STATUS_LABELS[ticket.status] || ticket.status || 'N/A'}
+            </Chip>
+          </div>
         )
       case 'priority':
         return (
-          <Chip
-            size="sm"
-            variant="flat"
-            color={getTicketPriorityColor(ticket.priority)}
-          >
-            {TICKET_PRIORITY_LABELS[ticket.priority] || ticket.priority || 'N/A'}
-          </Chip>
+          <div className="flex justify-center">
+            <Chip
+              size="sm"
+              variant="flat"
+              color={getTicketPriorityColor(ticket.priority)}
+            >
+              {TICKET_PRIORITY_LABELS[ticket.priority] || ticket.priority || 'N/A'}
+            </Chip>
+          </div>
         )
       case 'assignee':
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <div className="w-6 h-6 rounded-full bg-default-200 flex items-center justify-center flex-shrink-0">
               <UserIcon size={14} className="text-default-500" />
             </div>
@@ -181,7 +181,7 @@ function TicketListPage() {
       case 'updated':
         const exactTime = ticket.updated ? new Date(ticket.updated).toLocaleString() : 'N/A'
         return (
-          <div className="text-default-500 text-sm" title={exactTime}>
+          <div className="text-default-500 text-xs font-medium text-center" title={exactTime}>
             {formatRelativeTime(ticket.updated)}
           </div>
         )
@@ -395,7 +395,7 @@ function TicketListPage() {
               {(column) => (
                 <TableColumn
                   key={column.key}
-                  align={column.key === 'actions' ? 'center' : 'start'}
+                  align="center"
                 >
                   {column.label}
                 </TableColumn>

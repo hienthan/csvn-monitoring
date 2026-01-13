@@ -20,6 +20,7 @@ function ServerAppsPage() {
 
   const columns = [
     { key: 'name', label: 'NAME' },
+    { key: 'port', label: 'PORT' },
     { key: 'version', label: 'VERSION' },
     { key: 'status', label: 'STATUS' },
     { key: 'updated', label: 'LAST UPDATED' },
@@ -32,7 +33,7 @@ function ServerAppsPage() {
     switch (columnKey) {
       case 'name':
         return (
-          <div className="flex flex-col">
+          <div className="flex flex-col items-center">
             <span className="font-bold text-foreground">
               {app.name || appDetails?.name || 'N/A'}
             </span>
@@ -43,16 +44,26 @@ function ServerAppsPage() {
             )}
           </div>
         )
+      case 'port':
+        return (
+          <div className="flex justify-center">
+            <span className="text-sm font-mono text-primary font-bold px-2 py-0.5 bg-primary/5 rounded border border-primary/10">
+              {(app as any).port || appDetails?.port || '—'}
+            </span>
+          </div>
+        )
       case 'version':
         return (
-          <Chip size="sm" variant="flat" className="font-mono text-xs">
-            {appDetails?.version || 'v0.0.0'}
-          </Chip>
+          <div className="flex justify-center">
+            <Chip size="sm" variant="flat" className="font-mono text-xs">
+              {appDetails?.version || 'v0.0.0'}
+            </Chip>
+          </div>
         )
       case 'status':
         const isOnline = app.status?.toLowerCase() === 'online' || app.status?.toLowerCase() === 'running'
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <div className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-success' : 'bg-default-400'}`} />
             <span className={`text-sm font-medium ${isOnline ? 'text-success' : 'text-default-500'}`}>
               {app.status || 'N/A'}
@@ -61,13 +72,13 @@ function ServerAppsPage() {
         )
       case 'updated':
         return (
-          <div className="text-default-500 text-xs">
+          <div className="text-default-500 text-xs text-center font-medium">
             {app.updated ? new Date(app.updated).toLocaleString() : 'N/A'}
           </div>
         )
       case 'created_by':
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <div className="w-5 h-5 rounded-full bg-default-100 flex items-center justify-center">
               <span className="text-[10px] font-bold text-default-600">
                 {(appDetails?.created_by || 'S')[0].toUpperCase()}
@@ -108,7 +119,7 @@ function ServerAppsPage() {
         >
           <TableHeader columns={columns}>
             {(column) => (
-              <TableColumn key={column.key}>
+              <TableColumn key={column.key} align="center">
                 {column.label}
               </TableColumn>
             )}
@@ -139,7 +150,7 @@ function ServerAppsPage() {
             {(app) => (
               <TableRow key={app.id}>
                 {(columnKey) => (
-                  <TableCell>
+                  <TableCell align="center">
                     {renderCell(app, columnKey as string)}
                   </TableCell>
                 )}
