@@ -1,5 +1,6 @@
 // Ticket Type
 export type TicketType =
+  | 'general'
   | 'deploy_bugfix'
   | 'deploy_feature'
   | 'new_app_setup'
@@ -45,20 +46,20 @@ export interface Ticket {
   code: string
   title: string
   description: string
-  type: TicketType
+  types: TicketType
   priority: TicketPriority
   status: TicketStatus
   environment: TicketEnvironment
   app_name: string
   service_tags: string[]
-  requester_name: string
-  requester_contact?: string
+  requestor_name: string
+  requestor_contact?: string
   assignee?: string
   due_at?: string // ISO date string
   started_at?: string // ISO date string
   resolved_at?: string // ISO date string
   attachments?: string[] // PocketBase file field
-  links?: TicketLinks // JSON or string
+  link?: TicketLinks // JSON or string
   created?: string
   updated?: string
   [key: string]: unknown

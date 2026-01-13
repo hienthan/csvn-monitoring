@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Outlet, useLocation } from 'react-router-dom'
 import { Tabs, Tab, Chip, Card, CardBody, Skeleton, Button } from '@heroui/react'
-import { Edit, Package, AlertTriangle, Info } from 'lucide-react'
+import { Edit, Package, AlertTriangle, Info, Trash2 } from 'lucide-react'
 import Breadcrumb from '@/components/Breadcrumb'
 import { useServer } from '../hooks/useServer'
 import { useServerApps } from '../hooks/useServerApps'
@@ -9,6 +9,8 @@ import { useApiError } from '@/lib/hooks/useApiError'
 import { PageContainer } from '@/components/PageContainer'
 import { ServerEditModal } from '@/components/ServerEditModal'
 import { useNetdataKpis } from '../hooks/useNetdataKpis'
+import { useAuth } from '@/features/auth/context/AuthContext'
+import { pb } from '@/lib/pb'
 import type { Server } from '../types'
 
 function ServerDetailPage() {
@@ -19,7 +21,10 @@ function ServerDetailPage() {
   const { apps } = useServerApps(serverId)
   const { handleError } = useApiError()
   const [editModalOpen, setEditModalOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const netdata = useNetdataKpis(server?.ip, !loading && !!server?.ip)
+  const { user } = useAuth()
+  const canManageServers = user?.id === 1490 || user?.username === '048466'
 
   const getActiveTab = () => {
     if (location.pathname.includes('/apps')) return 'apps'
@@ -51,6 +56,20 @@ function ServerDetailPage() {
     } catch (err) {
       handleError(err)
       throw err
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!server || !window.confirm('Are you sure you want to delete this server? This action cannot be undone.')) return
+    
+    setDeleting(true)
+    try {
+      await pb.collection('ma_servers').delete(server.id)
+      navigate('/servers')
+    } catch (err) {
+      handleError(err)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -93,7 +112,7 @@ function ServerDetailPage() {
                       <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
                         {server?.name || 'Unknown Server'}
                       </h1>
-                      <span className="text-xs text-default-400 uppercase tracking-widest font-black opacity-70 mt-1">
+                      <span className="text-xs text-default-400 font-bold opacity-80 mt-1 capitalize leading-tight">
                         {server?.environment || (server as any).env || 'Production'}
                       </span>
                     </div>
@@ -162,12 +181,25 @@ function ServerDetailPage() {
                     )}
 
                     <Button
-                      isIconOnly
-                      variant="light"
-                      radius="full"
-                      onPress={() => setEditModalOpen(true)}
+                      variant="flat"
+                      color="danger"
+                      startContent={<Trash2 size={16} />}
+                      onPress={handleDelete}
+                      isLoading={deleting}
+                      isDisabled={!canManageServers}
+                      className="font-bold"
                     >
-                      <Edit size={18} />
+                      Delete
+                    </Button>
+                    <Button
+                      variant="solid"
+                      color="primary"
+                      startContent={<Edit size={16} />}
+                      onPress={() => setEditModalOpen(true)}
+                      isDisabled={!canManageServers}
+                      className="font-bold"
+                    >
+                      Edit
                     </Button>
                   </div>
                 </div>

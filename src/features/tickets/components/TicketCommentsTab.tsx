@@ -38,7 +38,7 @@ function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
   // Set default author name from ticket
   useEffect(() => {
     if (ticket && !authorName) {
-      setAuthorName(ticket.assignee || ticket.requester_name || '')
+      setAuthorName(ticket.assignee || ticket.requestor_name || '')
     }
   }, [ticket, authorName])
 

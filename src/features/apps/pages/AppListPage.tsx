@@ -13,14 +13,13 @@ import {
   CardBody,
   Input,
   Button,
-  Tooltip,
+  Select,
+  SelectItem,
 } from '@heroui/react'
 import { Search, X, Plus, Package } from 'lucide-react'
-import { Select, SelectItem } from '@heroui/react'
 import { appService } from '../services/appService'
 import { useApiError } from '@/lib/hooks/useApiError'
 import { useServers } from '@/features/servers/hooks/useServers'
-import { EyeIcon, EditIcon, DeleteIcon } from '@/components/icons'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageContainer } from '@/components/PageContainer'
 import type { ServerApp } from '../types'
@@ -77,41 +76,24 @@ function AppListPage() {
     navigate(`/apps/${appId}`)
   }
 
-  const handleAction = (action: string, app: ServerApp, e?: React.MouseEvent) => {
-    if (e) {
-      e.stopPropagation()
-    }
-    switch (action) {
-      case 'view':
-        navigate(`/apps/${app.id}`)
-        break
-      case 'edit':
-        navigate(`/apps/${app.id}/edit`)
-        break
-      case 'delete':
-        // TODO: Implement delete confirmation modal
-        console.log('Delete app', app.id)
-        break
-    }
-  }
-
   const columns = [
-    { key: 'key', label: 'APP KEY' },
-    { key: 'name', label: 'NAME' },
-    { key: 'department', label: 'DEPT' },
-    { key: 'server', label: 'SERVER' },
-    { key: 'port', label: 'PORT' },
-    { key: 'environment', label: 'ENV' },
-    { key: 'created_by', label: 'CREATED BY' },
-    { key: 'actions', label: 'ACTIONS' },
+    { key: 'key', label: 'App Key' },
+    { key: 'name', label: 'Name' },
+    { key: 'department', label: 'Dept' },
+    { key: 'server', label: 'Server IP' },
+    { key: 'port', label: 'Port' },
+    { key: 'environment', label: 'Env' },
+    { key: 'created_by', label: 'Created By' },
   ]
 
   const renderCell = (app: ServerApp, columnKey: string) => {
+    const fontSize = 'text-sm'
+    
     switch (columnKey) {
       case 'key':
         return (
           <div className="flex items-center justify-center">
-            <div className="font-mono text-[11px] font-black text-primary px-1.5 py-0.5 bg-primary/5 rounded border border-primary/15 shadow-sm">
+            <div className={`font-mono ${fontSize} font-bold text-primary`}>
               {app.key || 'N/A'}
             </div>
           </div>
@@ -120,7 +102,7 @@ function AppListPage() {
         return (
           <div className="flex items-center justify-center">
             <div className="flex flex-col min-w-0 py-0.5 items-center">
-              <span className="font-bold text-sm text-foreground truncate leading-tight">
+              <span className={`font-bold ${fontSize} text-foreground truncate leading-tight`}>
                 {app.name || 'N/A'}
               </span>
               {app.description && (
@@ -133,7 +115,7 @@ function AppListPage() {
         )
       case 'department':
         return (
-          <div className="flex items-center justify-center text-[11px] text-default-500 font-black uppercase tracking-tighter">
+          <div className={`flex items-center justify-center ${fontSize} text-default-500 font-bold uppercase`}>
             {app.department || 'N/A'}
           </div>
         )
@@ -141,24 +123,15 @@ function AppListPage() {
         const server = app.expand?.server
         return (
           <div className="flex items-center justify-center">
-            <div className="flex flex-col min-w-0 py-0.5 items-center">
-              <span className="font-bold text-sm text-foreground truncate leading-tight flex items-center gap-1.5 group">
-                {server?.name || 'N/A'}
-              </span>
-              {server && (
-                <div className="flex items-center gap-1 mt-0.5">
-                  <span className="text-[10px] text-primary font-black truncate font-mono bg-primary/5 px-1.5 rounded-full border border-primary/10 shadow-sm">
-                    {server.ip || server.host || ''}
-                  </span>
-                </div>
-              )}
-            </div>
+            <span className={`${fontSize} text-primary font-bold font-mono`}>
+              {server?.ip || server?.host || 'N/A'}
+            </span>
           </div>
         )
       case 'port':
         return (
           <div className="flex items-center justify-center">
-            <span className="text-[11px] font-mono font-bold text-default-700 bg-default-100 px-2 rounded-full border border-divider">
+            <span className={`${fontSize} font-mono font-bold text-default-700`}>
               {app.port || '—'}
             </span>
           </div>
@@ -179,47 +152,22 @@ function AppListPage() {
                 size="sm"
                 variant="flat"
                 color={getEnvColor(app.environment)}
-                className="capitalize font-black text-[10px] h-5"
+                className={`capitalize font-bold text-[10px] h-5`}
                 startContent={<div className="ml-1 h-1 w-1 rounded-full bg-current" />}
               >
                 {app.environment}
               </Chip>
             ) : (
-              <span className="text-[10px] text-default-400 font-bold uppercase">N/A</span>
+              <span className={`${fontSize} text-default-400 font-bold uppercase`}>N/A</span>
             )}
           </div>
         )
       case 'created_by':
         return (
           <div className="flex items-center justify-center gap-2">
-            <div className="w-5 h-5 rounded-full bg-default-100 flex items-center justify-center border border-divider/50 shadow-sm">
-              <span className="text-[9px] font-black text-default-600">
-                {(app.created_by || 'S')[0].toUpperCase()}
-              </span>
-            </div>
-            <span className="text-[11px] text-default-600 font-black uppercase tracking-tighter">
+            <span className={`${fontSize} text-default-600 font-bold`}>
               {app.created_by || 'System'}
             </span>
-          </div>
-        )
-      case 'actions':
-        return (
-          <div className="relative flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
-            <Tooltip content="Details">
-              <span className="text-lg text-default-400 cursor-pointer active:opacity-50 hover:text-primary transition-colors">
-                <EyeIcon onClick={(e) => handleAction('view', app, e)} />
-              </span>
-            </Tooltip>
-            <Tooltip content="Edit app">
-              <span className="text-lg text-default-400 cursor-pointer active:opacity-50 hover:text-primary transition-colors">
-                <EditIcon onClick={(e) => handleAction('edit', app, e)} />
-              </span>
-            </Tooltip>
-            <Tooltip color="danger" content="Delete app">
-              <span className="text-lg text-danger cursor-pointer active:opacity-50 hover:text-danger-600 transition-colors">
-                <DeleteIcon onClick={(e) => handleAction('delete', app, e)} />
-              </span>
-            </Tooltip>
           </div>
         )
       default:
@@ -310,7 +258,7 @@ function AppListPage() {
               }}
               items={[
                 { key: 'all', label: 'All Servers' },
-                ...servers.map((server) => ({ key: server.id, label: server.name || server.id }))
+                ...servers.map((server) => ({ key: server.id, label: server.ip || server.host || server.id }))
               ]}
               className="w-[180px]"
               variant="flat"
@@ -372,7 +320,7 @@ function AppListPage() {
             isStriped
             classNames={{
               base: 'min-h-[400px]',
-              th: 'bg-content2 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider',
+              th: 'bg-content2 text-default-400 font-bold text-xs uppercase tracking-wider h-11 px-4 first:rounded-none last:rounded-none border-b border-divider',
               td: 'py-2 px-4 border-b border-divider/50',
               tr: 'hover:bg-content3 cursor-pointer transition-colors',
             }}

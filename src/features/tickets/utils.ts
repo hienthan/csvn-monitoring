@@ -255,7 +255,7 @@ export function pbFileUrl(
   recordId: string,
   fileName: string
 ): string {
-  const pbUrl = import.meta.env.VITE_PB_URL || 'http://gmo021.cansportsvg.com:8090'
+  const pbUrl = import.meta.env.VITE_PB_URL || 'http://10.1.16.89:8090'
   // Remove trailing slash if present
   const baseUrl = pbUrl.replace(/\/$/, '')
   return `${baseUrl}/api/files/${collectionName}/${recordId}/${fileName}`

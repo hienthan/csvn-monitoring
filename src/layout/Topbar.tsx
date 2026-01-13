@@ -13,8 +13,11 @@ import {
 } from '@heroui/react'
 import { Bell, HelpCircle, Settings, LogOut, User } from 'lucide-react'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
+import { useAuth } from '@/features/auth/context/AuthContext'
 
 function Topbar() {
+  const { user, logout } = useAuth()
+
   return (
     <Navbar
       maxWidth="full"
@@ -54,15 +57,15 @@ function Topbar() {
                 as="button"
                 className="transition-transform"
                 color="primary"
-                name="Jason Hughes"
+                name={user?.name || 'User'}
                 size="sm"
-                src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=random`}
               />
             </DropdownTrigger>
             <DropdownMenu aria-label="Profile Actions" variant="flat">
               <DropdownItem key="profile" className="h-14 gap-2">
-                <p className="font-semibold">Signed in as</p>
-                <p className="font-semibold">jason@example.com</p>
+                <p className="font-semibold text-xs text-default-500">Signed in as</p>
+                <p className="font-semibold">{user?.email || user?.username}</p>
               </DropdownItem>
               <DropdownItem key="settings" startContent={<Settings className="w-4 h-4" />}>
                 My Settings
@@ -70,7 +73,7 @@ function Topbar() {
               <DropdownItem key="team_settings" startContent={<User className="w-4 h-4" />}>
                 Team Settings
               </DropdownItem>
-              <DropdownItem key="logout" color="danger" startContent={<LogOut className="w-4 h-4" />}>
+              <DropdownItem key="logout" color="danger" startContent={<LogOut className="w-4 h-4" />} onPress={() => logout()}>
                 Log Out
               </DropdownItem>
             </DropdownMenu>

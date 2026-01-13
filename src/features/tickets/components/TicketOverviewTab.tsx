@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-import { Card, CardBody, CardHeader, Skeleton, Chip, Button, Divider, Tooltip, Link } from '@heroui/react'
-import { ExternalLink, File, Download, User as UserIcon, Copy, Check, Server, Activity, Database } from 'lucide-react'
+import React from 'react'
+import { Card, CardBody, Skeleton, Chip, Tooltip, Button } from '@heroui/react'
+import { File, ExternalLink, Server, Activity, Database, Link as LinkIcon } from 'lucide-react'
 import { useTicket } from '../hooks/useTicket'
 import {
   TICKET_TYPE_LABELS,
@@ -11,7 +11,6 @@ import {
   getTicketPriorityColor,
 } from '../constants'
 import { parseLinks, pbFilesUrls } from '../utils'
-import { copyToClipboard } from '@/lib/utils/clipboard'
 
 interface TicketOverviewTabProps {
   ticketId?: string
@@ -19,7 +18,6 @@ interface TicketOverviewTabProps {
 
 function TicketOverviewTab({ ticketId }: TicketOverviewTabProps) {
   const { ticket, loading, error } = useTicket(ticketId)
-  const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
 
   if (error) {
     return (
@@ -62,7 +60,7 @@ function TicketOverviewTab({ ticketId }: TicketOverviewTabProps) {
     )
   }
 
-  const links = parseLinks(ticket.links)
+  const links = parseLinks(ticket.link)
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A'
     try {
@@ -116,16 +114,6 @@ function TicketOverviewTab({ ticketId }: TicketOverviewTabProps) {
   }
 
   const requirements = parseRequirements()
-  const healthEndpoint = requirements.healthCheck || '/health'
-  const expectedStatusCode = '200'
-
-  const handleCopyUrl = async (url: string) => {
-    const success = await copyToClipboard(url)
-    if (success) {
-      setCopiedUrl(url)
-      setTimeout(() => setCopiedUrl(null), 2000)
-    }
-  }
 
   // Helper component for Key-Value display
   const KeyValue = ({ label, value, truncate = false }: { label: string; value: string | React.ReactNode; truncate?: boolean }) => {
@@ -152,7 +140,9 @@ function TicketOverviewTab({ ticketId }: TicketOverviewTabProps) {
   const UserDisplay = ({ name, subtitle }: { name: string; subtitle?: string }) => (
     <div className="flex items-center gap-2">
       <div className="w-8 h-8 rounded-full bg-default-200 flex items-center justify-center">
-        <UserIcon size={16} className="text-default-500" />
+        <div className="text-default-500 text-[10px] font-bold">
+          {name.charAt(0).toUpperCase()}
+        </div>
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-default-900 truncate">{name}</p>
@@ -223,14 +213,43 @@ function TicketOverviewTab({ ticketId }: TicketOverviewTabProps) {
           </div>
         </div>
 
+        {/* Links Section */}
+        {links.length > 0 && (
+          <div className="space-y-2 pt-4 border-t border-divider">
+            <p className="text-[11px] uppercase tracking-[0.1em] font-bold text-default-400 px-1">Links</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 px-1">
+              {links.map((link, index) => (
+                <div key={index} className="flex items-center gap-3 p-2 rounded bg-default-100/30 border border-divider/50 hover:bg-default-100 transition-colors group cursor-pointer">
+                  <LinkIcon size={16} className="text-default-400 group-hover:text-primary flex-shrink-0" />
+                  <span className="flex-1 truncate text-xs font-bold text-default-700">{link.label || link.url}</span>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      isIconOnly
+                      size="sm"
+                      variant="light"
+                      as="a"
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-6 w-6 min-w-0"
+                    >
+                      <ExternalLink size={12} />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Attachments */}
-        {ticket.attachments && ticket.attachments.length > 0 && (
+        {ticket.attachments && (ticket.attachments as string[]).length > 0 && (
           <div className="space-y-2 pt-4 border-t border-divider">
             <p className="text-[11px] uppercase tracking-[0.1em] font-bold text-default-400 px-1">Attachments</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 px-1">
-              {pbFilesUrls('ma_tickets', ticket.id, ticket.attachments).map(
+              {pbFilesUrls('ma_tickets', ticket.id, ticket.attachments as string[]).map(
                 (url, index) => {
-                  const fileName = ticket.attachments?.[index] || `file-${index}`
+                  const fileName = (ticket.attachments as string[])?.[index] || `file-${index}`
                   return (
                     <div key={index} className="flex items-center gap-3 p-2 rounded bg-default-100/30 border border-divider/50 hover:bg-default-100 transition-colors group cursor-pointer">
                       <File size={16} className="text-default-400 group-hover:text-primary flex-shrink-0" />
@@ -273,7 +292,7 @@ function TicketOverviewTab({ ticketId }: TicketOverviewTabProps) {
             />
             <KeyValue label="TYPE" value={
               <Chip size="sm" variant="flat" color="primary" className="font-black text-[10px] uppercase h-5">
-                {TICKET_TYPE_LABELS[ticket.type] || ticket.type || 'N/A'}
+                {TICKET_TYPE_LABELS[ticket.types] || ticket.types || 'N/A'}
               </Chip>
             } />
             <KeyValue label="APPLICATION" value={<span className="font-bold text-xs text-foreground">{ticket.app_name || 'N/A'}</span>} truncate={true} />
@@ -342,11 +361,11 @@ function TicketOverviewTab({ ticketId }: TicketOverviewTabProps) {
                 value={ticket.assignee ? <UserDisplay name={ticket.assignee} /> : <span className="text-default-400 text-xs italic">Unassigned</span>}
               />
               <KeyValue
-                label="REQUESTER"
-                value={ticket.requester_name ? (
+                label="REQUESTOR"
+                value={ticket.requestor_name ? (
                   <UserDisplay
-                    name={ticket.requester_name}
-                    subtitle={ticket.requester_contact || undefined}
+                    name={ticket.requestor_name}
+                    subtitle={ticket.requestor_contact || undefined}
                   />
                 ) : <span className="text-default-400 text-xs italic">N/A</span>}
               />
