@@ -1,0 +1,10 @@
+Always read docs/dashboard/DASHBOARD_CONTEXT.md before modifying dashboard code.
+
+Scope control:
+- Dashboard only unless explicitly requested
+- No UI library changes
+- Minimal diffs only
+
+Quality checks:
+- Dark mode must be verified
+- Empty and loading states must be present

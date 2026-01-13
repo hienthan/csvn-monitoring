@@ -18,7 +18,7 @@ import { useTicketComments } from '../hooks/useTicketComments'
 import { useTicket } from '../hooks/useTicket'
 import { useApiError } from '@/lib/hooks/useApiError'
 import { pbFilesUrls } from '../utils'
-import { EmptyState } from '@/components/EmptyState'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 interface TicketCommentsTabProps {
   ticketId?: string
@@ -182,8 +182,8 @@ function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
             <Card key={index}>
               <CardBody>
                 <div className="space-y-2">
-                  <Skeleton className="h-4 w-32 rounded" />
-                  <Skeleton className="h-20 w-full rounded" />
+                  <Skeleton className="h-4 w-32 rounded bg-content1" />
+                  <Skeleton className="h-20 w-full rounded bg-content1" />
                 </div>
               </CardBody>
             </Card>

@@ -17,7 +17,7 @@ import {
   getTicketEventTypeColor,
 } from '../constants'
 import type { TicketEventType } from '../types'
-import { EmptyState } from '@/components/EmptyState'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 interface TicketEventsTabProps {
   ticketId?: string
@@ -146,8 +146,8 @@ function TicketEventsTab({ ticketId }: TicketEventsTabProps) {
           <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, index) => (
               <div key={index} className="space-y-2">
-                <Skeleton className="h-4 w-32 rounded" />
-                <Skeleton className="h-16 w-full rounded" />
+                <Skeleton className="h-4 w-32 rounded bg-content1" />
+                <Skeleton className="h-16 w-full rounded bg-content1" />
               </div>
             ))}
           </div>

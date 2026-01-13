@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
 @layer utilities {
   .animate-status-pulse {
     animation: status-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -19,7 +25,18 @@
   }
 
   .glassmorphism {
-    @apply backdrop-blur-md bg-white/70 dark:bg-black/70 border border-white/20 dark:border-white/10;
+    @apply backdrop-blur-md bg-content1/70 border border-divider;
   }
+}
+
+/* Prevent Recharts tooltip from causing layout shifts */
+.recharts-tooltip-wrapper {
+  pointer-events: none !important;
+  position: absolute !important;
+}
+
+.recharts-default-tooltip {
+  margin: 0 !important;
+  padding: 8px !important;
 }
 
