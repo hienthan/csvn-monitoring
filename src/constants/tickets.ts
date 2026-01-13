@@ -26,6 +26,7 @@ export const TICKET_PRIORITY_LABELS: Record<TicketPriority, string> = {
 }
 
 export const TICKET_TYPE_LABELS: Record<TicketType, string> = {
+  general: 'General',
   deploy_bugfix: 'Deploy Bugfix',
   deploy_feature: 'Deploy Feature',
   new_app_setup: 'New App Setup',
@@ -48,12 +49,12 @@ export const TICKET_ENVIRONMENT_LABELS: Record<TicketEnvironment, string> = {
 
 // Chip colorVariant maps (using HeroUI color prop)
 // HeroUI colors: default, primary, secondary, success, warning, danger
-export const TICKET_STATUS_COLORS: Record<TicketStatus, 'default' | 'primary' | 'success' | 'warning' | 'danger'> = {
-  new: 'primary',
-  triage: 'default',
-  in_progress: 'warning',
+export const TICKET_STATUS_COLORS: Record<TicketStatus, ChipProps['color']> = {
+  new: 'default',
+  triage: 'secondary',
+  in_progress: 'primary',
   waiting_dev: 'default',
-  blocked: 'danger',
+  blocked: 'warning',
   done: 'success',
   rejected: 'danger',
 }
@@ -103,7 +104,7 @@ export function getTicketEnvironmentLabel(environment: TicketEnvironment): strin
   return TICKET_ENVIRONMENT_LABELS[environment] || environment
 }
 
-export function getTicketStatusColor(status: TicketStatus): 'default' | 'primary' | 'success' | 'warning' | 'danger' {
+export function getTicketStatusColor(status: TicketStatus): ChipProps['color'] {
   return TICKET_STATUS_COLORS[status] || 'default'
 }
 

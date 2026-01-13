@@ -43,12 +43,12 @@ export function TicketEditModal({
   const [formData, setFormData] = useState<Partial<Ticket>>({
     title: '',
     description: '',
-    type: 'deploy_bugfix',
+    types: 'deploy_bugfix',
     priority: 'normal',
     environment: 'dev',
     app_name: '',
-    requester_name: '',
-    requester_contact: '',
+    requestor_name: '',
+    requestor_contact: '',
     assignee: '',
     due_at: '',
   })
@@ -64,17 +64,17 @@ export function TicketEditModal({
       setFormData({
         title: ticket.title || '',
         description: ticket.description || '',
-        type: ticket.type || 'deploy_bugfix',
+        types: ticket.types || 'deploy_bugfix',
         priority: ticket.priority || 'normal',
         environment: ticket.environment || 'dev',
         app_name: ticket.app_name || '',
-        requester_name: ticket.requester_name || '',
-        requester_contact: ticket.requester_contact || '',
+        requestor_name: ticket.requestor_name || '',
+        requestor_contact: ticket.requestor_contact || '',
         assignee: ticket.assignee || '',
         due_at: ticket.due_at || '',
       })
       setServiceTags(Array.isArray(ticket.service_tags) ? ticket.service_tags : [])
-      const parsedLinks = parseLinks(ticket.links)
+      const parsedLinks = parseLinks(ticket.link)
       setLinks(
         parsedLinks.map((link) => ({
           label: link.label || '',
@@ -82,18 +82,18 @@ export function TicketEditModal({
         }))
       )
       setAttachments([])
-      setActorName(ticket.assignee || ticket.requester_name || 'DevOps')
+      setActorName(ticket.assignee || ticket.requestor_name || 'DevOps')
     } else if (!isOpen) {
       // Reset form when modal closes
       setFormData({
         title: '',
         description: '',
-        type: 'deploy_bugfix',
+        types: 'deploy_bugfix',
         priority: 'normal',
         environment: 'dev',
         app_name: '',
-        requester_name: '',
-        requester_contact: '',
+        requestor_name: '',
+        requestor_contact: '',
         assignee: '',
         due_at: '',
       })
@@ -122,7 +122,7 @@ export function TicketEditModal({
       const changedFields: string[] = []
       if (formData.title !== ticket.title) changedFields.push('title')
       if (formData.description !== ticket.description) changedFields.push('description')
-      if (formData.type !== ticket.type) changedFields.push('type')
+      if (formData.types !== ticket.types) changedFields.push('types')
       if (formData.priority !== ticket.priority) changedFields.push('priority')
       if (formData.environment !== ticket.environment) changedFields.push('environment')
       if (formData.app_name !== ticket.app_name) changedFields.push('app_name')
@@ -130,18 +130,18 @@ export function TicketEditModal({
       if (JSON.stringify(serviceTags) !== JSON.stringify(ticketServiceTags)) {
         changedFields.push('service_tags')
       }
-      if (formData.requester_name !== ticket.requester_name) changedFields.push('requester_name')
-      if (formData.requester_contact !== ticket.requester_contact) {
-        changedFields.push('requester_contact')
+      if (formData.requestor_name !== ticket.requestor_name) changedFields.push('requestor_name')
+      if (formData.requestor_contact !== ticket.requestor_contact) {
+        changedFields.push('requestor_contact')
       }
       if (formData.assignee !== ticket.assignee) changedFields.push('assignee')
       if (formData.due_at !== ticket.due_at) changedFields.push('due_at')
-      if (JSON.stringify(linksData) !== JSON.stringify(ticket.links)) changedFields.push('links')
+      if (JSON.stringify(linksData) !== JSON.stringify(ticket.link)) changedFields.push('link')
 
       const payload: Partial<Ticket> = {
         ...formData,
         service_tags: serviceTags,
-        links: linksData,
+        link: linksData,
       }
 
       // Add actorName to payload for event logging
@@ -209,16 +209,16 @@ export function TicketEditModal({
                     id="edit-ticket-type"
                     name="type"
                     label="Type"
-                    placeholder="Select type"
+                    placeholder="Select types"
                     selectedKeys={
-                      formData.type && Object.keys(TICKET_TYPE_LABELS).includes(formData.type)
-                        ? new Set([formData.type])
+                      formData.types && Object.keys(TICKET_TYPE_LABELS).includes(formData.types)
+                        ? new Set([formData.types])
                         : new Set()
                     }
                     onSelectionChange={(keys) => {
                       const value = Array.from(keys)[0] as TicketType
                       if (value && Object.keys(TICKET_TYPE_LABELS).includes(value)) {
-                        setFormData((prev) => ({ ...prev, type: value }))
+                        setFormData((prev) => ({ ...prev, types: value }))
                       }
                     }}
                     isRequired
@@ -369,26 +369,26 @@ export function TicketEditModal({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    id="edit-ticket-requester-name"
-                    name="requester_name"
-                    label="Requester Name"
-                    placeholder="Enter requester name"
-                    value={formData.requester_name || ''}
+                    id="edit-ticket-requestor-name"
+                    name="requestor_name"
+                    label="Requestor Name"
+                    placeholder="Enter requestor name"
+                    value={formData.requestor_name || ''}
                     onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, requester_name: value }))
+                      setFormData((prev) => ({ ...prev, requestor_name: value }))
                     }
                     isRequired
                     isDisabled={loading}
                   />
 
                   <Input
-                    id="edit-ticket-requester-contact"
-                    name="requester_contact"
-                    label="Requester Contact"
-                    placeholder="Enter requester contact (optional)"
-                    value={formData.requester_contact || ''}
+                    id="edit-ticket-requestor-contact"
+                    name="requestor_contact"
+                    label="Requestor Contact"
+                    placeholder="Enter requestor contact (optional)"
+                    value={formData.requestor_contact || ''}
                     onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, requester_contact: value }))
+                      setFormData((prev) => ({ ...prev, requestor_contact: value }))
                     }
                     isDisabled={loading}
                   />

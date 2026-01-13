@@ -19,11 +19,22 @@ const AppDetailPage = lazy(() => import('@/features/apps/pages/AppDetailPage'))
 const BackupPage = lazy(() => import('@/features/backup/pages/BackupStatusPage'))
 const ThemePreviewPage = lazy(() => import('@/pages/ThemePreviewPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFound'))
+const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
+
+import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute'
 
 export const routes: RouteObject[] = [
   {
+    path: '/login',
+    element: <LoginPage />,
+  },
+  {
     path: '/',
-    element: <Layout />,
+    element: (
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,

@@ -12,12 +12,12 @@ import {
   CardBody,
   Input,
   Button,
-  Tooltip,
+  Chip,
 } from '@heroui/react'
 import { Search, X, Plus, Server as ServerIcon } from 'lucide-react'
-import { EyeIcon, EditIcon, DeleteIcon } from '@/components/icons'
 import { useServers } from '../hooks/useServers'
 import { useSearch } from '@/lib/contexts/SearchContext'
+import { useAuth } from '@/features/auth/context/AuthContext'
 import type { Server } from '../types'
 import { formatRelativeTime } from '@/features/tickets/utils'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -29,9 +29,6 @@ function ServerListPage() {
   const { servers, loading, error, refetch } = useServers({ searchQuery })
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || '')
 
-  const getStatusLabel = (isActive?: boolean) => {
-    return isActive ? 'Active' : 'Inactive'
-  }
 
   const formatDockerMode = (mode?: string | boolean | string[]) => {
     if (mode === undefined || mode === null) return 'N/A'
@@ -39,8 +36,12 @@ function ServerListPage() {
     if (typeof mode === 'boolean') {
       return mode ? 'Enabled' : 'Disabled'
     }
-    return String(mode)
+    const val = String(mode)
+    return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase()
   }
+
+  const { user } = useAuth()
+  const canManageServers = user?.id === 1490 || user?.username === '048466'
 
   const handleRowClick = (serverId: string) => {
     navigate(`/servers/${serverId}`)
@@ -51,52 +52,51 @@ function ServerListPage() {
     setSearchQuery(value)
   }
 
-  const handleAction = (action: string, server: Server, e?: React.MouseEvent) => {
-    if (e) {
-      e.stopPropagation()
-    }
-    switch (action) {
-      case 'view':
-        navigate(`/servers/${server.id}`)
-        break
-      case 'edit':
-        navigate(`/servers/${server.id}/edit`)
-        break
-      case 'delete':
-        // TODO: Implement delete confirmation modal
-        console.log('Delete server', server.id)
-        break
-    }
-  }
-
   const columns = [
-    { key: 'name', label: 'NAME' },
-    { key: 'ip_host', label: 'IP/HOST' },
-    { key: 'location', label: 'LOCATION' },
-    { key: 'docker_mode', label: 'DOCKER' },
+    { key: 'name', label: 'Name' },
+    { key: 'ip_host', label: 'IP/Host' },
+    { key: 'location', label: 'Location' },
+    { key: 'docker_mode', label: 'Docker' },
     { key: 'os', label: 'OS' },
-    { key: 'status', label: 'STATUS' },
-    { key: 'updated', label: 'UPDATED' },
-    { key: 'actions', label: 'ACTIONS' },
+    { key: 'netdata', label: 'Netdata' },
+    { key: 'updated', label: 'Updated' },
   ]
 
   const renderCell = (server: Server, columnKey: string) => {
+    const isActive = (server as any).is_active
+    const fontSize = 'text-sm'
+    
     switch (columnKey) {
       case 'name':
+        const env = server.environment || (server as any).env || 'Production'
         return (
           <div className="flex flex-col min-w-0 py-0.5 items-center">
-            <span className="font-bold text-base text-foreground truncate leading-tight">
-              {server.name || 'N/A'}
-            </span>
-            <span className="text-[10px] text-default-400 mt-0.5 truncate uppercase tracking-widest font-black opacity-70 scale-90">
-              {server.environment || (server as any).env || 'Production'}
+            <div className="flex items-center gap-2">
+              <span className={`font-bold ${fontSize} text-foreground truncate`}>
+                {server.name || 'N/A'}
+              </span>
+              <span className="relative flex h-2 w-2">
+                {isActive && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                )}
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${isActive ? 'bg-success' : 'bg-danger'}`}></span>
+              </span>
+            </div>
+            <span className={`text-[10px] font-semibold tracking-tight ${
+              env.toLowerCase() === 'production' || env.toLowerCase() === 'prd' 
+                ? 'text-danger' 
+                : (env.toLowerCase() === 'development' || env.toLowerCase() === 'dev')
+                  ? 'text-success'
+                  : 'text-default-400'
+            }`}>
+              {env}
             </span>
           </div>
         )
       case 'ip_host':
         return (
           <div className="flex flex-col items-center">
-            <div className="text-sm font-mono text-primary font-bold">
+            <div className={`${fontSize} font-mono text-primary font-bold`}>
               {server.ip || server.host || 'N/A'}
             </div>
           </div>
@@ -104,7 +104,7 @@ function ServerListPage() {
       case 'location':
         return (
           <div className="flex items-center justify-center">
-            <span className="text-sm font-bold text-default-700">
+            <span className={`${fontSize} font-bold text-foreground`}>
               {(server as any).location || 'Unknown'}
             </span>
           </div>
@@ -114,59 +114,39 @@ function ServerListPage() {
         const displayMode = formatDockerMode(modeValue)
         return (
           <div className="flex justify-center">
-            <span className="text-[11px] text-default-600 font-bold uppercase tracking-tight text-center">
+            <span className={`${fontSize} text-foreground font-medium text-center`}>
               {displayMode}
             </span>
           </div>
         )
       case 'os':
+        const osDisplay = server.os || 'Linux'
         return (
           <div className="flex justify-center">
-            <span className="text-xs font-bold text-default-500 uppercase">
-              {server.os || 'Linux'}
+            <span className={`${fontSize} font-bold text-foreground`}>
+              {osDisplay.charAt(0).toUpperCase() + osDisplay.slice(1).toLowerCase()}
             </span>
           </div>
         )
-      case 'status':
-        const isActive = (server as any).is_active
+      case 'netdata':
+        const isNetdata = (server as any).is_netdata_enabled
         return (
-          <div className="flex items-center justify-center gap-2">
-            {isActive && (
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
-              </span>
-            )}
-            <span className={`text-[11px] font-black uppercase tracking-widest ${isActive ? 'text-success' : 'text-danger'}`}>
-              {getStatusLabel(isActive)}
-            </span>
+          <div className="flex justify-center">
+            <Chip
+              size="sm"
+              variant="flat"
+              color={isNetdata ? 'success' : 'default'}
+              className="h-5 text-[10px] font-bold"
+            >
+              {isNetdata ? 'Enabled' : 'Disabled'}
+            </Chip>
           </div>
         )
       case 'updated':
         const exactTime = server.updated ? new Date(server.updated).toLocaleString() : 'N/A'
         return (
-          <div className="text-default-400 text-[10px] font-bold text-center tracking-tighter" title={exactTime}>
+          <div className="text-default-400 text-[11px] font-bold text-center tracking-tighter" title={exactTime}>
             {formatRelativeTime(server.updated)}
-          </div>
-        )
-      case 'actions':
-        return (
-          <div className="relative flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
-            <Tooltip content="Details">
-              <span className="text-lg text-default-400 cursor-pointer active:opacity-50 hover:text-primary transition-colors">
-                <EyeIcon onClick={(e) => handleAction('view', server, e)} />
-              </span>
-            </Tooltip>
-            <Tooltip content="Edit server">
-              <span className="text-lg text-default-400 cursor-pointer active:opacity-50 hover:text-primary transition-colors">
-                <EditIcon onClick={(e) => handleAction('edit', server, e)} />
-              </span>
-            </Tooltip>
-            <Tooltip color="danger" content="Delete server">
-              <span className="text-lg text-danger cursor-pointer active:opacity-50 hover:text-danger-600 transition-colors">
-                <DeleteIcon onClick={(e) => handleAction('delete', server, e)} />
-              </span>
-            </Tooltip>
           </div>
         )
       default:
@@ -213,6 +193,7 @@ function ServerListPage() {
           startContent={<Plus size={18} />}
           onPress={() => navigate('/servers/new')}
           className="font-bold"
+          isDisabled={!canManageServers}
         >
           New Server
         </Button>
@@ -264,7 +245,7 @@ function ServerListPage() {
             isStriped
             classNames={{
               base: 'min-h-[400px]',
-              th: 'bg-content2 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider',
+              th: 'bg-content2 text-default-400 font-bold text-xs uppercase tracking-wider h-11 px-4 first:rounded-none last:rounded-none border-b border-divider',
               td: 'py-2 px-4 border-b border-divider/50',
               tr: 'hover:bg-content3 cursor-pointer transition-colors',
             }}

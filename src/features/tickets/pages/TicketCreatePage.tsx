@@ -8,14 +8,13 @@ import {
   Select,
   SelectItem,
   Button,
-  Chip,
   Modal,
   ModalContent,
   ModalHeader,
   ModalBody,
   ModalFooter,
 } from '@heroui/react'
-import { ArrowLeft, Plus, X } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { createTicket } from '../services/tickets.service'
 import { addEvent } from '../services/events.service'
 import { useApiError } from '@/lib/hooks/useApiError'
@@ -29,15 +28,16 @@ import type {
 import {
   TICKET_TYPE_LABELS,
   TICKET_ENVIRONMENT_LABELS,
-  SERVICE_TAG_OPTIONS,
 } from '../constants'
 import { findAvailableTicketCode, generateTicketCode } from '../utils'
 import pb from '@/lib/pb'
+import { useAuth } from '@/features/auth/context/AuthContext'
 
 import { PageContainer } from '@/components/PageContainer'
 
 function TicketCreatePage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { handleError } = useApiError()
   const [loading, setLoading] = useState(false)
   const [codeGenerating, setCodeGenerating] = useState(true)
@@ -45,36 +45,36 @@ function TicketCreatePage() {
     code: string
     title: string
     description: string
-    type: TicketType
+    types: TicketType
     status: TicketStatus
     priority: TicketPriority
     environment: TicketEnvironment
     app_name: string
     service_tags: string[]
-    requester_name: string
-    requester_contact: string
+    requestor_name: string
+    requestor_contact: string
     assignee: string
     due_at: string
-    links: TicketLinks
+    link: TicketLinks
   }>>({
     code: '',
     title: '',
     description: '',
-    type: 'deploy_bugfix',
+    types: 'general',
     status: 'new',
     priority: 'normal',
     environment: 'dev',
     app_name: '',
     service_tags: [],
-    requester_name: '',
-    requester_contact: '',
+    requestor_name: user?.syno_username || user?.name || '',
+    requestor_contact: user?.email || '',
     assignee: '',
     due_at: '',
-    links: [],
+    link: [],
   })
-  const [customServiceTag, setCustomServiceTag] = useState('')
-  const [attachments, setAttachments] = useState<File[]>([])
-  const [links, setLinks] = useState<Array<{ label: string; url: string }>>([])
+  
+  const [attachments] = useState<File[]>([])
+  const [links] = useState<Array<{ label: string; url: string }>>([])
   const [showDiscardModal, setShowDiscardModal] = useState(false)
   const initialFormDataRef = useRef<typeof formData | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
@@ -87,7 +87,7 @@ function TicketCreatePage() {
         const initialData = { ...formData, code }
         setFormData(initialData)
         initialFormDataRef.current = JSON.parse(JSON.stringify(initialData))
-      } catch (err) {
+      } catch (err: any) {
         const year = new Date().getFullYear()
         const fallbackCode = generateTicketCode(year, 1)
         const initialData = { ...formData, code: fallbackCode }
@@ -103,8 +103,8 @@ function TicketCreatePage() {
 
   useEffect(() => {
     if (!initialFormDataRef.current) return
-    const currentData = JSON.stringify({ ...formData, links })
-    const initialData = JSON.stringify({ ...initialFormDataRef.current, links: [] })
+    const currentData = JSON.stringify({ ...formData, link: links })
+    const initialData = JSON.stringify({ ...initialFormDataRef.current, link: [] })
     setHasChanges(currentData !== initialData)
   }, [formData, links])
 
@@ -114,9 +114,14 @@ function TicketCreatePage() {
     setLoading(true)
     try {
       const ticket = await createTicket({ ...formData } as any, attachments.length > 0 ? attachments : undefined)
-      await addEvent({ ticket: ticket.id, event_type: 'note', actor_name: formData.requester_name || 'System', note: 'ticket_created' })
+      await addEvent({ 
+        ticket: ticket.id, 
+        event_type: 'note', 
+        actor_name: formData.requestor_name || 'System', 
+        note: 'ticket_created' 
+      })
       navigate(`/tickets/${ticket.id}`)
-    } catch (err) {
+    } catch (err: any) {
       handleError(err)
     } finally {
       setLoading(false)
@@ -194,7 +199,7 @@ function TicketCreatePage() {
                 label="Title"
                 placeholder="Brief summary"
                 value={formData.title}
-                onValueChange={(v) => handleChange('title', v)}
+                onValueChange={(v: string) => handleChange('title', v)}
                 isRequired
                 variant="flat"
               />
@@ -204,7 +209,7 @@ function TicketCreatePage() {
               label="Description"
               placeholder="Detailed explanation (Markdown supported)"
               value={formData.description}
-              onValueChange={(v) => handleChange('description', v)}
+              onValueChange={(v: string) => handleChange('description', v)}
               minRows={6}
               isRequired
               variant="flat"
@@ -213,8 +218,8 @@ function TicketCreatePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Select
                 label="Type"
-                selectedKeys={formData.type ? [formData.type] : []}
-                onSelectionChange={(keys) => handleChange('type', Array.from(keys)[0])}
+                selectedKeys={formData.types ? [formData.types] : []}
+                onSelectionChange={(keys: any) => handleChange('types', Array.from(keys)[0])}
                 variant="flat"
               >
                 {Object.entries(TICKET_TYPE_LABELS).map(([k, v]) => (
@@ -224,7 +229,7 @@ function TicketCreatePage() {
               <Select
                 label="Priority"
                 selectedKeys={formData.priority ? [formData.priority] : []}
-                onSelectionChange={(keys) => handleChange('priority', Array.from(keys)[0])}
+                onSelectionChange={(keys: any) => handleChange('priority', Array.from(keys)[0])}
                 variant="flat"
               >
                 <SelectItem key="low">Low</SelectItem>
@@ -235,7 +240,7 @@ function TicketCreatePage() {
               <Select
                 label="Environment"
                 selectedKeys={formData.environment ? [formData.environment] : []}
-                onSelectionChange={(keys) => handleChange('environment', Array.from(keys)[0])}
+                onSelectionChange={(keys: any) => handleChange('environment', Array.from(keys)[0])}
                 variant="flat"
               >
                 {Object.entries(TICKET_ENVIRONMENT_LABELS).map(([k, v]) => (
@@ -249,14 +254,14 @@ function TicketCreatePage() {
                 label="App Name"
                 placeholder="e.g. user-service"
                 value={formData.app_name}
-                onValueChange={(v) => handleChange('app_name', v)}
+                onValueChange={(v: string) => handleChange('app_name', v)}
                 variant="flat"
               />
               <Input
-                label="Requester"
+                label="Requestor"
                 placeholder="Your name"
-                value={formData.requester_name}
-                onValueChange={(v) => handleChange('requester_name', v)}
+                value={formData.requestor_name}
+                onValueChange={(v: string) => handleChange('requestor_name', v)}
                 variant="flat"
               />
             </div>
@@ -283,4 +288,3 @@ function TicketCreatePage() {
 }
 
 export default TicketCreatePage
-
