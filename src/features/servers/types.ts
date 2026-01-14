@@ -3,7 +3,7 @@ export interface Server {
   name: string
   host?: string
   ip?: string
-  docker_mode?: string | boolean
+  docker_mode?: string | boolean | string[]
   environment?: string
   os?: string
   status?: string

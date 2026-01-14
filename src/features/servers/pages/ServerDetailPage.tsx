@@ -48,8 +48,13 @@ function ServerDetailPage() {
   const formatDockerMode = (mode?: string | boolean) => {
     if (mode === undefined || mode === null) return 'N/A'
     if (typeof mode === 'boolean') {
-      return mode ? 'Enabled' : 'Disabled'
+      // Backwards compatibility: treat boolean as cli/none
+      return mode ? 'CLI' : 'None'
     }
+    const val = String(mode).toLowerCase()
+    if (val === 'cli') return 'CLI'
+    if (val === 'desktop') return 'Desktop'
+    if (val === 'none') return 'None'
     return String(mode)
   }
 
@@ -144,10 +149,10 @@ function ServerDetailPage() {
                               netdata.status === 'Degraded' ? 'bg-warning shadow-[0_0_8px_rgba(245,165,36,0.4)]' :
                                 'bg-danger shadow-[0_0_8px_rgba(243,18,96,0.4)]'
                               } animate-pulse`} />
-                            <span className={`text-[11px] font-bold uppercase tracking-wider ${netdata.status === 'Online' ? 'text-success' :
+                      <span className={`text-[11px] font-bold uppercase tracking-wider ${netdata.status === 'Online' ? 'text-success' :
                               netdata.status === 'Degraded' ? 'text-warning' : 'text-danger'
-                              }`}>
-                              {netdata.status}
+                            }`}>
+                              Netdata: {netdata.status}
                             </span>
                           </div>
                           {netdata.lastUpdated && (

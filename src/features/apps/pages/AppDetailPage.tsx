@@ -186,6 +186,10 @@ function AppDetailPage() {
                   <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Department</p>
                   <p className="text-sm">{app?.department || 'N/A'}</p>
                 </div>
+                <div>
+                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Owner</p>
+                  <p className="text-sm">{(app as any)?.owner || 'System'}</p>
+                </div>
               </div>
             </div>
 

@@ -65,8 +65,8 @@ function AppListPage() {
     }
   }, [searchQuery, serverFilter, createdByFilter, handleError])
 
-  // Get unique created_by values from apps
-  const createdByOptions = Array.from(new Set(apps.map(app => app.created_by).filter(Boolean))) as string[]
+  // Get unique owner values from apps
+  const createdByOptions = Array.from(new Set(apps.map(app => (app as any).owner).filter(Boolean))) as string[]
 
   useEffect(() => {
     fetchApps()
@@ -83,7 +83,7 @@ function AppListPage() {
     { key: 'server', label: 'Server IP' },
     { key: 'port', label: 'Port' },
     { key: 'environment', label: 'Env' },
-    { key: 'created_by', label: 'Created By' },
+    { key: 'owner', label: 'Owner' },
   ]
 
   const renderCell = (app: ServerApp, columnKey: string) => {
@@ -162,11 +162,11 @@ function AppListPage() {
             )}
           </div>
         )
-      case 'created_by':
+      case 'owner':
         return (
           <div className="flex items-center justify-center gap-2">
             <span className={`${fontSize} text-default-600 font-bold`}>
-              {app.created_by || 'System'}
+              {(app as any).owner || 'System'}
             </span>
           </div>
         )

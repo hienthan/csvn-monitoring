@@ -9,7 +9,8 @@ export interface ServerApp {
   description?: string
   repo_url?: string
   tech_stack?: string
-  created_by?: string
+  // owner: business owner / author of the app
+  owner?: string
   key?: string
   department?: string
   port?: string | number

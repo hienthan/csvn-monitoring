@@ -38,7 +38,7 @@ export function AppEditModal({
     environment: '',
     repo_url: '',
     tech_stack: '',
-    created_by: '',
+    owner: '',
     path: '',
     status: '',
     docker_mode: false,
@@ -59,7 +59,7 @@ export function AppEditModal({
         environment: app.environment || '',
         repo_url: app.repo_url || '',
         tech_stack: app.tech_stack || '',
-        created_by: app.created_by || '',
+        owner: (app as any).owner || 'System',
         path: app.path || '',
         status: app.status || '',
         docker_mode: app.docker_mode || false,
@@ -77,7 +77,7 @@ export function AppEditModal({
         environment: '',
         repo_url: '',
         tech_stack: '',
-        created_by: '',
+        owner: '',
         path: '',
         status: '',
         docker_mode: false,
@@ -93,7 +93,10 @@ export function AppEditModal({
 
     setLoading(true)
     try {
-      await onSave(formData)
+      await onSave({
+        ...formData,
+        owner: (formData.owner || 'System') as string,
+      })
       onClose()
     } catch (error) {
       // Error handling is done in parent

@@ -31,8 +31,8 @@ export function ServerEditModal({
     name: '',
     host: '',
     ip: '',
-    docker_mode: false,
-    environment: 'production',
+    docker_mode: 'none',
+    environment: 'prd',
     os: '',
     status: 'online',
     location: '',
@@ -43,12 +43,28 @@ export function ServerEditModal({
 
   useEffect(() => {
     if (isOpen && server) {
+      // Normalize env/environment
+      const rawEnv = server.environment || (server as any).env || 'prd'
+      const envLower = String(rawEnv).toLowerCase()
+      const normalizedEnv = envLower === 'dev' || envLower === 'development' ? 'dev' : 'prd'
+
+      // Normalize docker_mode to string: 'none' | 'cli' | 'desktop'
+      let normalizedDocker: string = 'none'
+      if (typeof server.docker_mode === 'boolean') {
+        normalizedDocker = server.docker_mode ? 'cli' : 'none'
+      } else if (typeof server.docker_mode === 'string') {
+        const modeLower = server.docker_mode.toLowerCase()
+        if (modeLower === 'cli' || modeLower === 'desktop' || modeLower === 'none') {
+          normalizedDocker = modeLower
+        }
+      }
+
       setFormData({
         name: server.name || '',
         host: server.host || '',
         ip: server.ip || '',
-        docker_mode: server.docker_mode || false,
-        environment: server.environment || 'production',
+        docker_mode: normalizedDocker,
+        environment: normalizedEnv,
         os: server.os || '',
         status: server.status || 'online',
         location: server.location || '',
@@ -60,8 +76,8 @@ export function ServerEditModal({
         name: '',
         host: '',
         ip: '',
-        docker_mode: false,
-        environment: 'production',
+        docker_mode: 'none',
+        environment: 'prd',
         os: '',
         status: 'online',
         location: '',
@@ -154,13 +170,13 @@ export function ServerEditModal({
                     label="Environment"
                     placeholder="Select environment"
                     selectedKeys={
-                      formData.environment && ['production', 'staging', 'development', 'testing'].includes(formData.environment)
+                      formData.environment && ['prd', 'dev'].includes(formData.environment)
                         ? new Set([formData.environment])
                         : new Set()
                     }
                     onSelectionChange={(keys) => {
                       const value = Array.from(keys)[0] as string
-                      if (value && ['production', 'staging', 'development', 'testing'].includes(value)) {
+                      if (value && ['prd', 'dev'].includes(value)) {
                         setFormData((prev) => ({ ...prev, environment: value }))
                       }
                     }}
@@ -168,10 +184,8 @@ export function ServerEditModal({
                     isDisabled={loading}
                     aria-label="Server environment"
                   >
-                    <SelectItem key="production">Production</SelectItem>
-                    <SelectItem key="staging">Staging</SelectItem>
-                    <SelectItem key="development">Development</SelectItem>
-                    <SelectItem key="testing">Testing</SelectItem>
+                    <SelectItem key="prd">Production</SelectItem>
+                    <SelectItem key="dev">Development</SelectItem>
                   </Select>
 
                   <Select
@@ -217,16 +231,23 @@ export function ServerEditModal({
                     id="edit-server-docker-mode"
                     name="docker_mode"
                     label="Docker Mode"
-                    selectedKeys={formData.docker_mode ? ['enabled'] : ['disabled']}
+                    selectedKeys={
+                      formData.docker_mode && ['none', 'cli', 'desktop'].includes(String(formData.docker_mode))
+                        ? new Set([String(formData.docker_mode)])
+                        : new Set(['none'])
+                    }
                     onSelectionChange={(keys) => {
-                      const value = Array.from(keys)[0]
-                      setFormData((prev) => ({ ...prev, docker_mode: value === 'enabled' }))
+                      const value = Array.from(keys)[0] as string
+                      if (value && ['none', 'cli', 'desktop'].includes(value)) {
+                        setFormData((prev) => ({ ...prev, docker_mode: value }))
+                      }
                     }}
                     isDisabled={loading}
                     aria-label="Docker mode"
                   >
-                    <SelectItem key="enabled">Enabled</SelectItem>
-                    <SelectItem key="disabled">Disabled</SelectItem>
+                    <SelectItem key="none">None</SelectItem>
+                    <SelectItem key="cli">CLI</SelectItem>
+                    <SelectItem key="desktop">Desktop</SelectItem>
                   </Select>
                 </div>
 

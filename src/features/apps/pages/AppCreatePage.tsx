@@ -32,7 +32,7 @@ function AppCreatePage() {
     environment: '',
     repo_url: '',
     tech_stack: '',
-    created_by: '',
+    owner: '',
     path: '',
     status: '',
     docker_mode: false,
@@ -46,7 +46,10 @@ function AppCreatePage() {
     if (!formData.name?.trim()) return
     setLoading(true)
     try {
-      const app = await appService.create(formData)
+      const app = await appService.create({
+        ...formData,
+        owner: formData.owner?.trim() || 'System',
+      })
       navigate(`/apps/${app.id}`)
     } catch (err) {
       handleError(err)

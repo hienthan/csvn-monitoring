@@ -29,16 +29,20 @@ function ServerListPage() {
   const { searchQuery, setSearchQuery } = useSearch()
   const { servers, loading, error, refetch } = useServers({ searchQuery })
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || '')
-
-
+ 
+ 
   const formatDockerMode = (mode?: string | boolean | string[]) => {
     if (mode === undefined || mode === null) return 'N/A'
     if (Array.isArray(mode)) return mode.join(', ')
     if (typeof mode === 'boolean') {
-      return mode ? 'Enabled' : 'Disabled'
+      // Backwards compatibility: treat boolean as cli/none
+      return mode ? 'CLI' : 'None'
     }
-    const val = String(mode)
-    return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase()
+    const val = String(mode).toLowerCase()
+    if (val === 'cli') return 'CLI'
+    if (val === 'desktop') return 'Desktop'
+    if (val === 'none') return 'None'
+    return String(mode)
   }
 
   const { user } = useAuth()
