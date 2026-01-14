@@ -56,8 +56,8 @@ const navItems: NavItem[] = [
         badgeLabel: 'Running',
       },
       {
-        path: '/backup',
-        label: 'Backup Status',
+        path: '/backups',
+        label: 'Backups',
         icon: Database,
       },
     ],
@@ -116,7 +116,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
   // Check if Infrastructure parent should be active (when any child is active)
   const isInfrastructureActive = location.pathname.startsWith('/servers') || 
                                   location.pathname.startsWith('/apps') || 
-                                  location.pathname.startsWith('/backup')
+                                  location.pathname.startsWith('/backups')
 
   return (
     <div
@@ -209,7 +209,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
                       <NavLink
                         key={child.path}
                         to={child.path}
-                        end={child.path === '/tickets' || child.path === '/servers' || child.path === '/apps' || child.path === '/backup'}
+                        end={child.path === '/tickets' || child.path === '/servers' || child.path === '/apps' || child.path === '/backups'}
                         className={({ isActive }) =>
                           `flex items-center gap-2 pl-7 pr-3 py-1.5 rounded-md text-[13px] transition-all relative group ${isActive
                             ? 'text-primary font-medium dark:bg-[rgba(76,141,255,0.15)] bg-primary/10'

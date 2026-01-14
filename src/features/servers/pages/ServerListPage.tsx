@@ -18,6 +18,7 @@ import { Search, X, Plus, Server as ServerIcon } from 'lucide-react'
 import { useServers } from '../hooks/useServers'
 import { useSearch } from '@/lib/contexts/SearchContext'
 import { useAuth } from '@/features/auth/context/AuthContext'
+import { isAdmin } from '@/constants/admin'
 import type { Server } from '../types'
 import { formatRelativeTime } from '@/features/tickets/utils'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -41,7 +42,7 @@ function ServerListPage() {
   }
 
   const { user } = useAuth()
-  const canManageServers = user?.id === 1490 || user?.username === '048466'
+  const canManageServers = isAdmin(user)
 
   const handleRowClick = (serverId: string) => {
     navigate(`/servers/${serverId}`)

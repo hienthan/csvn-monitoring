@@ -11,6 +11,7 @@ import { ServerEditModal } from '@/components/ServerEditModal'
 import { useNetdataKpis } from '../hooks/useNetdataKpis'
 import { useAuth } from '@/features/auth/context/AuthContext'
 import { pb } from '@/lib/pb'
+import { isAdmin } from '@/constants/admin'
 import type { Server } from '../types'
 
 function ServerDetailPage() {
@@ -22,9 +23,13 @@ function ServerDetailPage() {
   const { handleError } = useApiError()
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const netdata = useNetdataKpis(server?.ip, !loading && !!server?.ip)
   const { user } = useAuth()
-  const canManageServers = user?.id === 1490 || user?.username === '048466'
+  const canManageServers = isAdmin(user)
+  // Only fetch netdata if server has it enabled
+  const netdata = useNetdataKpis(
+    server?.ip,
+    !loading && !!server?.ip && !!server?.is_netdata_enabled
+  )
 
   const getActiveTab = () => {
     if (location.pathname.includes('/apps')) return 'apps'

@@ -16,7 +16,9 @@ const TicketDetailPage = lazy(() => import('@/features/tickets/pages/TicketDetai
 const AppListPage = lazy(() => import('@/features/apps/pages/AppListPage'))
 const AppCreatePage = lazy(() => import('@/features/apps/pages/AppCreatePage'))
 const AppDetailPage = lazy(() => import('@/features/apps/pages/AppDetailPage'))
-const BackupPage = lazy(() => import('@/features/backup/pages/BackupStatusPage'))
+const BackupOverviewPage = lazy(() => import('@/features/backup/pages/BackupOverviewPage'))
+const BackupDetailPage = lazy(() => import('@/features/backup/pages/BackupDetailPage'))
+const BackupCreatePage = lazy(() => import('@/features/backup/pages/BackupCreatePage'))
 const ThemePreviewPage = lazy(() => import('@/pages/ThemePreviewPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFound'))
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'))
@@ -99,8 +101,16 @@ export const routes: RouteObject[] = [
         element: <AppDetailPage />,
       },
       {
-        path: 'backup',
-        element: <BackupPage />,
+        path: 'backups',
+        element: <BackupOverviewPage />,
+      },
+      {
+        path: 'backups/new',
+        element: <BackupCreatePage />,
+      },
+      {
+        path: 'backups/:backupId',
+        element: <BackupDetailPage />,
       },
       {
         path: 'theme-preview',
