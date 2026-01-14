@@ -33,21 +33,16 @@ function ServerAppsPage() {
     switch (columnKey) {
       case 'name':
         return (
-          <div className="flex flex-col items-center">
+          <div className="flex items-center justify-center">
             <span className="font-bold text-foreground">
               {app.name || appDetails?.name || 'N/A'}
             </span>
-            {app.id && (
-              <span className="text-[10px] text-default-400 font-mono uppercase tracking-tighter">
-                {app.id}
-              </span>
-            )}
           </div>
         )
       case 'port':
         return (
           <div className="flex justify-center">
-            <span className="text-sm font-mono text-primary font-bold px-2 py-0.5 bg-primary/5 rounded border border-primary/10">
+            <span className="font-mono text-primary font-bold px-2 py-0.5 bg-primary/5 rounded border border-primary/10">
               {(app as any).port || appDetails?.port || '—'}
             </span>
           </div>

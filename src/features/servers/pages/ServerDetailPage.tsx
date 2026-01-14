@@ -242,6 +242,51 @@ function ServerDetailPage() {
         </CardBody>
       </Card>
 
+      {/* Additional Server Information */}
+      {!loading && server && (
+        <Card shadow="none" className="border border-divider bg-content1/50 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <CardBody className="p-6">
+            <div className="space-y-8">
+              {/* Location & Netdata */}
+              <div>
+                <h3 className="text-sm font-bold text-default-500 uppercase tracking-wider mb-4">Server Configuration</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Location</p>
+                    <p className="text-sm">{server.location || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Netdata Enabled</p>
+                    <Chip
+                      size="sm"
+                      variant="flat"
+                      color={server.is_netdata_enabled ? 'success' : 'default'}
+                      className="capitalize"
+                    >
+                      {server.is_netdata_enabled ? 'Enabled' : 'Disabled'}
+                    </Chip>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {server.notes && (
+                <div>
+                  <h3 className="text-sm font-bold text-default-500 uppercase tracking-wider mb-4">Notes</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-2">
+                      <p className="text-sm whitespace-pre-wrap bg-default-50 p-4 rounded-lg border border-divider">
+                        {server.notes}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardBody>
+        </Card>
+      )}
+
       {/* Tabs */}
       <Tabs
         variant="underlined"
@@ -252,8 +297,8 @@ function ServerDetailPage() {
         classNames={{
           tabList: "gap-8 w-full relative rounded-none border-b border-divider p-0 h-12",
           cursor: "w-full bg-primary h-[2px]",
-          tab: "max-w-fit px-0 h-12 transition-all",
-          tabContent: "group-data-[selected=true]:text-primary group-data-[selected=true]:font-bold text-default-500 font-medium transition-all"
+          tab: "min-w-fit px-0 h-12 transition-all",
+          tabContent: "group-data-[selected=true]:text-primary group-data-[selected=true]:font-bold text-default-500 font-medium transition-all text-sm"
         }}
       >
         <Tab key="overview" title="Overview" />

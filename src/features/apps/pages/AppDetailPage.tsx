@@ -8,7 +8,8 @@ import {
   Skeleton,
   Switch,
 } from '@heroui/react'
-import { ArrowLeft, Edit } from 'lucide-react'
+import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
+import { pb } from '@/lib/pb'
 import Breadcrumb from '@/components/Breadcrumb'
 import { useApp } from '../hooks/useApp'
 import { useApiError } from '@/lib/hooks/useApiError'
@@ -22,6 +23,7 @@ function AppDetailPage() {
   const { app, loading, error, refetch, update } = useApp(appId)
   const { handleError } = useApiError()
   const [editModalOpen, setEditModalOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const handleEditSave = async (payload: Partial<ServerApp>) => {
     if (!app) return
@@ -31,6 +33,20 @@ function AppDetailPage() {
     } catch (err) {
       handleError(err)
       throw err
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!app || !window.confirm('Are you sure you want to delete this app? This action cannot be undone.')) return
+    
+    setDeleting(true)
+    try {
+      await pb.collection('ma_apps').delete(app.id)
+      navigate('/apps')
+    } catch (err) {
+      handleError(err)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -128,6 +144,17 @@ function AppDetailPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="flat"
+            color="danger"
+            startContent={<Trash2 size={16} />}
+            onPress={handleDelete}
+            isLoading={deleting}
+            isDisabled={loading || deleting}
+            className="font-bold"
+          >
+            Delete
+          </Button>
           <Button
             variant="flat"
             startContent={<Edit size={16} />}

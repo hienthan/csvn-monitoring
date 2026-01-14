@@ -9,6 +9,8 @@ import {
   Input,
   Select,
   SelectItem,
+  Switch,
+  Textarea,
 } from '@heroui/react'
 import type { Server } from '@/features/servers/types'
 
@@ -33,6 +35,9 @@ export function ServerEditModal({
     environment: 'production',
     os: '',
     status: 'online',
+    location: '',
+    is_netdata_enabled: false,
+    notes: '',
   })
   const [loading, setLoading] = useState(false)
 
@@ -46,6 +51,9 @@ export function ServerEditModal({
         environment: server.environment || 'production',
         os: server.os || '',
         status: server.status || 'online',
+        location: server.location || '',
+        is_netdata_enabled: server.is_netdata_enabled || false,
+        notes: server.notes || '',
       })
     } else if (!isOpen) {
       setFormData({
@@ -56,6 +64,9 @@ export function ServerEditModal({
         environment: 'production',
         os: '',
         status: 'online',
+        location: '',
+        is_netdata_enabled: false,
+        notes: '',
       })
     }
   }, [isOpen, server])
@@ -218,6 +229,46 @@ export function ServerEditModal({
                     <SelectItem key="disabled">Disabled</SelectItem>
                   </Select>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    id="edit-server-location"
+                    name="location"
+                    label="Location"
+                    placeholder="Enter server location"
+                    value={formData.location || ''}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, location: value }))
+                    }
+                    isDisabled={loading}
+                  />
+
+                  <div className="flex items-center">
+                    <Switch
+                      id="edit-server-netdata"
+                      isSelected={formData.is_netdata_enabled || false}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, is_netdata_enabled: value }))
+                      }
+                      isDisabled={loading}
+                    >
+                      Netdata Enabled
+                    </Switch>
+                  </div>
+                </div>
+
+                <Textarea
+                  id="edit-server-notes"
+                  name="notes"
+                  label="Notes"
+                  placeholder="Enter notes"
+                  value={formData.notes || ''}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, notes: value }))
+                  }
+                  minRows={4}
+                  isDisabled={loading}
+                />
               </div>
             </ModalBody>
             <ModalFooter>

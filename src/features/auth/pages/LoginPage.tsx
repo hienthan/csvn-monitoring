@@ -64,18 +64,20 @@ const LoginPage: React.FC = () => {
               startContent={<LucideLock className="text-default-400" size={18} />}
             />
             
-            {error && (
-              <Alert 
-                color="danger" 
-                variant="flat"
-                classNames={{
-                  base: "flex justify-center text-center py-2",
-                  mainWrapper: "flex-none",
-                }}
-              >
-                {error}
-              </Alert>
-            )}
+            <div className="min-h-[40px] flex items-center justify-center">
+              {error && (
+                <Alert 
+                  color="danger" 
+                  variant="flat"
+                  classNames={{
+                    base: "w-full flex justify-center text-center py-2 animate-in fade-in zoom-in-95 duration-200",
+                    mainWrapper: "w-full",
+                  }}
+                >
+                  {error}
+                </Alert>
+              )}
+            </div>
 
             <Button
               color="primary"
