@@ -34,6 +34,7 @@ export interface ListTicketsParams {
   types?: TicketType
   environment?: TicketEnvironment
   assignee?: string
+  requestor?: string
 }
 
 export interface ListTicketsResponse {
@@ -60,6 +61,7 @@ export async function listTickets(
       types,
       environment,
       assignee,
+      requestor,
     } = params
 
     // Build filter
@@ -96,6 +98,11 @@ export async function listTickets(
     // Assignee filter
     if (assignee) {
       filterParts.push(`assignee = "${assignee}"`)
+    }
+
+    // Requestor filter
+    if (requestor) {
+      filterParts.push(`requestor_name = "${requestor}"`)
     }
 
     const filter = filterParts.length > 0 ? filterParts.join(' && ') : ''

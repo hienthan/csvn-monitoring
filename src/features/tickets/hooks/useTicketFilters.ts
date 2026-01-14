@@ -14,6 +14,7 @@ export interface TicketFilters {
   types?: TicketType
   environment?: TicketEnvironment
   assignee?: string
+  requestor?: string
   page?: number
 }
 
@@ -28,6 +29,7 @@ export function useTicketFilters() {
       types: (searchParams.get('types') as TicketType) || undefined,
       environment: (searchParams.get('environment') as TicketEnvironment) || undefined,
       assignee: searchParams.get('assignee') || undefined,
+      requestor: searchParams.get('requestor') || undefined,
       page: searchParams.get('page') ? parseInt(searchParams.get('page')!, 10) : 1,
     }
   }, [searchParams])

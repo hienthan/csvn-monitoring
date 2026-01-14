@@ -74,6 +74,37 @@ export const fetchNetdataAlarms = async (serverIp: string, signal?: AbortSignal)
     }
 };
 
+export const calculateCpuUsage = (data: Record<string, number> | any) => {
+    if (!data) return 0;
+    const idleKey = Object.keys(data).find(k => k.toLowerCase() === 'idle');
+    const idleValue = idleKey !== undefined ? data[idleKey] : undefined;
+    
+    if (idleValue !== undefined) {
+        return Math.max(0, Math.min(100, 100 - idleValue));
+    }
+    
+    let usage = 0;
+    let foundAny = false;
+    Object.entries(data).forEach(([label, val]) => {
+        if (label.toLowerCase() !== 'idle' && label !== 'time' && typeof val === 'number') {
+            usage += val;
+            foundAny = true;
+        }
+    });
+    return foundAny ? Math.min(100, usage) : 0;
+};
+
+export const calculateRamUsagePercent = (ram: Record<string, number> | any) => {
+    if (!ram) return 0;
+    const used = Object.entries(ram).find(([k]) => k.toLowerCase() === 'used')?.[1] as number || 0;
+    const free = Object.entries(ram).find(([k]) => k.toLowerCase() === 'free')?.[1] as number || 0;
+    const cached = Object.entries(ram).find(([k]) => k.toLowerCase() === 'cached')?.[1] as number || 0;
+    const buffers = Object.entries(ram).find(([k]) => k.toLowerCase() === 'buffers')?.[1] as number || 0;
+    
+    const total = used + free + cached + buffers;
+    return total > 0 ? Math.round((used / total) * 100) : 0;
+};
+
 export const fetchAllNetdataMetrics = async (
     serverIp: string,
     signal?: AbortSignal
@@ -82,18 +113,16 @@ export const fetchAllNetdataMetrics = async (
         fetchNetdataChart(serverIp, 'system.cpu', signal).catch(() => ({} as Record<string, number>)),
         fetchNetdataChart(serverIp, 'system.load', signal).catch(() => ({} as Record<string, number>)),
         fetchNetdataChart(serverIp, 'system.ram', signal).catch(() => ({} as Record<string, number>)),
-        fetchNetdataChart(serverIp, 'mem.swap', signal).catch(() => ({} as Record<string, number>)), // Use mem.swap
+        fetchNetdataChart(serverIp, 'mem.swap', signal).catch(() => ({} as Record<string, number>)),
         fetchNetdataChart(serverIp, 'system.net', signal).catch(() => ({} as Record<string, number>)),
         fetchNetdataChart(serverIp, 'system.io', signal).catch(() => ({} as Record<string, number>)),
         fetchNetdataAlarms(serverIp, signal).catch(() => ({ critical: 0, warning: 0 }))
     ]);
 
-    const cpuUsage = Object.entries(cpu).reduce((acc, [label, val]) => label !== 'idle' ? acc + val : acc, 0);
-
     const metrics: NetdataMetrics = {
-        cpu: Math.round(cpuUsage),
+        cpu: Math.round(calculateCpuUsage(cpu)),
         load: load['load1'] || 0,
-        ram: 0,
+        ram: calculateRamUsagePercent(ram),
         swapUsed: swap['used'] || 0,
         swapFree: swap['free'] || 0,
         netIn: net['received'] || 0,
@@ -103,12 +132,53 @@ export const fetchAllNetdataMetrics = async (
     };
 
     // RAM percentage calc
-    if (ram['used'] !== undefined) {
-        const total = (ram['used'] || 0) + (ram['free'] || 0) + (ram['cached'] || 0) + (ram['buffers'] || 0);
+    if (ram) {
+        const used = Object.entries(ram).find(([k]) => k.toLowerCase() === 'used')?.[1] || 0;
+        const free = Object.entries(ram).find(([k]) => k.toLowerCase() === 'free')?.[1] || 0;
+        const cached = Object.entries(ram).find(([k]) => k.toLowerCase() === 'cached')?.[1] || 0;
+        const buffers = Object.entries(ram).find(([k]) => k.toLowerCase() === 'buffers')?.[1] || 0;
+        
+        const total = used + free + cached + buffers;
         if (total > 0) {
-            metrics.ram = Math.round((ram['used'] / total) * 100);
+            metrics.ram = Math.round((used / total) * 100);
         }
     }
 
     return { metrics, alarms };
+};
+
+export interface NetdataHistoryPoint {
+    time: number;
+    [key: string]: number;
+}
+
+export const fetchNetdataHistory = async (
+    serverIp: string,
+    chart: string,
+    points: number = 60,
+    after: number = -86400, // 24h
+    signal?: AbortSignal
+): Promise<NetdataHistoryPoint[]> => {
+    const timestamp = Date.now();
+    const url = `http://${serverIp}:19999/api/v1/data?chart=${chart}&format=json&after=${after}&points=${points}&_=${timestamp}`;
+    
+    try {
+        const response = await fetch(url, { signal, cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const json: NetdataDataResponse = await response.json();
+        
+        const labels = json.labels || [];
+        return json.data.map(row => {
+            const point: NetdataHistoryPoint = { time: row[0] * 1000 }; // Convert to ms
+            labels.forEach((label, idx) => {
+                if (idx === 0) return;
+                point[label] = Math.abs(row[idx]);
+            });
+            return point;
+        }).reverse(); // Netdata returns data from newest to oldest
+    } catch (error) {
+        if ((error as Error).name === 'AbortError') throw error;
+        console.error(`Failed to fetch netdata history ${chart} from ${serverIp}:`, error);
+        return [];
+    }
 };

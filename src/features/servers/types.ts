@@ -7,6 +7,9 @@ export interface Server {
   environment?: string
   os?: string
   status?: string
+  location?: string
+  is_netdata_enabled?: boolean
+  notes?: string
   created?: string
   updated?: string
   [key: string]: unknown

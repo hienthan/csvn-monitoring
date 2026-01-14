@@ -13,7 +13,8 @@ import {
   DropdownItem,
   Skeleton,
 } from '@heroui/react'
-import { ArrowLeft, Edit, MoreVertical, Copy as CopyIcon } from 'lucide-react'
+import { ArrowLeft, Edit, MoreVertical, Copy as CopyIcon, Trash2 } from 'lucide-react'
+import { pb } from '@/lib/pb'
 import Breadcrumb from '@/components/Breadcrumb'
 import { useTicket } from '../hooks/useTicket'
 import { useApiError } from '@/lib/hooks/useApiError'
@@ -45,6 +46,7 @@ function TicketDetailPage() {
   const [selectedNewStatus, setSelectedNewStatus] = useState<TicketStatus | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [isChangingStatus, setIsChangingStatus] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const handleStatusChange = async (params: {
     newStatus: TicketStatus
@@ -95,6 +97,20 @@ function TicketDetailPage() {
   const handleCopyCode = async () => {
     if (ticket?.code) {
       await copyTicketCode(ticket.code)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!ticket || !window.confirm('Are you sure you want to delete this ticket? This action cannot be undone.')) return
+    
+    setDeleting(true)
+    try {
+      await pb.collection('ma_tickets').delete(ticket.id)
+      navigate('/tickets')
+    } catch (err) {
+      handleError(err)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -223,6 +239,17 @@ function TicketDetailPage() {
             className="font-semibold"
           >
             Edit
+          </Button>
+          <Button
+            variant="flat"
+            color="danger"
+            startContent={<Trash2 size={16} />}
+            onPress={handleDelete}
+            isLoading={deleting}
+            isDisabled={loading || deleting}
+            className="font-bold"
+          >
+            Delete
           </Button>
           <Dropdown placement="bottom-end">
             <DropdownTrigger>

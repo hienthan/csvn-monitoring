@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Table,
@@ -41,6 +41,40 @@ function TicketListPage() {
   const { tickets, loading, error, totalPages, currentPage, setCurrentPage, refetch, totalItems } =
     useTickets(filters)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  
+  // Calculate active tickets count (excluding done, rejected, blocked)
+  const [activeCount, setActiveCount] = useState<number>(0)
+  
+  useEffect(() => {
+    const fetchActiveCount = async () => {
+      try {
+        const pb = (await import('@/lib/pb')).default
+        const filterParts: string[] = []
+        filterParts.push(`(status != "done" && status != "rejected" && status != "blocked")`)
+        
+        if (filters.q) {
+          const query = filters.q.trim().replace(/"/g, '\\"')
+          filterParts.push(`(title ~ "${query}" || code ~ "${query}" || app_name ~ "${query}" || requestor_name ~ "${query}")`)
+        }
+        if (filters.priority) filterParts.push(`priority = "${filters.priority}"`)
+        if (filters.types) filterParts.push(`types = "${filters.types}"`)
+        if (filters.environment) filterParts.push(`environment = "${filters.environment}"`)
+        if (filters.assignee) filterParts.push(`assignee = "${filters.assignee}"`)
+        if (filters.requestor) filterParts.push(`requestor_name = "${filters.requestor}"`)
+        
+        const filter = filterParts.join(' && ')
+        const result = await pb.collection('ma_tickets').getList(1, 1, { filter })
+        setActiveCount(result.totalItems)
+      } catch (err) {
+        console.error('Error fetching active count:', err)
+        setActiveCount(totalItems) // Fallback
+      }
+    }
+    
+    if (!loading) {
+      fetchActiveCount()
+    }
+  }, [filters, loading, totalItems])
 
   const handleCopyCode = async (code: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -61,7 +95,7 @@ function TicketListPage() {
   }
 
   const hasActiveFilters = Boolean(
-    filters.q || filters.status || filters.priority || filters.types || filters.environment || filters.assignee
+    filters.q || filters.status || filters.priority || filters.types || filters.environment || filters.assignee || filters.requestor
   )
 
   const columns = [
@@ -199,6 +233,9 @@ function TicketListPage() {
   if (filters.environment) {
     activeFilterSummary.push(`Environment: ${TICKET_ENVIRONMENT_LABELS[filters.environment]}`)
   }
+  if (filters.requestor) {
+    activeFilterSummary.push(`Requestor: ${filters.requestor}`)
+  }
 
   if (error) {
     return (
@@ -242,7 +279,7 @@ function TicketListPage() {
               <Skeleton className="h-4 w-32 rounded mt-1 bg-content1" />
             ) : (
               <p className="text-sm font-medium text-default-500">
-                {totalItems > 0 ? `${totalItems} Tickets active` : 'No tickets'}
+                {activeCount > 0 ? `${activeCount} Tickets active` : 'No tickets'}
               </p>
             )}
             {activeFilterSummary.length > 0 && (
@@ -337,6 +374,32 @@ function TicketListPage() {
             >
               {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
             </Select>
+
+            <Input
+              placeholder="Requestor"
+              value={filters.requestor || ''}
+              onValueChange={(value) => setFilter('requestor', value || undefined)}
+              className="w-[140px]"
+              variant="flat"
+              classNames={{
+                inputWrapper: "bg-default-100/50 hover:bg-default-200/50 transition-colors border-none",
+                input: "text-sm"
+              }}
+              endContent={
+                filters.requestor && (
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="light"
+                    onPress={() => setFilter('requestor', undefined)}
+                    aria-label="Clear requestor filter"
+                  >
+                    <X size={16} />
+                  </Button>
+                )
+              }
+              aria-label="Filter by requestor"
+            />
 
             {hasActiveFilters && (
               <Button

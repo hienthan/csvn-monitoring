@@ -12,6 +12,7 @@ export function useTickets(filters: TicketFilters = {}) {
     type,
     environment,
     assignee,
+    requestor,
     page = 1,
   } = filters
 
@@ -51,6 +52,7 @@ export function useTickets(filters: TicketFilters = {}) {
         type,
         environment,
         assignee,
+        requestor,
       })
 
       // Check if request was aborted
@@ -74,7 +76,7 @@ export function useTickets(filters: TicketFilters = {}) {
         setLoading(false)
       }
     }
-  }, [q, currentPage, status, priority, type, environment, assignee, handleError])
+  }, [q, currentPage, status, priority, type, environment, assignee, requestor, handleError])
 
   // Debounced search effect
   useEffect(() => {

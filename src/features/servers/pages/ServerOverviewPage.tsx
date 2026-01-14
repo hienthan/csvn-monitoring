@@ -1,9 +1,11 @@
-import { useOutletContext } from 'react-router-dom'
+import { useOutletContext, useParams, useNavigate } from 'react-router-dom'
 import { Card, CardBody, CardHeader, Button, Skeleton, Tooltip } from '@heroui/react'
-import { Ticket, Database, Cpu, HardDrive, Globe, Zap } from 'lucide-react'
+import { Ticket, Database, Cpu, HardDrive, Globe, Zap, Package } from 'lucide-react'
 import { NetdataKpis } from '../netdata.types'
 
 function ServerOverviewPage() {
+  const { serverId } = useParams()
+  const navigate = useNavigate()
   const { netdata } = useOutletContext<{ netdata: NetdataKpis }>()
   const {
     status,
@@ -148,6 +150,15 @@ function ServerOverviewPage() {
         </CardHeader>
         <CardBody className="px-6 pb-6 pt-2">
           <div className="flex flex-wrap gap-3">
+            <Button
+              color="primary"
+              variant="flat"
+              startContent={<Package className="w-4 h-4" />}
+              onPress={() => navigate(`/apps/new?server=${serverId}`)}
+              className="font-bold"
+            >
+              Add Application
+            </Button>
             <Button
               color="primary"
               variant="flat"
