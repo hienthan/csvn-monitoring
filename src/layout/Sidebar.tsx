@@ -126,11 +126,11 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className="h-16 shrink-0 border-b border-divider flex items-center px-4 mb-2">
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0 border border-divider">
-            <span className="text-primary font-bold text-xs">VD</span>
+            <span className="text-primary font-bold text-xs">ID</span>
           </div>
           {!collapsed && (
             <h2 className="text-xs font-bold text-foreground truncate tracking-widest uppercase">
-              VG DATACENTER
+              VG INFRADESK
             </h2>
           )}
         </div>
@@ -247,21 +247,30 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
           )
         })}
       </nav>
-      <div className="p-2 border-t border-divider mt-auto">
-        <Button
-          variant="light"
-          onPress={onToggle}
-          size="sm"
-          className={`w-full flex items-center justify-center min-w-0 text-default-500 hover:text-foreground hover:bg-default-100 ${collapsed ? 'px-0' : 'gap-2 px-3'}`}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {collapsed ? <ChevronRight size={18} /> : (
-            <>
-              <ChevronLeft size={16} />
-              <span className="text-xs font-medium uppercase tracking-wider">Collapse</span>
-            </>
-          )}
-        </Button>
+      <div className="mt-auto">
+        {!collapsed && (
+          <div className="px-2 pt-2">
+            <p className="text-[10px] text-default-400 font-semibold tracking-widest text-center">
+              v1.0.0
+            </p>
+          </div>
+        )}
+        <div className="p-2 border-t border-divider">
+          <Button
+            variant="light"
+            onPress={onToggle}
+            size="sm"
+            className={`w-full flex items-center justify-center min-w-0 text-default-500 hover:text-foreground hover:bg-default-100 ${collapsed ? 'px-0' : 'gap-2 px-3'}`}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? <ChevronRight size={18} /> : (
+              <>
+                <ChevronLeft size={16} />
+                <span className="text-xs font-medium uppercase tracking-wider">Collapse</span>
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   )

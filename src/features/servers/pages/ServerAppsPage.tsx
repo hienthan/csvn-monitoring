@@ -32,11 +32,24 @@ function ServerAppsPage() {
 
     switch (columnKey) {
       case 'name':
+        const appId = (appDetails as any)?.id || app.id
         return (
           <div className="flex items-center justify-center">
-            <span className="font-bold text-foreground">
-              {app.name || appDetails?.name || 'N/A'}
-            </span>
+            {appId ? (
+              <a
+                href={`/apps/${appId}`}
+                target="_blank"
+                rel="noreferrer"
+                className="font-bold text-primary hover:underline"
+                onClick={(event) => event.stopPropagation()}
+              >
+                {app.name || appDetails?.name || 'N/A'}
+              </a>
+            ) : (
+              <span className="font-bold text-foreground">
+                {app.name || appDetails?.name || 'N/A'}
+              </span>
+            )}
           </div>
         )
       case 'port':

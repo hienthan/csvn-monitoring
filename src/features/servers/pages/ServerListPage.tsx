@@ -13,6 +13,7 @@ import {
   Input,
   Button,
   Chip,
+  Tooltip,
 } from '@heroui/react'
 import { Search, X, Plus, Server as ServerIcon } from 'lucide-react'
 import { useServers } from '../hooks/useServers'
@@ -64,6 +65,7 @@ function ServerListPage() {
     { key: 'docker_mode', label: 'Docker' },
     { key: 'os', label: 'OS' },
     { key: 'netdata', label: 'Netdata' },
+    { key: 'notes', label: 'Notes' },
     { key: 'updated', label: 'Updated' },
   ]
 
@@ -76,9 +78,18 @@ function ServerListPage() {
         const env = server.environment || (server as any).env || 'Production'
         return (
           <div className="flex flex-col min-w-0 py-0.5 items-center">
+            <span className={`font-bold ${fontSize} text-foreground truncate`}>
+              {server.name || 'N/A'}
+            </span>
             <div className="flex items-center gap-2">
-              <span className={`font-bold ${fontSize} text-foreground truncate`}>
-                {server.name || 'N/A'}
+              <span className={`text-[10px] font-semibold tracking-tight ${
+                env.toLowerCase() === 'production' || env.toLowerCase() === 'prd' 
+                  ? 'text-danger' 
+                  : (env.toLowerCase() === 'development' || env.toLowerCase() === 'dev')
+                    ? 'text-success'
+                    : 'text-default-400'
+              }`}>
+                {env}
               </span>
               <span className="relative flex h-2 w-2">
                 {isActive && (
@@ -87,15 +98,6 @@ function ServerListPage() {
                 <span className={`relative inline-flex rounded-full h-2 w-2 ${isActive ? 'bg-success' : 'bg-danger'}`}></span>
               </span>
             </div>
-            <span className={`text-[10px] font-semibold tracking-tight ${
-              env.toLowerCase() === 'production' || env.toLowerCase() === 'prd' 
-                ? 'text-danger' 
-                : (env.toLowerCase() === 'development' || env.toLowerCase() === 'dev')
-                  ? 'text-success'
-                  : 'text-default-400'
-            }`}>
-              {env}
-            </span>
           </div>
         )
       case 'ip_host':
@@ -145,6 +147,24 @@ function ServerListPage() {
             >
               {isNetdata ? 'Enabled' : 'Disabled'}
             </Chip>
+          </div>
+        )
+      case 'notes':
+        const notes = (server as any).notes
+        if (!notes) {
+          return (
+            <div className="flex items-center justify-center">
+              <span className={`${fontSize} text-default-400 font-bold`}>—</span>
+            </div>
+          )
+        }
+        return (
+          <div className="flex items-center justify-center">
+            <Tooltip content={notes}>
+              <span className={`${fontSize} text-default-600 font-medium truncate max-w-[160px]`}>
+                {notes}
+              </span>
+            </Tooltip>
           </div>
         )
       case 'updated':

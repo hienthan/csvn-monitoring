@@ -15,6 +15,7 @@ import {
   Button,
   Select,
   SelectItem,
+  Tooltip,
 } from '@heroui/react'
 import { Search, X, Plus, Package } from 'lucide-react'
 import { appService } from '../services/appService'
@@ -65,8 +66,8 @@ function AppListPage() {
     }
   }, [searchQuery, serverFilter, createdByFilter, handleError])
 
-  // Get unique owner values from apps
-  const createdByOptions = Array.from(new Set(apps.map(app => (app as any).owner).filter(Boolean))) as string[]
+  // Get unique owner values from apps (stored as created_by in DB)
+  const createdByOptions = Array.from(new Set(apps.map(app => app.created_by).filter(Boolean))) as string[]
 
   useEffect(() => {
     fetchApps()
@@ -83,6 +84,7 @@ function AppListPage() {
     { key: 'server', label: 'Server IP' },
     { key: 'port', label: 'Port' },
     { key: 'environment', label: 'Env' },
+    { key: 'docker_mode', label: 'Docker' },
     { key: 'owner', label: 'Owner' },
   ]
 
@@ -121,11 +123,24 @@ function AppListPage() {
         )
       case 'server':
         const server = app.expand?.server
+        const serverName = server?.name || server?.host || server?.ip || 'Unknown Server'
         return (
           <div className="flex items-center justify-center">
-            <span className={`${fontSize} text-primary font-bold font-mono`}>
-              {server?.ip || server?.host || 'N/A'}
-            </span>
+            {server?.id ? (
+              <Tooltip content={serverName}>
+                <a
+                  href={`/servers/${server.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`${fontSize} text-primary font-bold font-mono hover:underline`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {server?.ip || server?.host || 'N/A'}
+                </a>
+              </Tooltip>
+            ) : (
+              <span className={`${fontSize} text-default-400 font-bold`}>N/A</span>
+            )}
           </div>
         )
       case 'port':
@@ -162,11 +177,36 @@ function AppListPage() {
             )}
           </div>
         )
+      case 'docker_mode':
+        return (
+          <div className="flex items-center justify-center">
+            {app.docker_mode ? (
+              <Chip
+                size="sm"
+                variant="flat"
+                color={
+                  app.docker_mode === 'cli' || app.docker_mode === true
+                    ? 'primary'
+                    : app.docker_mode === 'desktop'
+                    ? 'secondary'
+                    : 'default'
+                }
+                className="capitalize font-bold text-[10px] h-5"
+              >
+                {typeof app.docker_mode === 'string' ? app.docker_mode.toUpperCase() : 'CLI'}
+              </Chip>
+            ) : (
+              <Chip size="sm" variant="flat" color="default" className="font-bold text-[10px] h-5">
+                None
+              </Chip>
+            )}
+          </div>
+        )
       case 'owner':
         return (
           <div className="flex items-center justify-center gap-2">
             <span className={`${fontSize} text-default-600 font-bold`}>
-              {(app as any).owner || 'System'}
+              {app.created_by || 'System'}
             </span>
           </div>
         )
@@ -271,14 +311,14 @@ function AppListPage() {
             </Select>
 
             <Select
-              placeholder="Filter by Created By"
+              placeholder="Filter by Owner"
               selectedKeys={createdByFilter ? new Set([createdByFilter]) : new Set()}
               onSelectionChange={(keys) => {
                 const value = Array.from(keys)[0] as string
                 setCreatedByFilter(value && value !== 'all' ? value : undefined)
               }}
               items={[
-                { key: 'all', label: 'All Creators' },
+                { key: 'all', label: 'All Owners' },
                 ...createdByOptions.map((creator) => ({ key: creator, label: creator }))
               ]}
               className="w-[180px]"
@@ -286,7 +326,7 @@ function AppListPage() {
               classNames={{
                 trigger: "bg-default-100/50 hover:bg-default-200/50 transition-colors border-none"
               }}
-              aria-label="Filter by created by"
+              aria-label="Filter by owner"
             >
               {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
             </Select>

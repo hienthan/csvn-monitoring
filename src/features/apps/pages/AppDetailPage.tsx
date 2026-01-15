@@ -169,140 +169,168 @@ function AppDetailPage() {
 
       <Card shadow="none" className="border border-divider bg-content1/50 animate-in fade-in slide-in-from-bottom-2 duration-300">
         <CardBody className="p-6">
-          <div className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-stretch">
+            {/* Notes (top, 2 columns) */}
+            <div className="lg:col-span-2 h-full">
+              <Card shadow="none" className="border border-divider bg-content1 h-full">
+                <CardBody className="h-full flex flex-col">
+                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-3">Notes</p>
+                  <p className="text-sm whitespace-pre-wrap text-default-600">
+                    {app?.notes || 'N/A'}
+                  </p>
+                </CardBody>
+              </Card>
+            </div>
+
             {/* Basic Information */}
-            <div>
-              <h3 className="text-sm font-bold text-default-500 uppercase tracking-wider mb-4">Basic Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">App Key</p>
-                  <p className="text-sm font-mono text-primary font-bold">{app?.key || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Name</p>
-                  <p className="text-lg font-semibold">{app?.name || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Department</p>
-                  <p className="text-sm">{app?.department || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Owner</p>
-                  <p className="text-sm">{(app as any)?.owner || 'System'}</p>
-                </div>
-              </div>
+            <div className="lg:col-span-2 h-full">
+              <Card shadow="none" className="border border-divider bg-content1 h-full">
+                <CardBody>
+                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-3">Basic Information</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-1">App Key</p>
+                      <p className="text-sm font-mono text-primary font-bold">{app?.key || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-1">Name</p>
+                      <p className="text-sm font-semibold">{app?.name || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-1">Department</p>
+                      <p className="text-sm">{app?.department || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-1">Owner</p>
+                      <p className="text-sm">{app?.created_by || 'System'}</p>
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
             </div>
 
             {/* Server & Network */}
-            <div>
-              <h3 className="text-sm font-bold text-default-500 uppercase tracking-wider mb-4">Server & Network</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Server</p>
-                  {app?.expand?.server ? (
-                    <div className="flex flex-col">
-                      <span className="font-bold text-sm text-foreground">
-                        {app.expand.server.name || 'N/A'}
-                      </span>
-                      <span className="text-[11px] text-default-400 font-mono mt-0.5">
-                        {app.expand.server.ip || app.expand.server.host || ''}
-                      </span>
+            <div className="lg:col-span-2">
+              <Card shadow="none" className="border border-divider bg-content1">
+                <CardBody>
+                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-3">Server & Network</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-1">Server</p>
+                      {app?.expand?.server ? (
+                        <div className="flex flex-col">
+                          <span className="font-bold text-sm text-foreground">
+                            {app.expand.server.name || 'N/A'}
+                          </span>
+                          <a
+                            href={`/servers/${app.expand!.server!.id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] text-primary font-mono mt-0.5 hover:underline"
+                          >
+                            {app.expand.server.ip || app.expand.server.host || ''}
+                          </a>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-default-500">N/A</p>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-sm text-default-500">N/A</p>
-                  )}
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Port</p>
-                  <p className="text-sm font-mono">{app?.port || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Environment</p>
-                  {app?.environment ? (
-                    <Chip
-                      size="sm"
-                      variant="flat"
-                      color={
-                        app.environment.toLowerCase() === 'dev' || app.environment.toLowerCase() === 'development'
-                          ? 'primary'
-                          : app.environment.toLowerCase() === 'stg' || app.environment.toLowerCase() === 'staging'
-                          ? 'warning'
-                          : app.environment.toLowerCase() === 'prd' || app.environment.toLowerCase() === 'production'
-                          ? 'success'
-                          : 'default'
-                      }
-                      className="capitalize"
-                    >
-                      {app.environment}
-                    </Chip>
-                  ) : (
-                    <p className="text-sm text-default-500">N/A</p>
-                  )}
-                </div>
-              </div>
+                    <div>
+                      <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-1">Port</p>
+                      <p className="text-sm font-mono">{app?.port || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-1">Environment</p>
+                      {app?.environment ? (
+                        <Chip
+                          size="sm"
+                          variant="flat"
+                          color={
+                            app.environment.toLowerCase() === 'dev' || app.environment.toLowerCase() === 'development'
+                              ? 'primary'
+                              : app.environment.toLowerCase() === 'stg' || app.environment.toLowerCase() === 'staging'
+                              ? 'warning'
+                              : app.environment.toLowerCase() === 'prd' || app.environment.toLowerCase() === 'production'
+                              ? 'success'
+                              : 'default'
+                          }
+                          className="capitalize"
+                        >
+                          {app.environment}
+                        </Chip>
+                      ) : (
+                        <p className="text-sm text-default-500">N/A</p>
+                      )}
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
             </div>
 
             {/* Application Details */}
-            <div>
-              <h3 className="text-sm font-bold text-default-500 uppercase tracking-wider mb-4">Application Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Tech Stack</p>
-                  <p className="text-sm">{app?.tech_stack || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Docker Mode</p>
-                  {app?.docker_mode ? (
-                    <Chip
-                      size="sm"
-                      variant="flat"
-                      color={
-                        app.docker_mode === 'cli' || app.docker_mode === true
-                          ? 'primary'
-                          : app.docker_mode === 'desktop'
-                          ? 'secondary'
-                          : 'default'
-                      }
-                      className="capitalize"
-                    >
-                      {typeof app.docker_mode === 'string' ? app.docker_mode.toUpperCase() : 'CLI'}
-                    </Chip>
-                  ) : (
-                    <Chip size="sm" variant="flat" color="default">
-                      None
-                    </Chip>
-                  )}
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Status</p>
-                  {app?.status ? (
-                    <Chip
-                      size="sm"
-                      variant="flat"
-                      color={
-                        app.status.toLowerCase() === 'online' || app.status.toLowerCase() === 'running'
-                          ? 'success'
-                          : app.status.toLowerCase() === 'offline' || app.status.toLowerCase() === 'stopped'
-                          ? 'danger'
-                          : 'default'
-                      }
-                      className="capitalize"
-                    >
-                      {app.status}
-                    </Chip>
-                  ) : (
-                    <p className="text-sm text-default-500">N/A</p>
-                  )}
-                </div>
-              </div>
+            <div className="lg:col-span-2">
+              <Card shadow="none" className="border border-divider bg-content1">
+                <CardBody>
+                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-3">Application Details</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-1">Tech Stack</p>
+                      <p className="text-sm">{app?.tech_stack || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-1">Docker Mode</p>
+                      {app?.docker_mode ? (
+                        <Chip
+                          size="sm"
+                          variant="flat"
+                          color={
+                            app.docker_mode === 'cli' || app.docker_mode === true
+                              ? 'primary'
+                              : app.docker_mode === 'desktop'
+                              ? 'secondary'
+                              : 'default'
+                          }
+                          className="capitalize"
+                        >
+                          {typeof app.docker_mode === 'string' ? app.docker_mode.toUpperCase() : 'CLI'}
+                        </Chip>
+                      ) : (
+                        <Chip size="sm" variant="flat" color="default">
+                          None
+                        </Chip>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-1">Status</p>
+                      {app?.status ? (
+                        <Chip
+                          size="sm"
+                          variant="flat"
+                          color={
+                            app.status.toLowerCase() === 'online' || app.status.toLowerCase() === 'running'
+                              ? 'success'
+                              : app.status.toLowerCase() === 'offline' || app.status.toLowerCase() === 'stopped'
+                              ? 'danger'
+                              : 'default'
+                          }
+                          className="capitalize"
+                        >
+                          {app.status}
+                        </Chip>
+                      ) : (
+                        <p className="text-sm text-default-500">N/A</p>
+                      )}
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
             </div>
 
             {/* Repository */}
-            <div>
-              <h3 className="text-sm font-bold text-default-500 uppercase tracking-wider mb-4">Repository</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-3">
-                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Repo URL</p>
+            <div className="lg:col-span-2">
+              <Card shadow="none" className="border border-divider bg-content1">
+                <CardBody>
+                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-3">Repository</p>
                   {app?.repo_url ? (
                     <a
                       href={app.repo_url}
@@ -315,46 +343,36 @@ function AppDetailPage() {
                   ) : (
                     <p className="text-sm text-default-500">N/A</p>
                   )}
-                </div>
-              </div>
+                </CardBody>
+              </Card>
             </div>
 
             {/* Backup Configuration */}
-            <div>
-              <h3 className="text-sm font-bold text-default-500 uppercase tracking-wider mb-4">Backup Configuration</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Backup Enabled</p>
-                  <Switch
-                    isSelected={app?.backup_enabled || false}
-                    isDisabled
-                    size="sm"
-                  >
-                    {app?.backup_enabled ? 'Enabled' : 'Disabled'}
-                  </Switch>
-                </div>
-                {app?.backup_enabled && (
-                  <div>
-                    <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Backup Frequency</p>
-                    <p className="text-sm">{app?.backup_frequency || 'N/A'}</p>
+            <div className="lg:col-span-2">
+              <Card shadow="none" className="border border-divider bg-content1">
+                <CardBody>
+                  <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-3">Backup Configuration</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-1">Backup Enabled</p>
+                      <Switch
+                        isSelected={app?.backup_enabled || false}
+                        isDisabled
+                        size="sm"
+                      >
+                        {app?.backup_enabled ? 'Enabled' : 'Disabled'}
+                      </Switch>
+                    </div>
+                    {app?.backup_enabled && (
+                      <div>
+                        <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-1">Backup Frequency</p>
+                        <p className="text-sm">{app?.backup_frequency || 'N/A'}</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </CardBody>
+              </Card>
             </div>
-
-            {/* Notes - 2/3 column */}
-            {app?.notes && (
-              <div>
-                <h3 className="text-sm font-bold text-default-500 uppercase tracking-wider mb-4">Notes</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="md:col-span-2">
-                    <p className="text-sm whitespace-pre-wrap bg-default-50 p-4 rounded-lg border border-divider">
-                      {app.notes}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </CardBody>
       </Card>

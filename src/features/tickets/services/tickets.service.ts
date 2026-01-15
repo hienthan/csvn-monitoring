@@ -101,8 +101,9 @@ export async function listTickets(
     }
 
     // Requestor filter
-    if (requestor) {
-      filterParts.push(`requestor_name = "${requestor}"`)
+    if (requestor && requestor.trim()) {
+      const requestorQuery = requestor.trim().replace(/"/g, '\\"')
+      filterParts.push(`requestor_name ~ "${requestorQuery}"`)
     }
 
     const filter = filterParts.length > 0 ? filterParts.join(' && ') : ''

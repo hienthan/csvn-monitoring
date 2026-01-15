@@ -277,47 +277,66 @@ function TicketOverviewTab({ ticketId }: TicketOverviewTabProps) {
         )}
       </div>
 
-      {/* Column 3: Summary (col-span-1) */}
-      <div className="lg:col-span-1 border-l border-divider px-4 space-y-6">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.1em] font-bold text-default-400 mb-3">Summary</p>
-          <dl className="space-y-4">
-            <KeyValue
-              label="CODE"
-              value={
-                <code className="text-primary font-bold text-xs tracking-tight">
-                  {ticket.code || 'N/A'}
-                </code>
-              }
-            />
-            <KeyValue label="TYPE" value={
-              <Chip size="sm" variant="flat" color="primary" className="font-black text-[10px] uppercase h-5">
-                {TICKET_TYPE_LABELS[ticket.types] || ticket.types || 'N/A'}
-              </Chip>
-            } />
-            <KeyValue label="APPLICATION" value={<span className="font-bold text-xs text-foreground">{ticket.app_name || 'N/A'}</span>} truncate={true} />
-            <KeyValue label="SERVICE TAGS" value={
-              Array.isArray(ticket.service_tags) && ticket.service_tags.length > 0 ? (
-                <div className="flex flex-wrap gap-1">
-                  {ticket.service_tags.map((tag) => (
-                    <Chip key={tag} size="sm" variant="dot" color="primary" className="text-[10px] h-5 font-bold">
-                      {tag}
-                    </Chip>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-default-400 text-xs italic">none</span>
-              )
-            } />
-          </dl>
-        </div>
+      {/* Column 3: Summary + Timeline */}
+      <div className="lg:col-span-1 space-y-4">
+        <Card shadow="none" className="border border-divider bg-content1">
+          <CardBody>
+            <p className="text-[11px] uppercase tracking-[0.1em] font-bold text-default-400 mb-3">Summary</p>
+            <dl className="space-y-4">
+              <KeyValue
+                label="CODE"
+                value={
+                  <code className="text-primary font-bold text-xs tracking-tight">
+                    {ticket.code || 'N/A'}
+                  </code>
+                }
+              />
+              <KeyValue
+                label="TYPE"
+                value={
+                  <Chip size="sm" variant="flat" color="primary" className="font-black text-[10px] uppercase h-5">
+                    {TICKET_TYPE_LABELS[ticket.types] || ticket.types || 'N/A'}
+                  </Chip>
+                }
+              />
+              <KeyValue label="APPLICATION" value={<span className="font-bold text-xs text-foreground">{ticket.app_name || 'N/A'}</span>} truncate={true} />
+              <KeyValue
+                label="SERVICE TAGS"
+                value={
+                  Array.isArray(ticket.service_tags) && ticket.service_tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {ticket.service_tags.map((tag) => (
+                        <Chip key={tag} size="sm" variant="dot" color="primary" className="text-[10px] h-5 font-bold">
+                          {tag}
+                        </Chip>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-default-400 text-xs italic">none</span>
+                  )
+                }
+              />
+            </dl>
+          </CardBody>
+        </Card>
+
+        <Card shadow="none" className="border border-divider bg-content1">
+          <CardBody>
+            <p className="text-[11px] uppercase tracking-[0.1em] font-bold text-default-400 mb-3">Timeline</p>
+            <div className="space-y-3">
+              <KeyValue label="DUE DATE" value={<span className="text-xs font-bold text-foreground">{ticket.due_at ? formatDate(ticket.due_at) : 'NOT SET'}</span>} />
+              <KeyValue label="STARTED" value={<span className="text-xs font-bold text-foreground">{ticket.started_at ? formatDate(ticket.started_at) : 'NOT STARTED'}</span>} />
+              <KeyValue label="RESOLVED" value={<span className="text-xs font-bold text-foreground">{ticket.resolved_at ? formatDate(ticket.resolved_at) : 'NOT RESOLVED'}</span>} />
+            </div>
+          </CardBody>
+        </Card>
       </div>
 
-      {/* Column 4: Quick Info (col-span-1) */}
-      <div className="lg:col-span-1 border-l border-divider px-4 space-y-6">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.1em] font-bold text-default-400 mb-3">Quick Info</p>
-          <div className="space-y-6">
+      {/* Column 4: Status + People */}
+      <div className="lg:col-span-1 space-y-4">
+        <Card shadow="none" className="border border-divider bg-content1">
+          <CardBody>
+            <p className="text-[11px] uppercase tracking-[0.1em] font-bold text-default-400 mb-3">Status</p>
             <div className="space-y-4">
               <KeyValue
                 label="STATUS"
@@ -354,8 +373,13 @@ function TicketOverviewTab({ ticketId }: TicketOverviewTabProps) {
                 }
               />
             </div>
+          </CardBody>
+        </Card>
 
-            <div className="space-y-4 pt-4 border-t border-divider/50">
+        <Card shadow="none" className="border border-divider bg-content1">
+          <CardBody>
+            <p className="text-[11px] uppercase tracking-[0.1em] font-bold text-default-400 mb-3">People</p>
+            <div className="space-y-4">
               <KeyValue
                 label="ASSIGNEE"
                 value={ticket.assignee ? <UserDisplay name={ticket.assignee} /> : <span className="text-default-400 text-xs italic">Unassigned</span>}
@@ -370,14 +394,8 @@ function TicketOverviewTab({ ticketId }: TicketOverviewTabProps) {
                 ) : <span className="text-default-400 text-xs italic">N/A</span>}
               />
             </div>
-
-            <div className="space-y-3 pt-4 border-t border-divider/50">
-              <KeyValue label="DUE DATE" value={<span className="text-xs font-bold text-foreground">{ticket.due_at ? formatDate(ticket.due_at) : 'NOT SET'}</span>} />
-              <KeyValue label="STARTED" value={<span className="text-xs font-bold text-foreground">{ticket.started_at ? formatDate(ticket.started_at) : 'NOT STARTED'}</span>} />
-              <KeyValue label="RESOLVED" value={<span className="text-xs font-bold text-foreground">{ticket.resolved_at ? formatDate(ticket.resolved_at) : 'NOT RESOLVED'}</span>} />
-            </div>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       </div>
     </div>
   )

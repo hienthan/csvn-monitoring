@@ -18,7 +18,14 @@ const AUTH_STORAGE_KEY = 'monitoring_app_user';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(() => {
-    const savedUser = sessionStorage.getItem(AUTH_STORAGE_KEY);
+    const localUser = localStorage.getItem(AUTH_STORAGE_KEY);
+    const sessionUser = sessionStorage.getItem(AUTH_STORAGE_KEY);
+
+    if (!localUser && sessionUser) {
+      localStorage.setItem(AUTH_STORAGE_KEY, sessionUser);
+    }
+
+    const savedUser = localUser || sessionUser;
     return savedUser ? JSON.parse(savedUser) : null;
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -37,7 +44,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       setUser(userData);
-      sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
     } catch (err: any) {
       setError(err.message || 'An error occurred during login');
       throw err;
@@ -49,6 +57,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     setUser(null);
     sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem(AUTH_STORAGE_KEY);
   };
 
   return (

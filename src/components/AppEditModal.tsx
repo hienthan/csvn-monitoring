@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   Modal,
   ModalContent,
@@ -38,7 +38,7 @@ export function AppEditModal({
     environment: '',
     repo_url: '',
     tech_stack: '',
-    owner: '',
+    created_by: '',
     path: '',
     status: '',
     docker_mode: false,
@@ -47,10 +47,11 @@ export function AppEditModal({
     notes: '',
   })
   const [loading, setLoading] = useState(false)
+  const initialFormRef = useRef<Partial<ServerApp> | null>(null)
 
   useEffect(() => {
     if (isOpen && app) {
-      setFormData({
+      const nextForm = {
         name: app.name || '',
         key: app.key || '',
         department: app.department || '',
@@ -59,14 +60,16 @@ export function AppEditModal({
         environment: app.environment || '',
         repo_url: app.repo_url || '',
         tech_stack: app.tech_stack || '',
-        owner: (app as any).owner || 'System',
+        created_by: app.created_by || 'System',
         path: app.path || '',
         status: app.status || '',
         docker_mode: app.docker_mode || false,
         backup_enabled: app.backup_enabled || false,
         backup_frequency: app.backup_frequency || '',
         notes: app.notes || '',
-      })
+      }
+      setFormData(nextForm)
+      initialFormRef.current = nextForm
     } else if (!isOpen) {
       setFormData({
         name: '',
@@ -77,7 +80,7 @@ export function AppEditModal({
         environment: '',
         repo_url: '',
         tech_stack: '',
-        owner: '',
+        created_by: '',
         path: '',
         status: '',
         docker_mode: false,
@@ -85,6 +88,7 @@ export function AppEditModal({
         backup_frequency: '',
         notes: '',
       })
+      initialFormRef.current = null
     }
   }, [isOpen, app])
 
@@ -95,7 +99,7 @@ export function AppEditModal({
     try {
       await onSave({
         ...formData,
-        owner: (formData.owner || 'System') as string,
+        created_by: (formData.created_by || 'System') as string,
       })
       onClose()
     } catch (error) {
@@ -104,6 +108,11 @@ export function AppEditModal({
       setLoading(false)
     }
   }
+
+  const isDirty = useMemo(() => {
+    if (!initialFormRef.current) return false
+    return JSON.stringify(formData) !== JSON.stringify(initialFormRef.current)
+  }, [formData])
 
   return (
     <Modal
@@ -168,6 +177,18 @@ export function AppEditModal({
                       }
                       isDisabled={loading}
                     />
+
+                  <Input
+                    id="edit-app-owner"
+                    name="created_by"
+                    label="Owner"
+                    placeholder="e.g. System"
+                    value={formData.created_by || ''}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, created_by: value }))
+                    }
+                    isDisabled={loading}
+                  />
 
                     <Select
                       id="edit-app-server"
@@ -386,7 +407,7 @@ export function AppEditModal({
                 color="primary"
                 onPress={handleSubmit}
                 isLoading={loading}
-                isDisabled={!formData.name?.trim()}
+                isDisabled={!formData.name?.trim() || !isDirty}
               >
                 Save Changes
               </Button>

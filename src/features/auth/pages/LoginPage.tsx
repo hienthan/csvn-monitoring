@@ -27,7 +27,7 @@ const LoginPage: React.FC = () => {
     <div className="flex items-center justify-center min-h-screen bg-content2">
       <Card className="w-full max-w-md p-4">
         <CardHeader className="flex flex-col gap-1 items-center">
-          <h1 className="text-2xl font-bold">Internal Monitoring</h1>
+          <h1 className="text-2xl font-bold">VG InfraDesk</h1>
           <p className="text-default-500">Log in to your account</p>
         </CardHeader>
         <CardBody>

@@ -45,19 +45,6 @@ function ServerDetailPage() {
     }
   }
 
-  const formatDockerMode = (mode?: string | boolean) => {
-    if (mode === undefined || mode === null) return 'N/A'
-    if (typeof mode === 'boolean') {
-      // Backwards compatibility: treat boolean as cli/none
-      return mode ? 'CLI' : 'None'
-    }
-    const val = String(mode).toLowerCase()
-    if (val === 'cli') return 'CLI'
-    if (val === 'desktop') return 'Desktop'
-    if (val === 'none') return 'None'
-    return String(mode)
-  }
-
   const handleEditSave = async (payload: Partial<Server>) => {
     if (!server) return
     try {
@@ -214,88 +201,11 @@ function ServerDetailPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="min-w-0 p-5 rounded-2xl bg-default-50 border border-divider hover:bg-default-100 transition-all shadow-sm">
-                    <p className="text-[10px] font-extrabold text-default-400 uppercase tracking-widest mb-1.5 shrink-0">IP Address</p>
-                    <p className="text-lg font-mono font-bold text-primary truncate min-w-0">
-                      {server?.ip || '0.0.0.0'}
-                    </p>
-                  </div>
-
-                  <div className="min-w-0 p-5 rounded-2xl bg-default-50 border border-divider hover:bg-default-100 transition-all shadow-sm">
-                    <p className="text-[10px] font-extrabold text-default-400 uppercase tracking-widest mb-1.5 shrink-0">SSH Host</p>
-                    <p className="text-lg font-bold text-foreground truncate min-w-0">
-                      {server?.host || 'localhost'}
-                    </p>
-                  </div>
-
-                  <div className="min-w-0 p-5 rounded-2xl bg-default-50 border border-divider hover:bg-default-100 transition-all shadow-sm">
-                    <p className="text-[10px] font-extrabold text-default-400 uppercase tracking-widest mb-1.5 shrink-0">Operating System</p>
-                    <p className="text-lg font-bold text-foreground truncate min-w-0">
-                      {server?.os || 'Linux Kernel'}
-                    </p>
-                  </div>
-
-                  <div className="min-w-0 p-5 rounded-2xl bg-default-50 border border-divider hover:bg-default-100 transition-all shadow-sm">
-                    <p className="text-[10px] font-extrabold text-default-400 uppercase tracking-widest mb-1.5 shrink-0">Virtualization</p>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${server?.docker_mode ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'bg-default-300'}`} />
-                      <p className="text-lg font-bold text-foreground truncate min-w-0">
-                        {formatDockerMode(server?.docker_mode)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           )}
         </CardBody>
       </Card>
-
-      {/* Additional Server Information */}
-      {!loading && server && (
-        <Card shadow="none" className="border border-divider bg-content1/50 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <CardBody className="p-6">
-            <div className="space-y-8">
-              {/* Location & Netdata */}
-              <div>
-                <h3 className="text-sm font-bold text-default-500 uppercase tracking-wider mb-4">Server Configuration</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Location</p>
-                    <p className="text-sm">{server.location || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-2">Netdata Enabled</p>
-                    <Chip
-                      size="sm"
-                      variant="flat"
-                      color={server.is_netdata_enabled ? 'success' : 'default'}
-                      className="capitalize"
-                    >
-                      {server.is_netdata_enabled ? 'Enabled' : 'Disabled'}
-                    </Chip>
-                  </div>
-                </div>
-              </div>
-
-              {/* Notes */}
-              {server.notes && (
-                <div>
-                  <h3 className="text-sm font-bold text-default-500 uppercase tracking-wider mb-4">Notes</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="md:col-span-2">
-                      <p className="text-sm whitespace-pre-wrap bg-default-50 p-4 rounded-lg border border-divider">
-                        {server.notes}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardBody>
-        </Card>
-      )}
 
       {/* Tabs */}
       <Tabs
@@ -312,12 +222,12 @@ function ServerDetailPage() {
         }}
       >
         <Tab key="overview" title="Overview" />
-        <Tab key="apps" title="Apps" />
+        <Tab key="apps" title="Applications" />
       </Tabs>
 
       {/* Tab Content */}
       <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <Outlet context={{ netdata }} />
+        <Outlet context={{ netdata, server }} />
       </div>
 
       {server && (

@@ -50,12 +50,12 @@ export const TICKET_ENVIRONMENT_LABELS: Record<TicketEnvironment, string> = {
 // Chip colorVariant maps (using HeroUI color prop)
 // HeroUI colors: default, primary, secondary, success, warning, danger
 export const TICKET_STATUS_COLORS: Record<TicketStatus, ChipProps['color']> = {
-  new: 'default',
+  new: 'primary',
   triage: 'secondary',
-  in_progress: 'primary',
-  waiting_dev: 'default',
-  blocked: 'warning',
-  done: 'success',
+  in_progress: 'success',
+  waiting_dev: 'warning',
+  blocked: 'danger',
+  done: 'default',
   rejected: 'danger',
 }
 

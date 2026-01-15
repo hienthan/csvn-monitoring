@@ -1,12 +1,13 @@
 import { useOutletContext, useParams, useNavigate } from 'react-router-dom'
-import { Card, CardBody, CardHeader, Button, Skeleton, Tooltip } from '@heroui/react'
+import { Card, CardBody, CardHeader, Button, Skeleton, Tooltip, Chip } from '@heroui/react'
 import { Ticket, Database, Cpu, HardDrive, Globe, Zap, Package } from 'lucide-react'
 import { NetdataKpis } from '../netdata.types'
+import type { Server } from '../types'
 
 function ServerOverviewPage() {
   const { serverId } = useParams()
   const navigate = useNavigate()
-  const { netdata } = useOutletContext<{ netdata: NetdataKpis }>()
+  const { netdata, server } = useOutletContext<{ netdata: NetdataKpis; server?: Server | null }>()
   const {
     status,
     isLoading,
@@ -34,6 +35,17 @@ function ServerOverviewPage() {
   const ioWriteFmt = formatSpeed(diskWrite)
 
   const isOffline = status === 'Offline'
+
+  const formatDockerMode = (mode?: string | boolean | string[]) => {
+    if (mode === undefined || mode === null) return 'N/A'
+    if (Array.isArray(mode)) return mode.length ? mode.join(', ') : 'None'
+    if (typeof mode === 'boolean') return mode ? 'CLI' : 'None'
+    const val = String(mode).toLowerCase()
+    if (val === 'cli') return 'CLI'
+    if (val === 'desktop') return 'Desktop'
+    if (val === 'none') return 'None'
+    return String(mode)
+  }
 
   return (
     <div className="space-y-6">
@@ -142,6 +154,101 @@ function ServerOverviewPage() {
         </Card>
       </div>
 
+
+      {/* Notes + Basic Information */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-stretch">
+        <div className="lg:col-span-2 h-full">
+          <Card shadow="none" className="border-divider border bg-content1/50 h-full">
+            <CardBody className="p-6 flex flex-col">
+              <p className="text-[10px] uppercase font-black text-default-400 tracking-wider mb-3">Notes</p>
+              <p className="text-sm text-default-600 whitespace-pre-wrap">
+                {server?.notes || 'N/A'}
+              </p>
+            </CardBody>
+          </Card>
+        </div>
+        <div className="lg:col-span-2 h-full">
+          <Card shadow="none" className="border-divider border bg-content1/50 h-full">
+            <CardBody className="p-6">
+              <p className="text-[10px] uppercase font-black text-default-400 tracking-wider mb-3">Basic Information</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] uppercase font-black text-default-400 tracking-wider mb-1">Server Name</p>
+                  <p className="text-sm font-semibold text-foreground">{server?.name || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-black text-default-400 tracking-wider mb-1">Environment</p>
+                  <p className="text-sm">{server?.environment || (server as any)?.env || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-black text-default-400 tracking-wider mb-1">Location</p>
+                  <p className="text-sm">{server?.location || 'N/A'}</p>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      </div>
+
+      {/* Server Details */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-stretch">
+        <div className="lg:col-span-2 h-full">
+          <Card shadow="none" className="border-divider border bg-content1/50 h-full">
+            <CardBody className="p-6">
+              <p className="text-[10px] uppercase font-black text-default-400 tracking-wider mb-3">Server Details</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] uppercase font-black text-default-400 tracking-wider mb-1">IP Address</p>
+                  <p className="text-sm font-mono text-primary font-bold">{server?.ip || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-black text-default-400 tracking-wider mb-1">SSH Host</p>
+                  <p className="text-sm">{server?.host || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-black text-default-400 tracking-wider mb-1">Operating System</p>
+                  <p className="text-sm">{server?.os || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-black text-default-400 tracking-wider mb-1">Docker Mode</p>
+                  <p className="text-sm">{formatDockerMode(server?.docker_mode)}</p>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+        <div className="lg:col-span-2 h-full">
+          <Card shadow="none" className="border-divider border bg-content1/50 h-full">
+            <CardBody className="p-6">
+              <p className="text-[10px] uppercase font-black text-default-400 tracking-wider mb-3">Operational Status</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] uppercase font-black text-default-400 tracking-wider mb-1">Active Status</p>
+                  <Chip
+                    size="sm"
+                    variant="flat"
+                    color={(server as any)?.is_active ? 'success' : 'danger'}
+                    className="capitalize"
+                  >
+                    {(server as any)?.is_active ? 'Online' : 'Offline'}
+                  </Chip>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-black text-default-400 tracking-wider mb-1">Netdata Enabled</p>
+                  <Chip
+                    size="sm"
+                    variant="flat"
+                    color={server?.is_netdata_enabled ? 'success' : 'default'}
+                    className="capitalize"
+                  >
+                    {server?.is_netdata_enabled ? 'Enabled' : 'Disabled'}
+                  </Chip>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      </div>
 
       {/* Quick Actions */}
       <Card shadow="none" className="border-divider border bg-content1/50">

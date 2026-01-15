@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   Modal,
   ModalContent,
@@ -40,6 +40,7 @@ export function ServerEditModal({
     notes: '',
   })
   const [loading, setLoading] = useState(false)
+  const initialFormRef = useRef<Partial<Server> | null>(null)
 
   useEffect(() => {
     if (isOpen && server) {
@@ -59,18 +60,26 @@ export function ServerEditModal({
         }
       }
 
-      setFormData({
+      const normalizedStatus =
+        typeof (server as any).is_active === 'boolean'
+          ? ((server as any).is_active ? 'online' : 'offline')
+          : (server.status || 'online')
+
+      const nextForm = {
         name: server.name || '',
         host: server.host || '',
         ip: server.ip || '',
         docker_mode: normalizedDocker,
         environment: normalizedEnv,
         os: server.os || '',
-        status: server.status || 'online',
+        status: normalizedStatus,
         location: server.location || '',
         is_netdata_enabled: server.is_netdata_enabled || false,
         notes: server.notes || '',
-      })
+      }
+
+      setFormData(nextForm)
+      initialFormRef.current = nextForm
     } else if (!isOpen) {
       setFormData({
         name: '',
@@ -84,6 +93,7 @@ export function ServerEditModal({
         is_netdata_enabled: false,
         notes: '',
       })
+      initialFormRef.current = null
     }
   }, [isOpen, server])
 
@@ -100,6 +110,11 @@ export function ServerEditModal({
       setLoading(false)
     }
   }
+
+  const isDirty = useMemo(() => {
+    if (!initialFormRef.current) return false
+    return JSON.stringify(formData) !== JSON.stringify(initialFormRef.current)
+  }, [formData])
 
   return (
     <Modal
@@ -300,7 +315,7 @@ export function ServerEditModal({
                 color="primary"
                 onPress={handleSubmit}
                 isLoading={loading}
-                isDisabled={!formData.name?.trim()}
+                isDisabled={!formData.name?.trim() || !isDirty}
               >
                 Save Changes
               </Button>

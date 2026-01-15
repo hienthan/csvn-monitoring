@@ -65,6 +65,17 @@ function mapServerPayload(data: Partial<Server>): Record<string, unknown> {
     payload.docker_mode = []
   }
 
+  // Map status → is_active (PB uses is_active boolean)
+  if (typeof data.status === 'string') {
+    const statusLower = data.status.toLowerCase()
+    payload.is_active = statusLower === 'online' || statusLower === 'running' || statusLower === 'active'
+  } else if (typeof (data as any).is_active === 'boolean') {
+    payload.is_active = (data as any).is_active
+  }
+
+  // Avoid sending status to PB if it doesn't exist
+  delete payload.status
+
   return payload
 }
 

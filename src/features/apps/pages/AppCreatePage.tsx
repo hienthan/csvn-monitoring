@@ -32,7 +32,7 @@ function AppCreatePage() {
     environment: '',
     repo_url: '',
     tech_stack: '',
-    owner: '',
+    created_by: '',
     path: '',
     status: '',
     docker_mode: false,
@@ -48,7 +48,7 @@ function AppCreatePage() {
     try {
       const app = await appService.create({
         ...formData,
-        owner: formData.owner?.trim() || 'System',
+        created_by: formData.created_by?.trim() || 'System',
       })
       navigate(`/apps/${app.id}`)
     } catch (err) {
@@ -145,6 +145,14 @@ function AppCreatePage() {
                   placeholder="Enter department"
                   value={formData.department}
                   onValueChange={(v) => handleChange('department', v)}
+                  variant="flat"
+                />
+
+                <Input
+                  label="Owner"
+                  placeholder="e.g. System"
+                  value={formData.created_by}
+                  onValueChange={(v) => handleChange('created_by', v)}
                   variant="flat"
                 />
 

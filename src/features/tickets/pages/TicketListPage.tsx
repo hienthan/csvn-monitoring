@@ -60,7 +60,10 @@ function TicketListPage() {
         if (filters.types) filterParts.push(`types = "${filters.types}"`)
         if (filters.environment) filterParts.push(`environment = "${filters.environment}"`)
         if (filters.assignee) filterParts.push(`assignee = "${filters.assignee}"`)
-        if (filters.requestor) filterParts.push(`requestor_name = "${filters.requestor}"`)
+        if (filters.requestor) {
+          const requestorQuery = filters.requestor.trim().replace(/"/g, '\\"')
+          filterParts.push(`requestor_name ~ "${requestorQuery}"`)
+        }
         
         const filter = filterParts.join(' && ')
         const result = await pb.collection('ma_tickets').getList(1, 1, { filter })
@@ -148,11 +151,6 @@ function TicketListPage() {
             <span className={`font-bold ${fontSize} text-foreground truncate leading-tight`}>
               {ticket.title || 'N/A'}
             </span>
-            {ticket.app_name && (
-              <span className="text-[10px] text-default-400 mt-0.5 truncate uppercase font-bold">
-                {ticket.app_name}
-              </span>
-            )}
           </div>
         )
       case 'type':
@@ -333,6 +331,32 @@ function TicketListPage() {
               }
             />
 
+            <Input
+              placeholder="Requestor"
+              value={filters.requestor || ''}
+              onValueChange={(value) => setFilter('requestor', value || undefined)}
+              className="w-[140px]"
+              variant="flat"
+              classNames={{
+                inputWrapper: "bg-default-100/50 hover:bg-default-200/50 transition-colors border-none",
+                input: "text-sm"
+              }}
+              endContent={
+                filters.requestor && (
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="light"
+                    onPress={() => setFilter('requestor', undefined)}
+                    aria-label="Clear requestor filter"
+                  >
+                    <X size={16} />
+                  </Button>
+                )
+              }
+              aria-label="Filter by requestor"
+            />
+
             <Select
               placeholder="Status"
               selectedKeys={filters.status ? new Set([filters.status]) : new Set()}
@@ -374,32 +398,6 @@ function TicketListPage() {
             >
               {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
             </Select>
-
-            <Input
-              placeholder="Requestor"
-              value={filters.requestor || ''}
-              onValueChange={(value) => setFilter('requestor', value || undefined)}
-              className="w-[140px]"
-              variant="flat"
-              classNames={{
-                inputWrapper: "bg-default-100/50 hover:bg-default-200/50 transition-colors border-none",
-                input: "text-sm"
-              }}
-              endContent={
-                filters.requestor && (
-                  <Button
-                    isIconOnly
-                    size="sm"
-                    variant="light"
-                    onPress={() => setFilter('requestor', undefined)}
-                    aria-label="Clear requestor filter"
-                  >
-                    <X size={16} />
-                  </Button>
-                )
-              }
-              aria-label="Filter by requestor"
-            />
 
             {hasActiveFilters && (
               <Button
