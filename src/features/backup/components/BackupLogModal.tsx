@@ -11,7 +11,6 @@ import { Copy, Check } from 'lucide-react'
 import { useState } from 'react'
 import { copyToClipboard } from '@/lib/utils/clipboard'
 import type { Backup } from '../types'
-import { getBackupHealth } from '../utils/backupStatus'
 
 interface BackupLogModalProps {
   isOpen: boolean
@@ -24,7 +23,6 @@ export function BackupLogModal({ isOpen, onClose, backup }: BackupLogModalProps)
 
   if (!backup) return null
 
-  const health = getBackupHealth(backup)
   const appName = backup.expand?.app_id?.name || backup.app_id
   const targetName = backup.name
 

@@ -9,7 +9,7 @@ export function useTickets(filters: TicketFilters = {}) {
     q = '',
     status,
     priority,
-    type,
+    types,
     environment,
     assignee,
     requestor,
@@ -49,7 +49,7 @@ export function useTickets(filters: TicketFilters = {}) {
         q: q.trim() || undefined,
         status,
         priority,
-        type,
+        types,
         environment,
         assignee,
         requestor,
@@ -76,7 +76,7 @@ export function useTickets(filters: TicketFilters = {}) {
         setLoading(false)
       }
     }
-  }, [q, currentPage, status, priority, type, environment, assignee, requestor, handleError])
+  }, [q, currentPage, status, priority, types, environment, assignee, requestor, handleError])
 
   // Debounced search effect
   useEffect(() => {

@@ -27,7 +27,6 @@ import { TicketEditModal } from '../components/TicketEditModal'
 import {
   TICKET_STATUS_LABELS,
   TICKET_PRIORITY_LABELS,
-  TICKET_ENVIRONMENT_LABELS,
   getTicketStatusColor,
   getTicketPriorityColor,
 } from '../constants'

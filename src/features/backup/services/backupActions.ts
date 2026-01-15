@@ -1,4 +1,3 @@
-import { backupService } from './backupService'
 import type { Backup } from '../types'
 
 /**

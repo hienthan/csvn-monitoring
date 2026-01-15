@@ -1,4 +1,4 @@
-import type { Backup, BackupHealth, BackupHealthKey, BackupSummary } from '../types'
+import type { Backup, BackupHealth, BackupSummary } from '../types'
 
 /**
  * Get backup health status following precedence:
@@ -35,7 +35,7 @@ export function getBackupHealth(backup: Backup): BackupHealth {
   }
   
   // 4. Overdue
-  if (backup.is_enabled !== false && backup.next_due_at) {
+  if (backup.next_due_at) {
     const dueDate = new Date(backup.next_due_at)
     if (now > dueDate) {
       return {

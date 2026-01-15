@@ -7,17 +7,17 @@ const COLLECTION_NAME = 'ma_backups'
 /**
  * Parse meta field (can be JSON string or object)
  */
-function parseMeta(meta: unknown): Record<string, unknown> | null {
-  if (!meta) return null
+function parseMeta(meta: unknown): Record<string, unknown> | undefined {
+  if (!meta) return undefined
   if (typeof meta === 'object' && meta !== null) return meta as Record<string, unknown>
   if (typeof meta === 'string') {
     try {
       return JSON.parse(meta)
     } catch {
-      return null
+      return undefined
     }
   }
-  return null
+  return undefined
 }
 
 /**

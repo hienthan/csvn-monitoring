@@ -18,7 +18,7 @@ import {
   ModalBody,
   ModalFooter,
 } from '@heroui/react'
-import { ArrowLeft, Play, Copy, Check, AlertTriangle, Trash2, Edit } from 'lucide-react'
+import { Play, Copy, Check, AlertTriangle, Trash2 } from 'lucide-react'
 import Breadcrumb from '@/components/Breadcrumb'
 import { useBackupDetail } from '../hooks/useBackupDetail'
 import { useApiError } from '@/lib/hooks/useApiError'
@@ -34,7 +34,7 @@ import {
 } from '../utils/backupStatus'
 import { hasBackupAdmin } from '../utils/rbac'
 import { useAuth } from '@/features/auth/context/AuthContext'
-import { runBackupNow, getOptimisticRunningBackup } from '../services/backupActions'
+import { runBackupNow } from '../services/backupActions'
 import { backupService } from '../services/backupService'
 import { copyToClipboard } from '@/lib/utils/clipboard'
 import { formatRelativeTime } from '@/features/tickets/utils'
@@ -133,8 +133,8 @@ function BackupDetailPage() {
         <div className="space-y-4">
           <Breadcrumb
             items={[
-              { label: 'Backups', href: '/backups' },
-              { label: 'Error' },
+              { label: 'Backups', path: '/backups' },
+              { label: 'Error', path: '/backups' },
             ]}
           />
           <Card>
@@ -175,9 +175,9 @@ function BackupDetailPage() {
         <div className="space-y-2">
           <Breadcrumb
             items={[
-              { label: 'Backups', href: '/backups' },
-              { label: appName },
-              { label: backup.name },
+              { label: 'Backups', path: '/backups' },
+              { label: appName, path: '/backups' },
+              { label: backup.name, path: `/backups/${backup.id}` },
             ]}
           />
           <div className="flex items-center gap-3">

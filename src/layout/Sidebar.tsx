@@ -87,7 +87,7 @@ const navItems: NavItem[] = [
 ]
 
 function Sidebar({ collapsed, onToggle }: SidebarProps) {
-  const { ticketCount, serverCount, appCount, loading: countsLoading } = useSidebarCounts()
+  const { ticketCount, serverCount, appCount } = useSidebarCounts()
   const location = useLocation()
 
   // Map counts to nav items

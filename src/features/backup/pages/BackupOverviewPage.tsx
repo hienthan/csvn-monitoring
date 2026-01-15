@@ -26,10 +26,9 @@ import {
   getBackupHealth,
   isHeavyBackup,
 } from '../utils/backupStatus'
-import { runBackupNow, getOptimisticRunningBackup } from '../services/backupActions'
+import { runBackupNow } from '../services/backupActions'
 import { useApiError } from '@/lib/hooks/useApiError'
 import { useAuth } from '@/features/auth/context/AuthContext'
-import { isAdmin } from '@/constants/admin'
 import { hasBackupAdmin } from '../utils/rbac'
 import type { Backup } from '../types'
 import { Database } from 'lucide-react'
@@ -227,7 +226,6 @@ function BackupOverviewPage() {
       setRunConfirmModalOpen(false)
 
       // Optimistic update
-      const optimisticBackup = getOptimisticRunningBackup(selectedBackup)
       // Update local state (we'll need to refetch after)
       // For now, just call the API
       await runBackupNow(selectedBackup.id)

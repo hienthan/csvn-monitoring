@@ -39,6 +39,31 @@ export function BackupFilters({
   hasActiveFilters,
   onClearFilters,
 }: BackupFiltersProps) {
+  const serverItems = [
+    { key: 'all', label: 'All servers' },
+    ...servers.map((server) => ({
+      key: server.id,
+      label: server.name || server.ip || server.id,
+    })),
+  ]
+
+  const appItems = [
+    { key: 'all', label: 'All apps' },
+    ...apps.map((app) => ({
+      key: app.id,
+      label: app.name || app.key || app.id,
+    })),
+  ]
+
+  const statusItems: { key: BackupStatusFilter; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'healthy', label: 'Healthy' },
+    { key: 'overdue', label: 'Overdue' },
+    { key: 'failed', label: 'Failed' },
+    { key: 'disabled', label: 'Disabled' },
+    { key: 'running', label: 'Running' },
+  ]
+
   return (
     <div className="flex flex-wrap items-center gap-4 p-4 bg-content1/30 rounded-lg border border-divider">
       <Input
@@ -56,82 +81,54 @@ export function BackupFilters({
       <Select
         label="Server"
         placeholder="All servers"
-        selectedKeys={serverFilter ? [serverFilter] : []}
+        selectedKeys={serverFilter ? new Set([serverFilter]) : new Set(['all'])}
         onSelectionChange={(keys) => {
           const selected = Array.from(keys)[0] as string | undefined
           onServerFilterChange(selected === 'all' ? undefined : selected)
         }}
+        items={serverItems}
         size="sm"
         className="min-w-[150px]"
         classNames={{
           trigger: 'h-9',
         }}
       >
-        <SelectItem key="all" value="all">
-          All servers
-        </SelectItem>
-        {servers.map((server) => (
-          <SelectItem key={server.id} value={server.id}>
-            {server.name || server.ip || server.id}
-          </SelectItem>
-        ))}
+        {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
       </Select>
 
       <Select
         label="App"
         placeholder="All apps"
-        selectedKeys={appFilter ? [appFilter] : []}
+        selectedKeys={appFilter ? new Set([appFilter]) : new Set(['all'])}
         onSelectionChange={(keys) => {
           const selected = Array.from(keys)[0] as string | undefined
           onAppFilterChange(selected === 'all' ? undefined : selected)
         }}
+        items={appItems}
         size="sm"
         className="min-w-[150px]"
         classNames={{
           trigger: 'h-9',
         }}
       >
-        <SelectItem key="all" value="all">
-          All apps
-        </SelectItem>
-        {apps.map((app) => (
-          <SelectItem key={app.id} value={app.id}>
-            {app.name || app.key || app.id}
-          </SelectItem>
-        ))}
+        {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
       </Select>
 
       <Select
         label="Status"
-        selectedKeys={[statusFilter]}
+        selectedKeys={new Set([statusFilter])}
         onSelectionChange={(keys) => {
           const selected = Array.from(keys)[0] as BackupStatusFilter
           onStatusFilterChange(selected || 'all')
         }}
+        items={statusItems}
         size="sm"
         className="min-w-[120px]"
         classNames={{
           trigger: 'h-9',
         }}
       >
-        <SelectItem key="all" value="all">
-          All
-        </SelectItem>
-        <SelectItem key="healthy" value="healthy">
-          Healthy
-        </SelectItem>
-        <SelectItem key="overdue" value="overdue">
-          Overdue
-        </SelectItem>
-        <SelectItem key="failed" value="failed">
-          Failed
-        </SelectItem>
-        <SelectItem key="disabled" value="disabled">
-          Disabled
-        </SelectItem>
-        <SelectItem key="running" value="running">
-          Running
-        </SelectItem>
+        {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
       </Select>
 
       <Checkbox

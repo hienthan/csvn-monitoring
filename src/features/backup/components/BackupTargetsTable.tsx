@@ -20,7 +20,6 @@ import {
   formatBytes,
   formatRetention,
   formatStorageBackend,
-  isHeavyBackup,
 } from '../utils/backupStatus'
 import { hasBackupAdmin } from '../utils/rbac'
 import { useAuth } from '@/features/auth/context/AuthContext'

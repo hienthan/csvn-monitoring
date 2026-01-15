@@ -1,15 +1,13 @@
 import type { Ticket, TicketEvent, TicketStatus } from '@/features/tickets/types'
 import type {
   TicketSnapshotMetrics,
-  TicketTimelineMetrics,
-  TicketsCreatedDataPoint,
   StatusTransitionDataPoint,
   Granularity,
   TicketStatusDonutChartData,
   TicketsCreatedOverTimeChartData,
   TicketStatusTransitionChartData,
 } from '../types'
-import { TICKET_STATUS_LABELS, TICKET_STATUS_COLORS } from '@/constants/tickets'
+import { TICKET_STATUS_LABELS } from '@/constants/tickets'
 
 /**
  * Aggregate snapshot metrics from tickets collection
