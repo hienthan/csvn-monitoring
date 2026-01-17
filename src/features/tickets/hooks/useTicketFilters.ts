@@ -11,9 +11,10 @@ export interface TicketFilters {
   q?: string
   status?: TicketStatus
   priority?: TicketPriority
-  type?: TicketType
+  types?: TicketType
   environment?: TicketEnvironment
   assignee?: string
+  requestor?: string
   page?: number
 }
 
@@ -25,9 +26,10 @@ export function useTicketFilters() {
       q: searchParams.get('q') || undefined,
       status: (searchParams.get('status') as TicketStatus) || undefined,
       priority: (searchParams.get('priority') as TicketPriority) || undefined,
-      type: (searchParams.get('type') as TicketType) || undefined,
+      types: (searchParams.get('types') as TicketType) || undefined,
       environment: (searchParams.get('environment') as TicketEnvironment) || undefined,
       assignee: searchParams.get('assignee') || undefined,
+      requestor: searchParams.get('requestor') || undefined,
       page: searchParams.get('page') ? parseInt(searchParams.get('page')!, 10) : 1,
     }
   }, [searchParams])

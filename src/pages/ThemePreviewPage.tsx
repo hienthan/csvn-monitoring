@@ -74,7 +74,7 @@ function ThemePreviewPage() {
                   <CardBody>
                     <div className="border-b border-divider bg-content1/60 backdrop-blur-md p-4 rounded">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-foreground">VG DATACENTER</span>
+                        <span className="text-sm font-bold text-foreground">VG InfraDesk</span>
                         <div className="flex gap-2">
                           <Button size="sm" variant="light" isIconOnly>
                             🔔

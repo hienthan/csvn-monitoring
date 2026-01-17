@@ -12,6 +12,11 @@ export interface AddCommentParams {
   attachmentsFiles?: File[]
 }
 
+export interface UpdateCommentParams {
+  commentId: string
+  message: string
+}
+
 /**
  * List comments for a specific ticket (sorted by created asc)
  */
@@ -95,3 +100,19 @@ export async function deleteComment(commentId: string): Promise<boolean> {
   }
 }
 
+/**
+ * Update a comment message
+ */
+export async function updateComment(params: UpdateCommentParams): Promise<TicketComment> {
+  try {
+    const { commentId, message } = params
+    const updated = await pb.collection(COLLECTION_NAME).update<TicketComment>(commentId, {
+      message,
+    })
+    return updated
+  } catch (error) {
+    console.error(`Error updating comment ${params.commentId}:`, error)
+    const normalized = normalizePbError(error)
+    throw new Error(normalized.message)
+  }
+}

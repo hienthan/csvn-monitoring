@@ -12,9 +12,9 @@ export function useSidebarCounts() {
       try {
         setLoading(true)
         
-        // Fetch tickets with status "waiting_dev"
+        // Fetch active tickets (excluding done, rejected, blocked)
         const ticketsResult = await pb.collection('ma_tickets').getList(1, 1, {
-          filter: 'status = "waiting_dev"',
+          filter: '(status != "done" && status != "rejected" && status != "blocked")',
         })
         setTicketCount(ticketsResult.totalItems)
 

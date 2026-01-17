@@ -13,12 +13,13 @@ import {
   DropdownItem,
   Skeleton,
 } from '@heroui/react'
-import { ArrowLeft, Edit, MoreVertical, Copy as CopyIcon } from 'lucide-react'
+import { ArrowLeft, Edit, MoreVertical, Copy as CopyIcon, Trash2, MessageSquare, Clock } from 'lucide-react'
+import { pb } from '@/lib/pb'
 import Breadcrumb from '@/components/Breadcrumb'
 import { useTicket } from '../hooks/useTicket'
 import { useApiError } from '@/lib/hooks/useApiError'
 import { addEvent } from '../services/events.service'
-import TicketOverviewTab from '../components/TicketOverviewTab'
+import TicketOverviewTab, { TicketInfoSidebar } from '../components/TicketOverviewTab'
 import TicketCommentsTab from '../components/TicketCommentsTab'
 import TicketEventsTab from '../components/TicketEventsTab'
 import { StatusChangeModal } from '../components/StatusChangeModal'
@@ -26,7 +27,6 @@ import { TicketEditModal } from '../components/TicketEditModal'
 import {
   TICKET_STATUS_LABELS,
   TICKET_PRIORITY_LABELS,
-  TICKET_ENVIRONMENT_LABELS,
   getTicketStatusColor,
   getTicketPriorityColor,
 } from '../constants'
@@ -45,6 +45,7 @@ function TicketDetailPage() {
   const [selectedNewStatus, setSelectedNewStatus] = useState<TicketStatus | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [isChangingStatus, setIsChangingStatus] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const handleStatusChange = async (params: {
     newStatus: TicketStatus
@@ -95,6 +96,20 @@ function TicketDetailPage() {
   const handleCopyCode = async () => {
     if (ticket?.code) {
       await copyTicketCode(ticket.code)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!ticket || !window.confirm('Are you sure you want to delete this ticket? This action cannot be undone.')) return
+    
+    setDeleting(true)
+    try {
+      await pb.collection('ma_tickets').update(ticket.id, { is_deleted: true })
+      navigate('/tickets')
+    } catch (err) {
+      handleError(err)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -224,6 +239,17 @@ function TicketDetailPage() {
           >
             Edit
           </Button>
+          <Button
+            variant="flat"
+            color="danger"
+            startContent={<Trash2 size={16} />}
+            onPress={handleDelete}
+            isLoading={deleting}
+            isDisabled={loading || deleting}
+            className="font-bold"
+          >
+            Delete
+          </Button>
           <Dropdown placement="bottom-end">
             <DropdownTrigger>
               <Button isIconOnly variant="light">
@@ -241,49 +267,38 @@ function TicketDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-3 space-y-6">
-          <Card shadow="none" className="border border-divider bg-transparent overflow-hidden">
-            <CardBody className="p-0">
-              <Tabs
-                variant="underlined"
-                color="primary"
-                aria-label="Ticket detail tabs"
-                classNames={{
-                  tabList: "gap-6 w-full relative rounded-none border-b border-divider px-6 pt-2 h-14",
-                  cursor: "px-6 bg-primary h-0.5",
-                  tab: "max-w-fit px-0 h-12",
-                  tabContent: "group-data-[selected=true]:text-primary font-bold transition-all text-sm uppercase tracking-wider"
-                }}
-              >
-                <Tab key="overview" title="Overview">
-                  <div className="p-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <TicketOverviewTab ticketId={ticketId!} />
-                  </div>
-                </Tab>
-                <Tab key="comments" title="Comments">
-                  <div className="p-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <TicketCommentsTab ticketId={ticketId!} />
-                  </div>
-                </Tab>
-                <Tab key="events" title="Events">
-                  <div className="p-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <TicketEventsTab ticketId={ticketId!} />
-                  </div>
-                </Tab>
-              </Tabs>
-            </CardBody>
-          </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="lg:col-span-3 space-y-4">
+          <div className="pt-6">
+            <TicketOverviewTab ticketId={ticketId!} ticket={ticket} showSidebar={false} />
+          </div>
+          <Tabs
+            variant="underlined"
+            color="primary"
+            aria-label="Ticket activity tabs"
+            classNames={{
+              tabList: "gap-4 w-full relative rounded-none border-b border-divider p-0 h-10",
+              cursor: "w-full bg-primary h-[2px]",
+              tab: "min-w-fit px-0 h-10 transition-all",
+              tabContent:
+                "group-data-[selected=true]:text-primary text-default-500 font-medium transition-all text-sm",
+            }}
+          >
+            <Tab key="comments" title={<MessageSquare size={16} aria-label="Comments" />}>
+              <div className="pt-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <TicketCommentsTab ticketId={ticketId!} ticket={ticket} showFormFirst={false} />
+              </div>
+            </Tab>
+            <Tab key="events" title={<Clock size={16} aria-label="History" />}>
+              <div className="pt-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <TicketEventsTab ticketId={ticketId!} />
+              </div>
+            </Tab>
+          </Tabs>
         </div>
 
-        <div className="lg:col-span-1 space-y-6">
-          {/* Metadata Sidebar / Quick Info moved here if truly out of tabs. 
-              But TicketOverviewTab already has it. 
-              If I move it out, OverviewTab needs to be cleaner. 
-              The user said 'đưa quick info ra cột 4 thay vì đang ở cột 3' in the context of the 4-column layout.
-              I will assume he refers to the internal grid in TicketOverviewTab.tsx.
-              Let's re-examine TicketOverviewTab.tsx.
-          */}
+        <div className="lg:col-span-1 pt-6">
+          {ticket && <TicketInfoSidebar ticket={ticket} />}
         </div>
       </div>
 

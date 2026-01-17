@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   Modal,
   ModalContent,
@@ -9,6 +9,8 @@ import {
   Input,
   Select,
   SelectItem,
+  Switch,
+  Textarea,
 } from '@heroui/react'
 import type { Server } from '@/features/servers/types'
 
@@ -29,34 +31,69 @@ export function ServerEditModal({
     name: '',
     host: '',
     ip: '',
-    docker_mode: false,
-    environment: 'production',
+    docker_mode: 'none',
+    environment: 'prd',
     os: '',
     status: 'online',
+    location: '',
+    is_netdata_enabled: false,
+    notes: '',
   })
   const [loading, setLoading] = useState(false)
+  const initialFormRef = useRef<Partial<Server> | null>(null)
 
   useEffect(() => {
     if (isOpen && server) {
-      setFormData({
+      // Normalize env/environment
+      const rawEnv = server.environment || (server as any).env || 'prd'
+      const envLower = String(rawEnv).toLowerCase()
+      const normalizedEnv = envLower === 'dev' || envLower === 'development' ? 'dev' : 'prd'
+
+      // Normalize docker_mode to string: 'none' | 'cli' | 'desktop'
+      let normalizedDocker: string = 'none'
+      if (typeof server.docker_mode === 'boolean') {
+        normalizedDocker = server.docker_mode ? 'cli' : 'none'
+      } else if (typeof server.docker_mode === 'string') {
+        const modeLower = server.docker_mode.toLowerCase()
+        if (modeLower === 'cli' || modeLower === 'desktop' || modeLower === 'none') {
+          normalizedDocker = modeLower
+        }
+      }
+
+      const normalizedStatus =
+        typeof (server as any).is_active === 'boolean'
+          ? ((server as any).is_active ? 'online' : 'offline')
+          : (server.status || 'online')
+
+      const nextForm = {
         name: server.name || '',
         host: server.host || '',
         ip: server.ip || '',
-        docker_mode: server.docker_mode || false,
-        environment: server.environment || 'production',
+        docker_mode: normalizedDocker,
+        environment: normalizedEnv,
         os: server.os || '',
-        status: server.status || 'online',
-      })
+        status: normalizedStatus,
+        location: server.location || '',
+        is_netdata_enabled: server.is_netdata_enabled || false,
+        notes: server.notes || '',
+      }
+
+      setFormData(nextForm)
+      initialFormRef.current = nextForm
     } else if (!isOpen) {
       setFormData({
         name: '',
         host: '',
         ip: '',
-        docker_mode: false,
-        environment: 'production',
+        docker_mode: 'none',
+        environment: 'prd',
         os: '',
         status: 'online',
+        location: '',
+        is_netdata_enabled: false,
+        notes: '',
       })
+      initialFormRef.current = null
     }
   }, [isOpen, server])
 
@@ -73,6 +110,11 @@ export function ServerEditModal({
       setLoading(false)
     }
   }
+
+  const isDirty = useMemo(() => {
+    if (!initialFormRef.current) return false
+    return JSON.stringify(formData) !== JSON.stringify(initialFormRef.current)
+  }, [formData])
 
   return (
     <Modal
@@ -143,13 +185,13 @@ export function ServerEditModal({
                     label="Environment"
                     placeholder="Select environment"
                     selectedKeys={
-                      formData.environment && ['production', 'staging', 'development', 'testing'].includes(formData.environment)
+                      formData.environment && ['prd', 'dev'].includes(formData.environment)
                         ? new Set([formData.environment])
                         : new Set()
                     }
                     onSelectionChange={(keys) => {
                       const value = Array.from(keys)[0] as string
-                      if (value && ['production', 'staging', 'development', 'testing'].includes(value)) {
+                      if (value && ['prd', 'dev'].includes(value)) {
                         setFormData((prev) => ({ ...prev, environment: value }))
                       }
                     }}
@@ -157,10 +199,8 @@ export function ServerEditModal({
                     isDisabled={loading}
                     aria-label="Server environment"
                   >
-                    <SelectItem key="production">Production</SelectItem>
-                    <SelectItem key="staging">Staging</SelectItem>
-                    <SelectItem key="development">Development</SelectItem>
-                    <SelectItem key="testing">Testing</SelectItem>
+                    <SelectItem key="prd">Production</SelectItem>
+                    <SelectItem key="dev">Development</SelectItem>
                   </Select>
 
                   <Select
@@ -206,18 +246,65 @@ export function ServerEditModal({
                     id="edit-server-docker-mode"
                     name="docker_mode"
                     label="Docker Mode"
-                    selectedKeys={formData.docker_mode ? ['enabled'] : ['disabled']}
+                    selectedKeys={
+                      formData.docker_mode && ['none', 'cli', 'desktop'].includes(String(formData.docker_mode))
+                        ? new Set([String(formData.docker_mode)])
+                        : new Set(['none'])
+                    }
                     onSelectionChange={(keys) => {
-                      const value = Array.from(keys)[0]
-                      setFormData((prev) => ({ ...prev, docker_mode: value === 'enabled' }))
+                      const value = Array.from(keys)[0] as string
+                      if (value && ['none', 'cli', 'desktop'].includes(value)) {
+                        setFormData((prev) => ({ ...prev, docker_mode: value }))
+                      }
                     }}
                     isDisabled={loading}
                     aria-label="Docker mode"
                   >
-                    <SelectItem key="enabled">Enabled</SelectItem>
-                    <SelectItem key="disabled">Disabled</SelectItem>
+                    <SelectItem key="none">None</SelectItem>
+                    <SelectItem key="cli">CLI</SelectItem>
+                    <SelectItem key="desktop">Desktop</SelectItem>
                   </Select>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    id="edit-server-location"
+                    name="location"
+                    label="Location"
+                    placeholder="Enter server location"
+                    value={formData.location || ''}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, location: value }))
+                    }
+                    isDisabled={loading}
+                  />
+
+                  <div className="flex items-center">
+                    <Switch
+                      id="edit-server-netdata"
+                      isSelected={formData.is_netdata_enabled || false}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, is_netdata_enabled: value }))
+                      }
+                      isDisabled={loading}
+                    >
+                      Netdata Enabled
+                    </Switch>
+                  </div>
+                </div>
+
+                <Textarea
+                  id="edit-server-notes"
+                  name="notes"
+                  label="Notes"
+                  placeholder="Enter notes"
+                  value={formData.notes || ''}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, notes: value }))
+                  }
+                  minRows={4}
+                  isDisabled={loading}
+                />
               </div>
             </ModalBody>
             <ModalFooter>
@@ -228,7 +315,7 @@ export function ServerEditModal({
                 color="primary"
                 onPress={handleSubmit}
                 isLoading={loading}
-                isDisabled={!formData.name?.trim()}
+                isDisabled={!formData.name?.trim() || !isDirty}
               >
                 Save Changes
               </Button>

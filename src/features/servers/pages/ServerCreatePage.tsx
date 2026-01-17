@@ -8,6 +8,7 @@ import {
   Select,
   SelectItem,
   Button,
+  Switch,
 } from '@heroui/react'
 import { ArrowLeft } from 'lucide-react'
 import { serverService } from '../services/serverService'
@@ -22,10 +23,15 @@ function ServerCreatePage() {
     name: '',
     host: '',
     ip: '',
-    docker_mode: false,
-    environment: 'production',
+    // docker_mode is multi-select: string[]
+    docker_mode: [] as string[],
+    // environment maps to env: 'prd' | 'dev' (default 'prd')
+    environment: 'prd',
     os: '',
     status: 'online',
+    location: '',
+    is_netdata_enabled: false,
+    notes: '',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,13 +128,16 @@ function ServerCreatePage() {
               <Select
                 label="Environment"
                 selectedKeys={formData.environment ? [formData.environment] : []}
-                onSelectionChange={(keys) => handleChange('environment', Array.from(keys)[0])}
+                onSelectionChange={(keys) => {
+                  const value = Array.from(keys)[0] as string
+                  if (value === 'prd' || value === 'dev') {
+                    handleChange('environment', value)
+                  }
+                }}
                 variant="flat"
               >
-                <SelectItem key="production">Production</SelectItem>
-                <SelectItem key="staging">Staging</SelectItem>
-                <SelectItem key="development">Development</SelectItem>
-                <SelectItem key="testing">Testing</SelectItem>
+                <SelectItem key="prd">Production</SelectItem>
+                <SelectItem key="dev">Development</SelectItem>
               </Select>
             </div>
 
@@ -154,16 +163,51 @@ function ServerCreatePage() {
 
             <Select
               label="Docker Mode"
-              selectedKeys={formData.docker_mode ? ['enabled'] : ['disabled']}
+              selectionMode="multiple"
+              selectedKeys={new Set(formData.docker_mode)}
               onSelectionChange={(keys) => {
-                const value = Array.from(keys)[0]
-                handleChange('docker_mode', value === 'enabled')
+                const values = Array.from(keys) as string[]
+                const valid = values.filter((v) => ['cli', 'desktop', 'none'].includes(v))
+                // If 'none' is selected with others, remove 'none'
+                const normalized =
+                  valid.includes('cli') || valid.includes('desktop')
+                    ? valid.filter((v) => v !== 'none')
+                    : valid
+                handleChange('docker_mode', normalized)
               }}
               variant="flat"
             >
-              <SelectItem key="enabled">Enabled</SelectItem>
-              <SelectItem key="disabled">Disabled</SelectItem>
+              <SelectItem key="none">None</SelectItem>
+              <SelectItem key="cli">CLI</SelectItem>
+              <SelectItem key="desktop">Desktop</SelectItem>
             </Select>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Location"
+                placeholder="Enter server location"
+                value={formData.location}
+                onValueChange={(v) => handleChange('location', v)}
+                variant="flat"
+              />
+              <div className="flex items-center">
+                <Switch
+                  isSelected={formData.is_netdata_enabled}
+                  onValueChange={(value) => handleChange('is_netdata_enabled', value)}
+                >
+                  Netdata Enabled
+                </Switch>
+              </div>
+            </div>
+
+            <Textarea
+              label="Notes"
+              placeholder="Enter notes"
+              value={formData.notes}
+              onValueChange={(v) => handleChange('notes', v)}
+              minRows={3}
+              variant="flat"
+            />
           </form>
         </CardBody>
       </Card>

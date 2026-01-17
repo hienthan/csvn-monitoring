@@ -32,14 +32,22 @@ function ServerAppsPage() {
 
     switch (columnKey) {
       case 'name':
+        const appId = (appDetails as any)?.id || app.id
         return (
-          <div className="flex flex-col items-center">
-            <span className="font-bold text-foreground">
-              {app.name || appDetails?.name || 'N/A'}
-            </span>
-            {app.id && (
-              <span className="text-[10px] text-default-400 font-mono uppercase tracking-tighter">
-                {app.id}
+          <div className="flex items-center justify-center">
+            {appId ? (
+              <a
+                href={`/apps/${appId}`}
+                target="_blank"
+                rel="noreferrer"
+                className="font-bold text-primary hover:underline"
+                onClick={(event) => event.stopPropagation()}
+              >
+                {app.name || appDetails?.name || 'N/A'}
+              </a>
+            ) : (
+              <span className="font-bold text-foreground">
+                {app.name || appDetails?.name || 'N/A'}
               </span>
             )}
           </div>
@@ -47,7 +55,7 @@ function ServerAppsPage() {
       case 'port':
         return (
           <div className="flex justify-center">
-            <span className="text-sm font-mono text-primary font-bold px-2 py-0.5 bg-primary/5 rounded border border-primary/10">
+            <span className="font-mono text-primary font-bold px-2 py-0.5 bg-primary/5 rounded border border-primary/10">
               {(app as any).port || appDetails?.port || '—'}
             </span>
           </div>
@@ -84,7 +92,7 @@ function ServerAppsPage() {
                 {(appDetails?.created_by || 'S')[0].toUpperCase()}
               </span>
             </div>
-            <span className="text-xs text-default-600 font-medium">
+            <span className="text-xs text-primary font-medium">
               {appDetails?.created_by || 'System'}
             </span>
           </div>

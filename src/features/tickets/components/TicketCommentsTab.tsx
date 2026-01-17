@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Card,
   CardBody,
@@ -6,41 +6,37 @@ import {
   Textarea,
   Button,
   Skeleton,
-  Input,
   Chip,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
 } from '@heroui/react'
-import { Send, Download, ExternalLink, File, User as UserIcon, MoreVertical } from 'lucide-react'
+import { Send, Download, ExternalLink, File, User as UserIcon, Pencil, Trash2 } from 'lucide-react'
 import { useTicketComments } from '../hooks/useTicketComments'
-import { useTicket } from '../hooks/useTicket'
 import { useApiError } from '@/lib/hooks/useApiError'
 import { pbFilesUrls } from '../utils'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { useAuth } from '@/features/auth/context/AuthContext'
 
 interface TicketCommentsTabProps {
   ticketId?: string
+  ticket?: { assignee?: string; requestor_name?: string } | null
+  showFormFirst?: boolean
 }
 
-function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
-  const { ticket } = useTicket(ticketId)
-  const { comments, loading, error, addComment } = useTicketComments({
+function TicketCommentsTab({
+  ticketId,
+  showFormFirst = true,
+}: TicketCommentsTabProps) {
+  const { comments, loading, error, addComment, updateComment, deleteComment } = useTicketComments({
     ticketId,
   })
   const { handleError } = useApiError()
+  const { user } = useAuth()
   const [newComment, setNewComment] = useState('')
-  const [authorName, setAuthorName] = useState('')
   const [attachments, setAttachments] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingMessage, setEditingMessage] = useState('')
 
-  // Set default author name from ticket
-  useEffect(() => {
-    if (ticket && !authorName) {
-      setAuthorName(ticket.assignee || ticket.requester_name || '')
-    }
-  }, [ticket, authorName])
+  const authorName = user?.syno_username || user?.name || 'DevOps'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -99,84 +95,11 @@ function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
       <div className="w-8 h-8 rounded-full bg-default-200 flex items-center justify-center flex-shrink-0">
         <UserIcon size={16} className="text-default-500" />
       </div>
-      <p className="font-medium text-sm text-default-900">{name}</p>
+      <p className="font-medium text-sm text-primary">{name}</p>
     </div>
   )
 
-  return (
-    <div className="space-y-6">
-      {/* Add Comment Form - Top */}
-      <Card>
-        <CardBody>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              id="comment-author-name"
-              name="authorName"
-              label="Author Name"
-              placeholder="Enter your name"
-              value={authorName}
-              onValueChange={setAuthorName}
-              isRequired
-              isDisabled={submitting}
-            />
-            <Textarea
-              id="comment-message"
-              name="message"
-              label="Message"
-              placeholder="Write a comment..."
-              value={newComment}
-              onValueChange={setNewComment}
-              minRows={3}
-              isRequired
-              isDisabled={submitting}
-            />
-            <div>
-              <label htmlFor="comment-attachments" className="text-sm font-medium mb-2 block">
-                Attachments (optional)
-              </label>
-              <input
-                id="comment-attachments"
-                name="attachments"
-                type="file"
-                multiple
-                onChange={handleFileChange}
-                disabled={submitting}
-                className="text-sm"
-              />
-              {attachments.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {attachments.map((file, index) => (
-                    <Chip
-                      key={index}
-                      onClose={() =>
-                        setAttachments(attachments.filter((_, i) => i !== index))
-                      }
-                      variant="flat"
-                      size="sm"
-                    >
-                      {file.name}
-                    </Chip>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                color="primary"
-                startContent={<Send size={16} />}
-                isLoading={submitting}
-                isDisabled={!newComment.trim() || !authorName.trim()}
-              >
-                Add Comment
-              </Button>
-            </div>
-          </form>
-        </CardBody>
-      </Card>
-
-      {/* Comments List - Below */}
-      {loading ? (
+  const commentList = loading ? (
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, index) => (
             <Card key={index}>
@@ -214,29 +137,81 @@ function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
                       {formatDate(comment.created)}
                     </span>
                   </div>
-                  <Dropdown>
-                    <DropdownTrigger>
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="light"
-                        aria-label="More options"
-                      >
-                        <MoreVertical size={16} />
-                      </Button>
-                    </DropdownTrigger>
-                    <DropdownMenu aria-label="Comment actions">
-                      <DropdownItem key="edit">Edit</DropdownItem>
-                      <DropdownItem key="delete" className="text-danger">
-                        Delete
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      isIconOnly
+                      size="sm"
+                      variant="light"
+                      aria-label="Edit comment"
+                      onPress={() => {
+                        setEditingId(comment.id)
+                        setEditingMessage(comment.message || '')
+                      }}
+                    >
+                      <Pencil size={14} />
+                    </Button>
+                    <Button
+                      isIconOnly
+                      size="sm"
+                      variant="light"
+                      color="danger"
+                      aria-label="Delete comment"
+                      onPress={async () => {
+                        if (!window.confirm('Delete this comment?')) return
+                        try {
+                          await deleteComment(comment.id)
+                        } catch (err) {
+                          handleError(err)
+                        }
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardBody className="pt-0">
-                  <p className="text-default-700 whitespace-pre-wrap mb-3">
-                    {comment.message || ''}
-                  </p>
+                  {editingId === comment.id ? (
+                    <div className="space-y-3">
+                      <Textarea
+                        value={editingMessage}
+                        onValueChange={setEditingMessage}
+                        minRows={3}
+                        isDisabled={submitting}
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="light"
+                          onPress={() => {
+                            setEditingId(null)
+                            setEditingMessage('')
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          color="primary"
+                          onPress={async () => {
+                            if (!editingMessage.trim()) return
+                            try {
+                              await updateComment(comment.id, editingMessage.trim())
+                              setEditingId(null)
+                              setEditingMessage('')
+                            } catch (err) {
+                              handleError(err)
+                            }
+                          }}
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-default-700 whitespace-pre-wrap mb-3">
+                      {comment.message || ''}
+                    </p>
+                  )}
                   {attachmentUrls.length > 0 && (
                     <div className="space-y-2 mt-3 pt-3 border-t border-divider">
                       {attachmentUrls.map((url, index) => {
@@ -283,6 +258,81 @@ function TicketCommentsTab({ ticketId }: TicketCommentsTabProps) {
             )
           })}
         </div>
+      )
+
+  const commentForm = (
+    <Card>
+      <CardBody>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Textarea
+            id="comment-message"
+            name="message"
+            label="Message"
+            placeholder="Write a comment..."
+            value={newComment}
+            onValueChange={setNewComment}
+            minRows={3}
+            isRequired
+            isDisabled={submitting}
+          />
+          <div>
+            <label htmlFor="comment-attachments" className="text-sm font-medium mb-2 block">
+              Attachments (optional)
+            </label>
+            <input
+              id="comment-attachments"
+              name="attachments"
+              type="file"
+              multiple
+              onChange={handleFileChange}
+              disabled={submitting}
+              className="text-sm"
+            />
+            {attachments.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {attachments.map((file, index) => (
+                  <Chip
+                    key={index}
+                    onClose={() =>
+                      setAttachments(attachments.filter((_, i) => i !== index))
+                    }
+                    variant="flat"
+                    size="sm"
+                  >
+                    {file.name}
+                  </Chip>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              color="primary"
+              startContent={<Send size={16} />}
+              isLoading={submitting}
+              isDisabled={!newComment.trim() || !authorName.trim()}
+            >
+              Add Comment
+            </Button>
+          </div>
+        </form>
+      </CardBody>
+    </Card>
+  )
+
+  return (
+    <div className="space-y-6">
+      {showFormFirst ? (
+        <>
+          {commentForm}
+          {commentList}
+        </>
+      ) : (
+        <>
+          {commentList}
+          {commentForm}
+        </>
       )}
     </div>
   )

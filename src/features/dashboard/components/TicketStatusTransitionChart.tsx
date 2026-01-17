@@ -59,8 +59,8 @@ export function TicketStatusTransitionChart({
         <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       </CardHeader>
       <CardBody className="pt-4 px-6 pb-6" style={{ overflow: 'hidden' }}>
-        <div className="relative" style={{ minHeight: '300px', width: '100%' }}>
-          <ResponsiveContainer width="100%" height={300}>
+        <div className="relative" style={{ minHeight: '350px', width: '100%' }}>
+          <ResponsiveContainer width="100%" height={350}>
             <LineChart
               data={data}
               margin={{ top: 10, right: 30, bottom: 10, left: 20 }}

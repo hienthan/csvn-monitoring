@@ -31,9 +31,10 @@ export interface ListTicketsParams {
   q?: string // search query
   status?: TicketStatus
   priority?: TicketPriority
-  type?: TicketType
+  types?: TicketType
   environment?: TicketEnvironment
   assignee?: string
+  requestor?: string
 }
 
 export interface ListTicketsResponse {
@@ -57,19 +58,23 @@ export async function listTickets(
       q,
       status,
       priority,
-      type,
+      types,
       environment,
       assignee,
+      requestor,
     } = params
 
     // Build filter
     const filterParts: string[] = []
 
-    // Search query (title OR code OR app_name OR requester_name)
+    // Always exclude deleted tickets
+    filterParts.push('is_deleted = false')
+
+    // Search query (title OR code OR app_name OR requestor_name)
     if (q && q.trim()) {
       const query = q.trim().replace(/"/g, '\\"')
       filterParts.push(
-        `(title ~ "${query}" || code ~ "${query}" || app_name ~ "${query}" || requester_name ~ "${query}")`
+        `(title ~ "${query}" || code ~ "${query}" || app_name ~ "${query}" || requestor_name ~ "${query}")`
       )
     }
 
@@ -83,9 +88,9 @@ export async function listTickets(
       filterParts.push(`priority = "${priority}"`)
     }
 
-    // Type filter
-    if (type) {
-      filterParts.push(`type = "${type}"`)
+    // Types filter
+    if (types) {
+      filterParts.push(`types = "${types}"`)
     }
 
     // Environment filter
@@ -96,6 +101,12 @@ export async function listTickets(
     // Assignee filter
     if (assignee) {
       filterParts.push(`assignee = "${assignee}"`)
+    }
+
+    // Requestor filter
+    if (requestor && requestor.trim()) {
+      const requestorQuery = requestor.trim().replace(/"/g, '\\"')
+      filterParts.push(`requestor_name ~ "${requestorQuery}"`)
     }
 
     const filter = filterParts.length > 0 ? filterParts.join(' && ') : ''
@@ -168,7 +179,7 @@ export async function createTicket(
             value.forEach((tag) => {
               formData.append(`${key}[]`, String(tag))
             })
-          } else if (key === 'links' && typeof value === 'object') {
+          } else if (key === 'link' && typeof value === 'object') {
             // Handle links as JSON string
             formData.append(key, JSON.stringify(value))
           } else {
@@ -223,7 +234,7 @@ export async function updateTicket(
             value.forEach((tag) => {
               formData.append(`${key}[]`, String(tag))
             })
-          } else if (key === 'links' && typeof value === 'object') {
+          } else if (key === 'link' && typeof value === 'object') {
             // Handle links as JSON string
             formData.append(key, JSON.stringify(value))
           } else {

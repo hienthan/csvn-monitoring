@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Outlet, useLocation } from 'react-router-dom'
 import { Tabs, Tab, Chip, Card, CardBody, Skeleton, Button } from '@heroui/react'
-import { Edit, Package, AlertTriangle, Info } from 'lucide-react'
+import { Edit, Package, AlertTriangle, Info, Trash2 } from 'lucide-react'
 import Breadcrumb from '@/components/Breadcrumb'
 import { useServer } from '../hooks/useServer'
 import { useServerApps } from '../hooks/useServerApps'
@@ -9,6 +9,9 @@ import { useApiError } from '@/lib/hooks/useApiError'
 import { PageContainer } from '@/components/PageContainer'
 import { ServerEditModal } from '@/components/ServerEditModal'
 import { useNetdataKpis } from '../hooks/useNetdataKpis'
+import { useAuth } from '@/features/auth/context/AuthContext'
+import { pb } from '@/lib/pb'
+import { isAdmin } from '@/constants/admin'
 import type { Server } from '../types'
 
 function ServerDetailPage() {
@@ -19,7 +22,14 @@ function ServerDetailPage() {
   const { apps } = useServerApps(serverId)
   const { handleError } = useApiError()
   const [editModalOpen, setEditModalOpen] = useState(false)
-  const netdata = useNetdataKpis(server?.ip, !loading && !!server?.ip)
+  const [deleting, setDeleting] = useState(false)
+  const { user } = useAuth()
+  const canManageServers = isAdmin(user)
+  // Only fetch netdata if server has it enabled
+  const netdata = useNetdataKpis(
+    server?.ip,
+    !loading && !!server?.ip && !!server?.is_netdata_enabled
+  )
 
   const getActiveTab = () => {
     if (location.pathname.includes('/apps')) return 'apps'
@@ -35,14 +45,6 @@ function ServerDetailPage() {
     }
   }
 
-  const formatDockerMode = (mode?: string | boolean) => {
-    if (mode === undefined || mode === null) return 'N/A'
-    if (typeof mode === 'boolean') {
-      return mode ? 'Enabled' : 'Disabled'
-    }
-    return String(mode)
-  }
-
   const handleEditSave = async (payload: Partial<Server>) => {
     if (!server) return
     try {
@@ -51,6 +53,20 @@ function ServerDetailPage() {
     } catch (err) {
       handleError(err)
       throw err
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!server || !window.confirm('Are you sure you want to delete this server? This action cannot be undone.')) return
+    
+    setDeleting(true)
+    try {
+      await pb.collection('ma_servers').delete(server.id)
+      navigate('/servers')
+    } catch (err) {
+      handleError(err)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -93,7 +109,7 @@ function ServerDetailPage() {
                       <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
                         {server?.name || 'Unknown Server'}
                       </h1>
-                      <span className="text-xs text-default-400 uppercase tracking-widest font-black opacity-70 mt-1">
+                      <span className="text-xs text-default-400 font-bold opacity-80 mt-1 capitalize leading-tight">
                         {server?.environment || (server as any).env || 'Production'}
                       </span>
                     </div>
@@ -120,10 +136,10 @@ function ServerDetailPage() {
                               netdata.status === 'Degraded' ? 'bg-warning shadow-[0_0_8px_rgba(245,165,36,0.4)]' :
                                 'bg-danger shadow-[0_0_8px_rgba(243,18,96,0.4)]'
                               } animate-pulse`} />
-                            <span className={`text-[11px] font-bold uppercase tracking-wider ${netdata.status === 'Online' ? 'text-success' :
+                      <span className={`text-[11px] font-bold uppercase tracking-wider ${netdata.status === 'Online' ? 'text-success' :
                               netdata.status === 'Degraded' ? 'text-warning' : 'text-danger'
-                              }`}>
-                              {netdata.status}
+                            }`}>
+                              Netdata: {netdata.status}
                             </span>
                           </div>
                           {netdata.lastUpdated && (
@@ -162,48 +178,29 @@ function ServerDetailPage() {
                     )}
 
                     <Button
-                      isIconOnly
-                      variant="light"
-                      radius="full"
-                      onPress={() => setEditModalOpen(true)}
+                      variant="flat"
+                      color="danger"
+                      startContent={<Trash2 size={16} />}
+                      onPress={handleDelete}
+                      isLoading={deleting}
+                      isDisabled={!canManageServers}
+                      className="font-bold"
                     >
-                      <Edit size={18} />
+                      Delete
+                    </Button>
+                    <Button
+                      variant="solid"
+                      color="primary"
+                      startContent={<Edit size={16} />}
+                      onPress={() => setEditModalOpen(true)}
+                      isDisabled={!canManageServers}
+                      className="font-bold"
+                    >
+                      Edit
                     </Button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="min-w-0 p-5 rounded-2xl bg-default-50 border border-divider hover:bg-default-100 transition-all shadow-sm">
-                    <p className="text-[10px] font-extrabold text-default-400 uppercase tracking-widest mb-1.5 shrink-0">IP Address</p>
-                    <p className="text-lg font-mono font-bold text-primary truncate min-w-0">
-                      {server?.ip || '0.0.0.0'}
-                    </p>
-                  </div>
-
-                  <div className="min-w-0 p-5 rounded-2xl bg-default-50 border border-divider hover:bg-default-100 transition-all shadow-sm">
-                    <p className="text-[10px] font-extrabold text-default-400 uppercase tracking-widest mb-1.5 shrink-0">SSH Host</p>
-                    <p className="text-lg font-bold text-foreground truncate min-w-0">
-                      {server?.host || 'localhost'}
-                    </p>
-                  </div>
-
-                  <div className="min-w-0 p-5 rounded-2xl bg-default-50 border border-divider hover:bg-default-100 transition-all shadow-sm">
-                    <p className="text-[10px] font-extrabold text-default-400 uppercase tracking-widest mb-1.5 shrink-0">Operating System</p>
-                    <p className="text-lg font-bold text-foreground truncate min-w-0">
-                      {server?.os || 'Linux Kernel'}
-                    </p>
-                  </div>
-
-                  <div className="min-w-0 p-5 rounded-2xl bg-default-50 border border-divider hover:bg-default-100 transition-all shadow-sm">
-                    <p className="text-[10px] font-extrabold text-default-400 uppercase tracking-widest mb-1.5 shrink-0">Virtualization</p>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${server?.docker_mode ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'bg-default-300'}`} />
-                      <p className="text-lg font-bold text-foreground truncate min-w-0">
-                        {formatDockerMode(server?.docker_mode)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           )}
@@ -220,17 +217,17 @@ function ServerDetailPage() {
         classNames={{
           tabList: "gap-8 w-full relative rounded-none border-b border-divider p-0 h-12",
           cursor: "w-full bg-primary h-[2px]",
-          tab: "max-w-fit px-0 h-12 transition-all",
-          tabContent: "group-data-[selected=true]:text-primary group-data-[selected=true]:font-bold text-default-500 font-medium transition-all"
+          tab: "min-w-fit px-0 h-12 transition-all",
+          tabContent: "group-data-[selected=true]:text-primary group-data-[selected=true]:font-bold text-default-500 font-medium transition-all text-sm"
         }}
       >
         <Tab key="overview" title="Overview" />
-        <Tab key="apps" title="Apps" />
+        <Tab key="apps" title="Applications" />
       </Tabs>
 
       {/* Tab Content */}
       <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <Outlet context={{ netdata }} />
+        <Outlet context={{ netdata, server }} />
       </div>
 
       {server && (

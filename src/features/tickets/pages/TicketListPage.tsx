@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Table,
@@ -18,8 +18,7 @@ import {
   Input,
   Tooltip,
 } from '@heroui/react'
-import { Plus, Search, X, Copy, Check, User as UserIcon, Ticket as TicketIcon } from 'lucide-react'
-import { EyeIcon, EditIcon, DeleteIcon } from '@/components/icons'
+import { Plus, Search, X, Copy, Check, Ticket as TicketIcon } from 'lucide-react'
 import { useTickets } from '../hooks/useTickets'
 import { useTicketFilters } from '../hooks/useTicketFilters'
 import type { Ticket } from '../types'
@@ -31,9 +30,8 @@ import {
   getTicketStatusColor,
   getTicketPriorityColor,
 } from '../constants'
-import { formatRelativeTime, copyTicketCode } from '../utils'
+import { formatTicketCreatedDate, formatTicketUpdatedDate, copyTicketCode } from '../utils'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { TicketEditModal } from '../components/TicketEditModal'
 
 import { PageContainer } from '@/components/PageContainer'
 
@@ -43,8 +41,45 @@ function TicketListPage() {
   const { tickets, loading, error, totalPages, currentPage, setCurrentPage, refetch, totalItems } =
     useTickets(filters)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
-  const [editTicket, setEditTicket] = useState<Ticket | null>(null)
-  const [editModalOpen, setEditModalOpen] = useState(false)
+  
+  // Calculate active tickets count (excluding done, rejected, blocked)
+  const [activeCount, setActiveCount] = useState<number>(0)
+  
+  useEffect(() => {
+    const fetchActiveCount = async () => {
+      try {
+        const pb = (await import('@/lib/pb')).default
+        const filterParts: string[] = []
+        filterParts.push('is_deleted = false')
+        filterParts.push(`(status != "done" && status != "rejected" && status != "blocked")`)
+        
+        if (filters.q) {
+          const query = filters.q.trim().replace(/"/g, '\\"')
+          filterParts.push(`(title ~ "${query}" || code ~ "${query}" || app_name ~ "${query}" || requestor_name ~ "${query}")`)
+        }
+        if (filters.priority) filterParts.push(`priority = "${filters.priority}"`)
+        if (filters.types) filterParts.push(`types = "${filters.types}"`)
+        if (filters.environment) filterParts.push(`environment = "${filters.environment}"`)
+        if (filters.assignee) filterParts.push(`assignee = "${filters.assignee}"`)
+        if (filters.requestor) {
+          const requestorQuery = filters.requestor.trim().replace(/"/g, '\\"')
+          filterParts.push(`requestor_name ~ "${requestorQuery}"`)
+        }
+        
+        const filter = filterParts.join(' && ')
+        const result = await pb.collection('ma_tickets').getList(1, 1, { filter })
+        setActiveCount(result.totalItems)
+      } catch (err) {
+        console.error('Error fetching active count:', err)
+        setActiveCount(totalItems) // Fallback
+      }
+    }
+    
+    if (!loading) {
+      fetchActiveCount()
+    }
+  }, [filters, loading, totalItems])
+
 
   const handleCopyCode = async (code: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -65,45 +100,32 @@ function TicketListPage() {
   }
 
   const hasActiveFilters = Boolean(
-    filters.q || filters.status || filters.priority || filters.type || filters.environment || filters.assignee
+    filters.q || filters.status || filters.priority || filters.types || filters.environment || filters.assignee || filters.requestor
   )
 
   const columns = [
-    { key: 'code', label: 'CODE' },
-    { key: 'title', label: 'TITLE' },
-    { key: 'priority', label: 'PRIORITY' },
-    { key: 'status', label: 'STATUS' },
-    { key: 'assignee', label: 'ASSIGNEE' },
-    { key: 'updated', label: 'UPDATED' },
-    { key: 'actions', label: 'ACTIONS' },
+    { key: 'code', label: 'Code' },
+    { key: 'title', label: 'Title' },
+    { key: 'type', label: 'Type' },
+    { key: 'priority', label: 'Priority' },
+    { key: 'status', label: 'Status' },
+    { key: 'requestor', label: 'Requestor' },
+    { key: 'assignee', label: 'Assignee' },
+    { key: 'created', label: 'Created' },
+    { key: 'updated', label: 'Updated' },
   ]
 
-  const handleEditSave = async (_payload: Partial<Ticket>, _attachmentsFiles?: File[]) => {
-    await refetch()
-  }
+  // handleEditSave removed as modal is removed from list
 
-  const handleAction = (action: string, ticket: Ticket, e: React.MouseEvent) => {
-    e.stopPropagation()
-    switch (action) {
-      case 'view':
-        navigate(`/tickets/${ticket.id}`)
-        break
-      case 'edit':
-        setEditTicket(ticket)
-        setEditModalOpen(true)
-        break
-      case 'delete':
-        console.log('Delete ticket', ticket.id)
-        break
-    }
-  }
 
   const renderCell = (ticket: Ticket, columnKey: string) => {
+    const fontSize = 'text-sm'
+    
     switch (columnKey) {
       case 'code':
         return (
-          <div className="flex items-center justify-center gap-2 group">
-            <span className="font-mono text-xs font-bold text-primary px-1.5 py-0.5 bg-primary/5 rounded border border-primary/10">
+          <div className="flex items-center justify-center gap-1 group">
+            <span className={`font-mono ${fontSize} font-medium text-primary`}>
               {ticket.code || 'N/A'}
             </span>
             {ticket.code && (
@@ -112,14 +134,14 @@ function TicketListPage() {
                   isIconOnly
                   size="sm"
                   variant="light"
-                  className="min-w-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="min-w-0 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
                   onPress={(e) => handleCopyCode(ticket.code, e as any)}
                   aria-label="Copy ticket code"
                 >
                   {copiedCode === ticket.code ? (
-                    <Check size={12} className="text-success" />
+                    <Check size={10} className="text-success" />
                   ) : (
-                    <Copy size={12} />
+                    <Copy size={10} />
                   )}
                 </Button>
               </Tooltip>
@@ -127,20 +149,17 @@ function TicketListPage() {
           </div>
         )
       case 'title':
-        const serviceTagsText = Array.isArray(ticket.service_tags) && ticket.service_tags.length > 0
-          ? ticket.service_tags.join(', ')
-          : ''
-        const subtitleParts = [ticket.app_name, serviceTagsText].filter(Boolean)
         return (
-          <div className="flex flex-col min-w-0 py-0.5 items-center">
-            <span className="font-bold text-sm text-foreground truncate leading-tight">
+          <div className="flex flex-col min-w-[200px] py-0.5 items-center">
+            <span className={`${fontSize} text-foreground truncate leading-tight`}>
               {ticket.title || 'N/A'}
             </span>
-            {subtitleParts.length > 0 && (
-              <span className="text-[11px] text-default-400 mt-0.5 truncate uppercase tracking-wide font-medium">
-                {subtitleParts.join(' · ')}
-              </span>
-            )}
+          </div>
+        )
+      case 'type':
+        return (
+          <div className={`flex justify-center ${fontSize} font-normal text-default-600`}>
+            {TICKET_TYPE_LABELS[ticket.types] || ticket.types || 'N/A'}
           </div>
         )
       case 'status':
@@ -150,6 +169,7 @@ function TicketListPage() {
               size="sm"
               variant="flat"
               color={getTicketStatusColor(ticket.status)}
+              className="font-medium text-[10px] h-5"
             >
               {TICKET_STATUS_LABELS[ticket.status] || ticket.status || 'N/A'}
             </Chip>
@@ -162,47 +182,43 @@ function TicketListPage() {
               size="sm"
               variant="flat"
               color={getTicketPriorityColor(ticket.priority)}
+              className="font-medium text-[10px] h-5"
             >
               {TICKET_PRIORITY_LABELS[ticket.priority] || ticket.priority || 'N/A'}
+            </Chip>
+          </div>
+        )
+      case 'requestor':
+        return (
+          <div className="flex items-center justify-center gap-2">
+            <Chip
+              size="sm"
+              variant="flat"
+              color="primary"
+              className="text-[11px] font-normal"
+            >
+              {ticket.requestor_name || 'N/A'}
             </Chip>
           </div>
         )
       case 'assignee':
         return (
           <div className="flex items-center justify-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-default-200 flex items-center justify-center flex-shrink-0">
-              <UserIcon size={14} className="text-default-500" />
-            </div>
-            <span className="text-sm text-default-700">
+            <span className={`${fontSize} text-primary font-normal`}>
               {ticket.assignee || 'Unassigned'}
             </span>
           </div>
         )
-      case 'updated':
-        const exactTime = ticket.updated ? new Date(ticket.updated).toLocaleString() : 'N/A'
+      case 'created':
         return (
-          <div className="text-default-500 text-xs font-medium text-center" title={exactTime}>
-            {formatRelativeTime(ticket.updated)}
+          <div className="text-primary text-[11px] font-normal text-center tracking-tight" title={ticket.created}>
+            {formatTicketCreatedDate(ticket.created)}
           </div>
         )
-      case 'actions':
+      case 'updated':
         return (
-          <div className="relative flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
-            <Tooltip content="Details">
-              <span className="text-lg text-default-400 cursor-pointer active:opacity-50 hover:text-primary transition-colors">
-                <EyeIcon onClick={(e) => handleAction('view', ticket, e)} />
-              </span>
-            </Tooltip>
-            <Tooltip content="Edit ticket">
-              <span className="text-lg text-default-400 cursor-pointer active:opacity-50 hover:text-primary transition-colors">
-                <EditIcon onClick={(e) => handleAction('edit', ticket, e)} />
-              </span>
-            </Tooltip>
-            <Tooltip color="danger" content="Delete ticket">
-              <span className="text-lg text-danger cursor-pointer active:opacity-50 hover:text-danger-600 transition-colors">
-                <DeleteIcon onClick={(e) => handleAction('delete', ticket, e)} />
-              </span>
-            </Tooltip>
+          <div className="text-primary text-[11px] font-normal text-center tracking-tight" title={ticket.updated}>
+            {formatTicketUpdatedDate(ticket.updated)}
           </div>
         )
       default:
@@ -217,11 +233,14 @@ function TicketListPage() {
   if (filters.priority) {
     activeFilterSummary.push(`Priority: ${TICKET_PRIORITY_LABELS[filters.priority]}`)
   }
-  if (filters.type) {
-    activeFilterSummary.push(`Type: ${TICKET_TYPE_LABELS[filters.type]}`)
+  if (filters.types) {
+    activeFilterSummary.push(`Type: ${TICKET_TYPE_LABELS[filters.types]}`)
   }
   if (filters.environment) {
     activeFilterSummary.push(`Environment: ${TICKET_ENVIRONMENT_LABELS[filters.environment]}`)
+  }
+  if (filters.requestor) {
+    activeFilterSummary.push(`Requestor: ${filters.requestor}`)
   }
 
   if (error) {
@@ -266,7 +285,7 @@ function TicketListPage() {
               <Skeleton className="h-4 w-32 rounded mt-1 bg-content1" />
             ) : (
               <p className="text-sm font-medium text-default-500">
-                {totalItems > 0 ? `${totalItems} Tickets active` : 'No tickets'}
+                {activeCount > 0 ? `${activeCount} Tickets active` : 'No tickets'}
               </p>
             )}
             {activeFilterSummary.length > 0 && (
@@ -318,6 +337,32 @@ function TicketListPage() {
                   </Button>
                 )
               }
+            />
+
+            <Input
+              placeholder="Requestor"
+              value={filters.requestor || ''}
+              onValueChange={(value) => setFilter('requestor', value || undefined)}
+              className="w-[140px]"
+              variant="flat"
+              classNames={{
+                inputWrapper: "bg-default-100/50 hover:bg-default-200/50 transition-colors border-none",
+                input: "text-sm"
+              }}
+              endContent={
+                filters.requestor && (
+                  <Button
+                    isIconOnly
+                    size="sm"
+                    variant="light"
+                    onPress={() => setFilter('requestor', undefined)}
+                    aria-label="Clear requestor filter"
+                  >
+                    <X size={16} />
+                  </Button>
+                )
+              }
+              aria-label="Filter by requestor"
             />
 
             <Select
@@ -386,7 +431,7 @@ function TicketListPage() {
             isStriped
             classNames={{
               base: 'min-h-[400px]',
-              th: 'bg-content2 text-default-500 font-black text-[10px] uppercase tracking-wider h-10 px-4 first:rounded-none last:rounded-none border-b border-divider',
+              th: 'bg-content2 text-default-400 font-bold text-xs uppercase tracking-wider h-11 px-4 first:rounded-none last:rounded-none border-b border-divider',
               td: 'py-2 px-4 border-b border-divider/50',
               tr: 'hover:bg-content3 cursor-pointer transition-colors',
             }}
@@ -457,21 +502,6 @@ function TicketListPage() {
         </div>
       )}
 
-      {editTicket && (
-        <TicketEditModal
-          isOpen={editModalOpen}
-          onClose={() => {
-            setEditModalOpen(false)
-            setEditTicket(null)
-          }}
-          ticket={editTicket}
-          onSave={async (payload, attachmentsFiles) => {
-            await handleEditSave(payload, attachmentsFiles)
-            setEditModalOpen(false)
-            setEditTicket(null)
-          }}
-        />
-      )}
     </PageContainer>
   )
 }

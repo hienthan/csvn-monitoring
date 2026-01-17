@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
-import { listComments, addComment } from '../services/comments.service'
+import { listComments, addComment, updateComment, deleteComment } from '../services/comments.service'
 import type { TicketComment } from '../types'
 import { useApiError } from '@/lib/hooks/useApiError'
+import pb from '@/lib/pb'
 
 interface UseTicketCommentsOptions {
   ticketId?: string
@@ -49,7 +50,53 @@ export function useTicketComments(options: UseTicketCommentsOptions = {}) {
           ...params,
         })
         setComments((prev) => [...prev, newComment])
+        try {
+          await pb.collection('ma_tickets').update(ticketId, {
+            updated: new Date().toISOString(),
+          })
+        } catch (updateError) {
+          console.warn('Unable to bump ticket updated timestamp:', updateError)
+        }
         return newComment
+      } catch (err) {
+        const apiError = handleError(err)
+        setError(new Error(apiError.message))
+        throw err
+      } finally {
+        setLoading(false)
+      }
+    },
+    [ticketId, handleError]
+  )
+
+  const updateExistingComment = useCallback(
+    async (commentId: string, message: string) => {
+      if (!ticketId) return
+      try {
+        setLoading(true)
+        setError(null)
+        const updated = await updateComment({ commentId, message })
+        setComments((prev) => prev.map((item) => (item.id === commentId ? updated : item)))
+        return updated
+      } catch (err) {
+        const apiError = handleError(err)
+        setError(new Error(apiError.message))
+        throw err
+      } finally {
+        setLoading(false)
+      }
+    },
+    [ticketId, handleError]
+  )
+
+  const deleteExistingComment = useCallback(
+    async (commentId: string) => {
+      if (!ticketId) return
+      try {
+        setLoading(true)
+        setError(null)
+        await deleteComment(commentId)
+        setComments((prev) => prev.filter((item) => item.id !== commentId))
       } catch (err) {
         const apiError = handleError(err)
         setError(new Error(apiError.message))
@@ -71,5 +118,7 @@ export function useTicketComments(options: UseTicketCommentsOptions = {}) {
     error,
     refetch: fetchComments,
     addComment: addNewComment,
+    updateComment: updateExistingComment,
+    deleteComment: deleteExistingComment,
   }
 }

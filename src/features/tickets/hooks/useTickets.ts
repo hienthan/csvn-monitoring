@@ -9,9 +9,10 @@ export function useTickets(filters: TicketFilters = {}) {
     q = '',
     status,
     priority,
-    type,
+    types,
     environment,
     assignee,
+    requestor,
     page = 1,
   } = filters
 
@@ -48,9 +49,10 @@ export function useTickets(filters: TicketFilters = {}) {
         q: q.trim() || undefined,
         status,
         priority,
-        type,
+        types,
         environment,
         assignee,
+        requestor,
       })
 
       // Check if request was aborted
@@ -74,7 +76,7 @@ export function useTickets(filters: TicketFilters = {}) {
         setLoading(false)
       }
     }
-  }, [q, currentPage, status, priority, type, environment, assignee, handleError])
+  }, [q, currentPage, status, priority, types, environment, assignee, requestor, handleError])
 
   // Debounced search effect
   useEffect(() => {

@@ -29,8 +29,8 @@ export function TicketStatusDonutChart({ data, title = 'Ticket Status Distributi
       <CardHeader className="pb-0 pt-6 px-6">
         <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       </CardHeader>
-      <CardBody className="pt-4 px-6 pb-6">
-        <ResponsiveContainer width="100%" height={300}>
+      <CardBody className="pt-4 px-6 pb-6 overflow-hidden">
+        <ResponsiveContainer width="100%" height={350}>
           <PieChart>
             <Pie
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,7 +45,7 @@ export function TicketStatusDonutChart({ data, title = 'Ticket Status Distributi
                 if (percent === undefined || percent === null) return ''
                 return `${label}: ${(percent * 100).toFixed(0)}%`
               }}
-              outerRadius={80}
+              outerRadius={100}
               fill="#8884d8"
               dataKey="count"
               nameKey="label"
@@ -72,7 +72,9 @@ export function TicketStatusDonutChart({ data, title = 'Ticket Status Distributi
                 color: theme.text,
                 border: `1px solid ${theme.border}`,
                 borderRadius: '8px',
+                pointerEvents: 'none',
               }}
+              wrapperStyle={{ outline: 'none' }}
             />
             <Legend
               formatter={(value) => value}
