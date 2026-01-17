@@ -67,6 +67,9 @@ export async function listTickets(
     // Build filter
     const filterParts: string[] = []
 
+    // Always exclude deleted tickets
+    filterParts.push('is_deleted = false')
+
     // Search query (title OR code OR app_name OR requestor_name)
     if (q && q.trim()) {
       const query = q.trim().replace(/"/g, '\\"')

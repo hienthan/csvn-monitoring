@@ -13,8 +13,9 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
+  Chip,
 } from '@heroui/react'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Plus, X } from 'lucide-react'
 import { createTicket } from '../services/tickets.service'
 import { addEvent } from '../services/events.service'
 import { useApiError } from '@/lib/hooks/useApiError'
@@ -28,6 +29,7 @@ import type {
 import {
   TICKET_TYPE_LABELS,
   TICKET_ENVIRONMENT_LABELS,
+  SERVICE_TAG_OPTIONS,
 } from '../constants'
 import { findAvailableTicketCode, generateTicketCode } from '../utils'
 import pb from '@/lib/pb'
@@ -68,13 +70,15 @@ function TicketCreatePage() {
     service_tags: [],
     requestor_name: user?.syno_username || user?.name || '',
     requestor_contact: user?.email || '',
-    assignee: '',
+    assignee: 'DevOps',
     due_at: '',
     link: [],
   })
   
-  const [attachments] = useState<File[]>([])
-  const [links] = useState<Array<{ label: string; url: string }>>([])
+  const [serviceTags, setServiceTags] = useState<string[]>([])
+  const [customServiceTag, setCustomServiceTag] = useState('')
+  const [attachments, setAttachments] = useState<File[]>([])
+  const [links, setLinks] = useState<Array<{ label: string; url: string }>>([])
   const [showDiscardModal, setShowDiscardModal] = useState(false)
   const initialFormDataRef = useRef<typeof formData | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
@@ -86,13 +90,17 @@ function TicketCreatePage() {
         const code = await findAvailableTicketCode(pb)
         const initialData = { ...formData, code }
         setFormData(initialData)
-        initialFormDataRef.current = JSON.parse(JSON.stringify(initialData))
+        initialFormDataRef.current = JSON.parse(
+          JSON.stringify({ ...initialData, service_tags: [], link: [] })
+        )
       } catch (err: any) {
         const year = new Date().getFullYear()
         const fallbackCode = generateTicketCode(year, 1)
         const initialData = { ...formData, code: fallbackCode }
         setFormData(initialData)
-        initialFormDataRef.current = JSON.parse(JSON.stringify(initialData))
+        initialFormDataRef.current = JSON.parse(
+          JSON.stringify({ ...initialData, service_tags: [], link: [] })
+        )
         handleError(err)
       } finally {
         setCodeGenerating(false)
@@ -103,17 +111,41 @@ function TicketCreatePage() {
 
   useEffect(() => {
     if (!initialFormDataRef.current) return
-    const currentData = JSON.stringify({ ...formData, link: links })
-    const initialData = JSON.stringify({ ...initialFormDataRef.current, link: [] })
+    const currentData = JSON.stringify({ ...formData, link: links, service_tags: serviceTags })
+    const initialData = JSON.stringify({
+      ...initialFormDataRef.current,
+      link: [],
+      service_tags: [],
+    })
     setHasChanges(currentData !== initialData)
-  }, [formData, links])
+  }, [formData, links, serviceTags])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.title?.trim() || !formData.description?.trim()) return
+    const normalizedTitle = formData.title?.trim()
+    const normalizedType = formData.types || 'general'
+    const normalizedEnv = formData.environment || 'dev'
+    if (!normalizedTitle) return
     setLoading(true)
     try {
-      const ticket = await createTicket({ ...formData } as any, attachments.length > 0 ? attachments : undefined)
+      const linksData =
+        links.length > 0
+          ? links.filter((link) => link.url.trim()).map((link) => ({
+              label: link.label || '',
+              url: link.url,
+            }))
+          : undefined
+      const ticket = await createTicket(
+        {
+          ...formData,
+          title: normalizedTitle,
+          types: normalizedType,
+          environment: normalizedEnv,
+          service_tags: serviceTags,
+          link: linksData,
+        } as any,
+        attachments.length > 0 ? attachments : undefined
+      )
       await addEvent({ 
         ticket: ticket.id, 
         event_type: 'note', 
@@ -264,6 +296,173 @@ function TicketCreatePage() {
                 onValueChange={(v: string) => handleChange('requestor_name', v)}
                 variant="flat"
               />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Requestor Contact"
+                placeholder="Email or phone (optional)"
+                value={formData.requestor_contact}
+                onValueChange={(v: string) => handleChange('requestor_contact', v)}
+                variant="flat"
+              />
+              <Input
+                label="Assignee"
+                placeholder="Assignee name or ID (optional)"
+                value={formData.assignee}
+                onValueChange={(v: string) => handleChange('assignee', v)}
+                variant="flat"
+                isReadOnly
+              />
+            </div>
+
+            <Input
+              label="Due Date"
+              type="datetime-local"
+              placeholder="Select due date (optional)"
+              value={formData.due_at ? new Date(formData.due_at).toISOString().slice(0, 16) : ''}
+              onValueChange={(value) => {
+                if (value) {
+                  const date = new Date(value)
+                  handleChange('due_at', date.toISOString())
+                } else {
+                  handleChange('due_at', undefined)
+                }
+              }}
+              variant="flat"
+            />
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Service Tags</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {serviceTags.map((tag) => (
+                  <Chip
+                    key={tag}
+                    onClose={() => setServiceTags(serviceTags.filter((t) => t !== tag))}
+                    variant="flat"
+                    color="primary"
+                  >
+                    {tag}
+                  </Chip>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Select
+                  placeholder="Add service tag"
+                  selectedKeys={new Set()}
+                  onSelectionChange={(keys) => {
+                    const value = Array.from(keys)[0] as string
+                    if (value && !serviceTags.includes(value)) {
+                      setServiceTags([...serviceTags, value])
+                    }
+                  }}
+                  variant="flat"
+                  aria-label="Add service tag"
+                >
+                  {SERVICE_TAG_OPTIONS.filter((tag) => !serviceTags.includes(tag)).map(
+                    (tag) => (
+                      <SelectItem key={tag}>{tag}</SelectItem>
+                    )
+                  )}
+                </Select>
+                <Input
+                  placeholder="Custom tag"
+                  value={customServiceTag}
+                  onValueChange={setCustomServiceTag}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && customServiceTag.trim()) {
+                      e.preventDefault()
+                      if (!serviceTags.includes(customServiceTag.trim())) {
+                        setServiceTags([...serviceTags, customServiceTag.trim()])
+                      }
+                      setCustomServiceTag('')
+                    }
+                  }}
+                  variant="flat"
+                  aria-label="Custom service tag"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Links (optional)</label>
+              <div className="space-y-2">
+                {links.map((link, index) => (
+                  <div key={index} className="flex gap-2 items-end">
+                    <Input
+                      placeholder="Label (optional)"
+                      value={link.label}
+                      onValueChange={(value) => {
+                        const newLinks = [...links]
+                        newLinks[index].label = value
+                        setLinks(newLinks)
+                      }}
+                      variant="flat"
+                      className="flex-1"
+                      aria-label={`Link label ${index + 1}`}
+                    />
+                    <Input
+                      placeholder="URL"
+                      value={link.url}
+                      onValueChange={(value) => {
+                        const newLinks = [...links]
+                        newLinks[index].url = value
+                        setLinks(newLinks)
+                      }}
+                      variant="flat"
+                      className="flex-2"
+                      aria-label={`Link URL ${index + 1}`}
+                    />
+                    <Button
+                      isIconOnly
+                      variant="light"
+                      color="danger"
+                      onPress={() => setLinks(links.filter((_, i) => i !== index))}
+                      aria-label="Remove link"
+                    >
+                      <X size={16} />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant="bordered"
+                  startContent={<Plus size={16} />}
+                  onPress={() => setLinks([...links, { label: '', url: '' }])}
+                  className="w-full"
+                >
+                  Add Link
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Attachments (optional)</label>
+              <input
+                type="file"
+                multiple
+                onChange={(e) => {
+                  if (e.target.files) {
+                    setAttachments(Array.from(e.target.files))
+                  }
+                }}
+                className="text-sm w-full"
+              />
+              {attachments.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {attachments.map((file, index) => (
+                    <Chip
+                      key={index}
+                      onClose={() =>
+                        setAttachments(attachments.filter((_, i) => i !== index))
+                      }
+                      variant="flat"
+                      size="sm"
+                    >
+                      {file.name}
+                    </Chip>
+                  ))}
+                </div>
+              )}
             </div>
           </form>
         </CardBody>

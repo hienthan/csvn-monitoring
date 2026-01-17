@@ -251,7 +251,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {!collapsed && (
           <div className="px-2 pt-2">
             <p className="text-[10px] text-default-400 font-semibold tracking-widest text-center">
-              v1.0.0
+              v1.0.1
             </p>
           </div>
         )}

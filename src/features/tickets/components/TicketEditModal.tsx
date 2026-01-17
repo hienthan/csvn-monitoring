@@ -49,7 +49,7 @@ export function TicketEditModal({
     app_name: '',
     requestor_name: '',
     requestor_contact: '',
-    assignee: '',
+    assignee: 'DevOps',
     due_at: '',
   })
   const [links, setLinks] = useState<Array<{ label: string; url: string }>>([])
@@ -70,7 +70,7 @@ export function TicketEditModal({
         app_name: ticket.app_name || '',
         requestor_name: ticket.requestor_name || '',
         requestor_contact: ticket.requestor_contact || '',
-        assignee: ticket.assignee || '',
+        assignee: ticket.assignee || 'DevOps',
         due_at: ticket.due_at || '',
       })
       setServiceTags(Array.isArray(ticket.service_tags) ? ticket.service_tags : [])
@@ -94,7 +94,7 @@ export function TicketEditModal({
         app_name: '',
         requestor_name: '',
         requestor_contact: '',
-        assignee: '',
+        assignee: 'DevOps',
         due_at: '',
       })
       setServiceTags([])
@@ -403,7 +403,7 @@ export function TicketEditModal({
                   onValueChange={(value) =>
                     setFormData((prev) => ({ ...prev, assignee: value }))
                   }
-                  isDisabled={loading}
+                  isDisabled={true}
                 />
 
                 <div className="space-y-2">

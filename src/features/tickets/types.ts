@@ -27,7 +27,7 @@ export type TicketStatus =
   | 'rejected'
 
 // Ticket Environment
-export type TicketEnvironment = 'dev' | 'test' | 'staging' | 'prod'
+export type TicketEnvironment = 'dev' | 'test' | 'prod'
 
 // Ticket Event Type
 export type TicketEventType =

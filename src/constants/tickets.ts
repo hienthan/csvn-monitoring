@@ -43,7 +43,6 @@ export const TICKET_TYPE_LABELS: Record<TicketType, string> = {
 export const TICKET_ENVIRONMENT_LABELS: Record<TicketEnvironment, string> = {
   dev: 'Dev',
   test: 'Test',
-  staging: 'Staging',
   prod: 'Prod',
 }
 

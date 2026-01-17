@@ -26,7 +26,7 @@ import {
   getBackupHealth,
   isHeavyBackup,
 } from '../utils/backupStatus'
-import { runBackupNow } from '../services/backupActions'
+import { runBackupNow, getOptimisticRunningBackup } from '../services/backupActions'
 import { useApiError } from '@/lib/hooks/useApiError'
 import { useAuth } from '@/features/auth/context/AuthContext'
 import { hasBackupAdmin } from '../utils/rbac'

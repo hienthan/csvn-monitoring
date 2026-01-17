@@ -92,7 +92,7 @@ function ServerAppsPage() {
                 {(appDetails?.created_by || 'S')[0].toUpperCase()}
               </span>
             </div>
-            <span className="text-xs text-default-600 font-medium">
+            <span className="text-xs text-primary font-medium">
               {appDetails?.created_by || 'System'}
             </span>
           </div>

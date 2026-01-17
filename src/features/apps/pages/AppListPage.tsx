@@ -205,7 +205,7 @@ function AppListPage() {
       case 'owner':
         return (
           <div className="flex items-center justify-center gap-2">
-            <span className={`${fontSize} text-default-600 font-bold`}>
+            <span className={`${fontSize} text-primary font-normal`}>
               {app.created_by || 'System'}
             </span>
           </div>

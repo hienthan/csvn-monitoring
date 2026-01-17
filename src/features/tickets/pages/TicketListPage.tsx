@@ -30,7 +30,7 @@ import {
   getTicketStatusColor,
   getTicketPriorityColor,
 } from '../constants'
-import { formatRelativeTime, copyTicketCode } from '../utils'
+import { formatTicketCreatedDate, formatTicketUpdatedDate, copyTicketCode } from '../utils'
 import { EmptyState } from '@/components/ui/EmptyState'
 
 import { PageContainer } from '@/components/PageContainer'
@@ -50,6 +50,7 @@ function TicketListPage() {
       try {
         const pb = (await import('@/lib/pb')).default
         const filterParts: string[] = []
+        filterParts.push('is_deleted = false')
         filterParts.push(`(status != "done" && status != "rejected" && status != "blocked")`)
         
         if (filters.q) {
@@ -78,6 +79,7 @@ function TicketListPage() {
       fetchActiveCount()
     }
   }, [filters, loading, totalItems])
+
 
   const handleCopyCode = async (code: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -115,6 +117,7 @@ function TicketListPage() {
 
   // handleEditSave removed as modal is removed from list
 
+
   const renderCell = (ticket: Ticket, columnKey: string) => {
     const fontSize = 'text-sm'
     
@@ -122,7 +125,7 @@ function TicketListPage() {
       case 'code':
         return (
           <div className="flex items-center justify-center gap-1 group">
-            <span className={`font-mono ${fontSize} font-bold text-primary`}>
+            <span className={`font-mono ${fontSize} font-medium text-primary`}>
               {ticket.code || 'N/A'}
             </span>
             {ticket.code && (
@@ -148,14 +151,14 @@ function TicketListPage() {
       case 'title':
         return (
           <div className="flex flex-col min-w-[200px] py-0.5 items-center">
-            <span className={`font-bold ${fontSize} text-foreground truncate leading-tight`}>
+            <span className={`${fontSize} text-foreground truncate leading-tight`}>
               {ticket.title || 'N/A'}
             </span>
           </div>
         )
       case 'type':
         return (
-          <div className={`flex justify-center ${fontSize} font-bold text-default-600`}>
+          <div className={`flex justify-center ${fontSize} font-normal text-default-600`}>
             {TICKET_TYPE_LABELS[ticket.types] || ticket.types || 'N/A'}
           </div>
         )
@@ -166,7 +169,7 @@ function TicketListPage() {
               size="sm"
               variant="flat"
               color={getTicketStatusColor(ticket.status)}
-              className="font-bold text-[10px] h-5"
+              className="font-medium text-[10px] h-5"
             >
               {TICKET_STATUS_LABELS[ticket.status] || ticket.status || 'N/A'}
             </Chip>
@@ -179,7 +182,7 @@ function TicketListPage() {
               size="sm"
               variant="flat"
               color={getTicketPriorityColor(ticket.priority)}
-              className="font-bold text-[10px] h-5"
+              className="font-medium text-[10px] h-5"
             >
               {TICKET_PRIORITY_LABELS[ticket.priority] || ticket.priority || 'N/A'}
             </Chip>
@@ -188,29 +191,34 @@ function TicketListPage() {
       case 'requestor':
         return (
           <div className="flex items-center justify-center gap-2">
-            <span className={`${fontSize} text-foreground font-bold`}>
+            <Chip
+              size="sm"
+              variant="flat"
+              color="primary"
+              className="text-[11px] font-normal"
+            >
               {ticket.requestor_name || 'N/A'}
-            </span>
+            </Chip>
           </div>
         )
       case 'assignee':
         return (
           <div className="flex items-center justify-center gap-2">
-            <span className={`${fontSize} text-foreground font-bold`}>
+            <span className={`${fontSize} text-primary font-normal`}>
               {ticket.assignee || 'Unassigned'}
             </span>
           </div>
         )
       case 'created':
         return (
-          <div className="text-default-400 text-[11px] font-bold text-center tracking-tighter" title={ticket.created}>
-            {formatRelativeTime(ticket.created)}
+          <div className="text-primary text-[11px] font-normal text-center tracking-tight" title={ticket.created}>
+            {formatTicketCreatedDate(ticket.created)}
           </div>
         )
       case 'updated':
         return (
-          <div className="text-default-400 text-[11px] font-bold text-center tracking-tighter" title={ticket.updated}>
-            {formatRelativeTime(ticket.updated)}
+          <div className="text-primary text-[11px] font-normal text-center tracking-tight" title={ticket.updated}>
+            {formatTicketUpdatedDate(ticket.updated)}
           </div>
         )
       default:

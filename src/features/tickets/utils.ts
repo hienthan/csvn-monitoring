@@ -107,31 +107,31 @@ export function normalizePbError(error: unknown): { message: string; details?: u
 }
 
 /**
- * Generate ticket code in format: TCK-YYYY-######
- * @param year - Year (e.g., 2026)
- * @param seq - Sequence number (e.g., 123)
- * @returns Formatted code (e.g., "TCK-2026-000123")
+ * Generate ticket code in format: YY-#### (e.g., 26-0001)
+ * @param year - Full year (e.g., 2026)
+ * @param seq - Sequence number (1 - 9999)
+ * @returns Formatted code (e.g., "26-0001")
  */
 export function generateTicketCode(year: number, seq: number): string {
-  const yearStr = String(year)
-  const seqStr = String(seq).padStart(6, '0')
-  return `TCK-${yearStr}-${seqStr}`
+  const yearStr = String(year % 100).padStart(2, '0')
+  const seqStr = String(seq).padStart(4, '0')
+  return `${yearStr}-${seqStr}`
 }
 
 /**
  * Parse ticket code to extract year and sequence
- * @param code - Ticket code (e.g., "TCK-2026-000123")
+ * @param code - Ticket code (e.g., "26-0001")
  * @returns Object with year and seq, or null if invalid format
  */
 export function parseTicketCode(code: string): { year: number; seq: number } | null {
-  const match = code.match(/^TCK-(\d{4})-(\d{6})$/)
+  const match = code.match(/^(\d{2})-(\d{4})$/)
   if (!match) return null
 
-  const year = parseInt(match[1], 10)
+  const yearTwo = parseInt(match[1], 10)
   const seq = parseInt(match[2], 10)
+  if (isNaN(yearTwo) || isNaN(seq)) return null
 
-  if (isNaN(year) || isNaN(seq)) return null
-
+  const year = 2000 + yearTwo
   return { year, seq }
 }
 
@@ -177,6 +177,9 @@ export async function findAvailableTicketCode(
 
       // Code exists, try next sequence
       seq++
+      if (seq > 9999) {
+        throw new Error(`Ticket code sequence exceeded 9999 for year ${targetYear}`)
+      }
     } catch (error) {
       // If error is "not found" or similar, code is available
       // Otherwise, throw the error
@@ -192,6 +195,39 @@ export async function findAvailableTicketCode(
   throw new Error(
     `Unable to find available ticket code after ${maxRetries} attempts for year ${targetYear}`
   )
+}
+
+export function formatTicketCreatedDate(dateString?: string): string {
+  if (!dateString) return 'N/A'
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
+  } catch {
+    return 'N/A'
+  }
+}
+
+export function formatTicketUpdatedDate(dateString?: string): string {
+  if (!dateString) return 'N/A'
+  try {
+    const date = new Date(dateString)
+    const time = date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+    const day = date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+    })
+    return `${time} ${day}`
+  } catch {
+    return 'N/A'
+  }
 }
 
 /**

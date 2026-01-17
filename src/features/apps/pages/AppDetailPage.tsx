@@ -202,7 +202,7 @@ function AppDetailPage() {
                     </div>
                     <div>
                       <p className="text-xs font-bold text-default-400 uppercase tracking-wider mb-1">Owner</p>
-                      <p className="text-sm">{app?.created_by || 'System'}</p>
+                      <p className="text-sm text-primary">{app?.created_by || 'System'}</p>
                     </div>
                   </div>
                 </CardBody>

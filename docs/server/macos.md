@@ -1,0 +1,29 @@
+netdata API response on macOS:
+system.io:
+{
+        "labels":["time","in","out"],
+        "data":[
+            [1768535700,170110.9199993,-92.1333313]
+        ]
+    }
+mem.swap
+{
+        "labels":["time","free","used"],
+        "data":[
+            [1768535760,879.625,144.375]
+        ]
+    }
+system.ram
+{
+        "labels":["time","active","wired","throttled","compressor","inactive","purgeable","speculative","free"],
+        "data":[
+            [1768535790,49921.9466667,3101.6283,0,209.1094,48963.75,3561.8613333,4296.8505333,23979.3803333]
+        ]
+    }
+system.load
+{
+        "labels":["time","load1","load5","load15"],
+        "data":[
+            [1768535790,1.7964128,2.021726,2.4140565]
+        ]
+    }

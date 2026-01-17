@@ -120,17 +120,21 @@ export function StatusChangeModal({
             </ModalHeader>
             <ModalBody>
               <div className="space-y-4">
-                {isClosingStatus && (
-                  <Alert
-                    color="warning"
-                    variant="flat"
-                    title="Confirm Status Change"
-                    startContent={<AlertCircle size={20} />}
-                  >
-                    You are about to change this ticket to a final status ({TICKET_STATUS_LABELS[selectedNewStatus]}). 
-                    This action will mark the ticket as resolved or closed. Please confirm this is correct.
-                  </Alert>
-                )}
+                <div className="min-h-[86px]">
+                  {isClosingStatus ? (
+                    <Alert
+                      color="warning"
+                      variant="flat"
+                      title="Confirm Status Change"
+                      startContent={<AlertCircle size={20} />}
+                    >
+                      You are about to change this ticket to a final status ({TICKET_STATUS_LABELS[selectedNewStatus]}).
+                      This action will mark the ticket as resolved or closed. Please confirm this is correct.
+                    </Alert>
+                  ) : (
+                    <div />
+                  )}
+                </div>
                 <div>
                   <p className="text-sm text-default-600 mb-2">
                     Current status:{' '}
@@ -197,17 +201,21 @@ export function StatusChangeModal({
               isDisabled={loading}
             />
 
-            {needsResolvedAtClear && (
-              <Checkbox
-                id="status-change-clear-resolved"
-                name="clearResolvedAt"
-                isSelected={clearResolvedAt}
-                onValueChange={setClearResolvedAt}
-                isDisabled={loading}
-              >
-                Clear resolved_at date
-              </Checkbox>
-            )}
+            <div className="min-h-[28px] flex items-center">
+              {needsResolvedAtClear ? (
+                <Checkbox
+                  id="status-change-clear-resolved"
+                  name="clearResolvedAt"
+                  isSelected={clearResolvedAt}
+                  onValueChange={setClearResolvedAt}
+                  isDisabled={loading}
+                >
+                  Clear resolved_at date
+                </Checkbox>
+              ) : (
+                <div />
+              )}
+            </div>
               </div>
             </ModalBody>
             <ModalFooter>

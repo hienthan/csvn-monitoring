@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardBody, Input, Button, Alert } from '@heroui/react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -10,6 +10,17 @@ const LoginPage: React.FC = () => {
   const { login, isLoading, error } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  useEffect(() => {
+    const root = document.documentElement;
+    const hadDark = root.classList.contains('dark');
+    root.classList.remove('dark');
+
+    return () => {
+      if (hadDark) {
+        root.classList.add('dark');
+      }
+    };
+  }, []);
 
   const from = (location.state as any)?.from?.pathname || '/';
 
